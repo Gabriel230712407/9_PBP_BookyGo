@@ -40,8 +40,8 @@ class WelcomePage extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Image.asset(
                   'assets/images/onboarding_bag.png',
-                  width: 95,
-                  height: 95,
+                  width: 110,
+                  height: 110,
                   fit: BoxFit.contain,
                 ),
               ),
