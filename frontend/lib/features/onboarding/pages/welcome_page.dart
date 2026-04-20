@@ -108,13 +108,11 @@ class WelcomePage extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
-                        child: const Text(
-                          'G',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange,
-                          ),
+                        child: Image.asset(
+                          'assets/images/Google_G_Logo.png',
+                          width: 25,
+                          height: 25,
+                          fit: BoxFit.contain,
                         ),
                       ),
                       const SizedBox(width: 14),
