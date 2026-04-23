@@ -3,10 +3,12 @@ import '../../home/pages/home_page.dart';
 
 class MainNavPage extends StatefulWidget {
   final bool isGuest;
+  final String? userEmail;
 
   const MainNavPage({
     super.key,
     this.isGuest = true,
+    this.userEmail,
   });
 
   @override
@@ -23,7 +25,10 @@ class _MainNavPageState extends State<MainNavPage> {
     super.initState();
 
     _pages = [
-      HomePage(isGuest: widget.isGuest),
+      HomePage(
+        isGuest: widget.isGuest,
+        userEmail: widget.userEmail,
+      ),
       const Center(child: Text('Booking Page')),
       const Center(child: Text('Wishlist Page')),
       const Center(child: Text('Profile Page')),
