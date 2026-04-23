@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../home/pages/home_page.dart';
+import '../../mybook/pages/mybook_page.dart';
 
 class MainNavPage extends StatefulWidget {
   final bool isGuest;
@@ -17,23 +18,6 @@ class MainNavPage extends StatefulWidget {
 
 class _MainNavPageState extends State<MainNavPage> {
   int _selectedIndex = 0;
-
-  late final List<Widget> _pages;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _pages = [
-      HomePage(
-        isGuest: widget.isGuest,
-        userEmail: widget.userEmail,
-      ),
-      const Center(child: Text('Booking Page')),
-      const Center(child: Text('Wishlist Page')),
-      const Center(child: Text('Profile Page')),
-    ];
-  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -65,10 +49,20 @@ class _MainNavPageState extends State<MainNavPage> {
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF5B74E8);
 
+    final List<Widget> pages = [
+      HomePage(
+        isGuest: widget.isGuest,
+        userEmail: widget.userEmail,
+      ),
+      const MyBookPage(),
+      const Center(child: Text('Wishlist Page')),
+      const Center(child: Text('Profile Page')),
+    ];
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: _pages,
+        children: pages,
       ),
       bottomNavigationBar: SafeArea(
         top: false,
