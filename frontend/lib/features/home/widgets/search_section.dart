@@ -4,8 +4,33 @@ import '../../../core/theme/app_colors.dart';
 class SearchSection extends StatelessWidget {
   const SearchSection({super.key});
 
+  String formatDate(DateTime date) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  return '${date.day} ${months[date.month - 1]} ${date.year}';
+}
+
   @override
   Widget build(BuildContext context) {
+
+    final today = DateTime.now();
+    final tomorrow = today.add(const Duration(days: 1));
+
+    final checkInDate = formatDate(today);
+    final checkOutDate = formatDate(tomorrow);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
       decoration: BoxDecoration(
@@ -79,12 +104,12 @@ class SearchSection extends StatelessWidget {
           const SizedBox(height: 14),
 
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: _InfoBox(
                   icon: Icons.event_available_outlined,
                   title: 'Check-in',
-                  value: '16 Mar 2026',
+                  value: checkInDate,
                 ),
               ),
               SizedBox(width: 10),
@@ -92,7 +117,7 @@ class SearchSection extends StatelessWidget {
                 child: _InfoBox(
                   icon: Icons.event_note_outlined,
                   title: 'Check-out',
-                  value: '17 Mar 2026',
+                  value: checkOutDate,
                 ),
               ),
             ],
