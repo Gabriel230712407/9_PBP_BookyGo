@@ -36,6 +36,7 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bgVeryLight,
       body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 100),
         child: Column(
           children: [
             Stack(
@@ -76,8 +77,8 @@ class HomePage extends StatelessWidget {
                 ),
 
                 const Positioned(
-                  left: 20,
-                  right: 20,
+                  left: 16,
+                  right: 16,
                   top: 165,
                   child: SearchSection(),
                 ),
@@ -248,7 +249,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 140),
+            const SizedBox(height: 40),
           ],
         ),
       ),
