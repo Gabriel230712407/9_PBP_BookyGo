@@ -3,7 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import 'delete_history_dialog.dart';
 
 class HistoryCard extends StatelessWidget {
-  final Map<String, String> history;
+  final Map<String, dynamic> history;
 
   const HistoryCard({
     super.key,

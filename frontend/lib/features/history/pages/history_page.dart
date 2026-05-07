@@ -5,8 +5,7 @@ import '../widgets/history_card.dart';
 import '../widgets/empty_history_view.dart';
 
 class HistoryPage extends StatelessWidget {
-  final List<Map<String, String>> histories;
-
+  final List<Map<String, dynamic>> histories;
   const HistoryPage({
     super.key,
     required this.histories,
