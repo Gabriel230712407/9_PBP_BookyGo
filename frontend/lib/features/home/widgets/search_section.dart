@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/hotel/pages/hotel_list_page.dart';
 import '../../../core/theme/app_colors.dart';
 
 class SearchSection extends StatelessWidget {
   const SearchSection({super.key});
 
   String formatDate(DateTime date) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
 
-  return '${date.day} ${months[date.month - 1]} ${date.year}';
-}
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
-
     final today = DateTime.now();
     final tomorrow = today.add(const Duration(days: 1));
 
@@ -58,12 +58,9 @@ class SearchSection extends StatelessWidget {
           const SizedBox(height: 18),
 
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              border: Border.all(color:  AppColors.blueSoft),
+              border: Border.all(color: AppColors.blueSoft),
               borderRadius: BorderRadius.circular(18),
             ),
             child: const Row(
@@ -158,7 +155,7 @@ class SearchSection extends StatelessWidget {
                   end: Alignment.centerRight,
                   colors: [
                     AppColors.primaryEnd, // #3F7BEA
-                    AppColors.blueDark,   // #3466C9
+                    AppColors.blueDark, // #3466C9
                   ],
                 ),
                 boxShadow: [
@@ -170,7 +167,12 @@ class SearchSection extends StatelessWidget {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HotelListPage()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
@@ -225,11 +227,7 @@ class _InfoBox extends StatelessWidget {
               color: AppColors.bgVeryLight,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(
-              icon,
-              color: AppColors.mutedBlue,
-              size: 24,
-            ),
+            child: Icon(icon, color: AppColors.mutedBlue, size: 24),
           ),
           const SizedBox(width: 10),
           Expanded(
