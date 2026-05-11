@@ -3,6 +3,7 @@ import '../widgets/mybook_action_button.dart';
 import '../widgets/mybook_header.dart';
 import '../widgets/mybook_recommendation_section.dart';
 import '../../history/pages/history_page.dart';
+import '../../../core/theme/app_colors.dart';
 
 class MyBookPage extends StatelessWidget {
   final VoidCallback onBookNowTap;
@@ -11,13 +12,11 @@ class MyBookPage extends StatelessWidget {
     super.key,
     required this.onBookNowTap,
   });
+
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFF4F7FF);
-    const darkBlue = Color(0xFF1F2A44);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.bgVeryLight,
       body: Column(
         children: [
           MyBookHeader(
@@ -26,7 +25,18 @@ class MyBookPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => const HistoryPage(
-                    histories: [], //inii nanti kalo mau nampilin contoh card nya masukin data dummy aja
+                    histories: [
+                      {
+                        'id': 'XXXXX',
+                        'hotelName': 'Malioboro Boutique Stay',
+                        'location': 'Yogyakarta, Indonesia',
+                        'imagePath': 'assets/images/onboarding_bag.png',
+                        'dateRange': '16 March – 18 March, 2026',
+                        'night': '2 Night',
+                        'status': 'completed',
+                        'hasReview': false,
+                      },
+                    ],
                   ),
                 ),
               );
@@ -53,7 +63,7 @@ class MyBookPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: darkBlue,
+                      color: AppColors.textDark,
                     ),
                     textAlign: TextAlign.center,
                   ),
