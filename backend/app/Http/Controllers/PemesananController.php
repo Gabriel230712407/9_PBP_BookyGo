@@ -45,8 +45,8 @@ class PemesananController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'kamar_id' => 'required|exists:kamars,id',
-            'tgl_chin' => 'required|date',
-            'tgl_chout' => 'required|date|after:tgl_chin',
+            'tgl_checkin' => 'required|date',
+            'tgl_checkout' => 'required|date|after:tgl_checkin',
             'status_pesan' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:255',
             'kode_booking' => 'nullable|string|max:255|unique:pemesanans,kode_booking',
@@ -60,8 +60,8 @@ class PemesananController extends Controller
         $pemesanan = Pemesanan::create([
             'user_id' => $request->user_id,
             'kamar_id' => $request->kamar_id,
-            'tgl_chin' => $request->tgl_chin,
-            'tgl_chout' => $request->tgl_chout,
+            'tgl_checkin' => $request->tgl_checkin,
+            'tgl_checkout' => $request->tgl_checkout,
             'status_pesan' => $request->status_pesan ?? 'pending',
             'metode_bayar' => $request->metode_bayar,
             'kode_booking' => $request->kode_booking ?? 'BK-' . strtoupper(Str::random(8)),
@@ -103,8 +103,8 @@ class PemesananController extends Controller
         $request->validate([
             'user_id' => 'sometimes|required|exists:users,id',
             'kamar_id' => 'sometimes|required|exists:kamars,id',
-            'tgl_chin' => 'sometimes|required|date',
-            'tgl_chout' => 'sometimes|required|date|after:tgl_chin',
+            'tgl_checkin' => 'sometimes|required|date',
+            'tgl_checkout' => 'sometimes|required|date|after:tgl_checkin',
             'status_pesan' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:255',
             'kode_booking' => 'nullable|string|max:255|unique:pemesanans,kode_booking,' . $pemesanan->id,
@@ -118,8 +118,8 @@ class PemesananController extends Controller
         $pemesanan->update($request->only([
             'user_id',
             'kamar_id',
-            'tgl_chin',
-            'tgl_chout',
+            'tgl_checkin',
+            'tgl_checkout',
             'status_pesan',
             'metode_bayar',
             'kode_booking',

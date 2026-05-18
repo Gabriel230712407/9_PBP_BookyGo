@@ -9,8 +9,8 @@ class Pemesanan extends Model
     protected $fillable = [
         'user_id',
         'kamar_id',
-        'tgl_chin',
-        'tgl_chout',
+        'tgl_checkin',
+        'tgl_checkout',
         'status_pesan',
         'metode_bayar',
         'kode_booking',

@@ -12,21 +12,21 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'nama' => 'required|string|max:255',
-            'gender' => 'nullable|string|max:255',
-            'no_telp' => 'nullable|string|max:255',
+            'name' => 'required|string|max:255',
+            'gender' => 'required|in:Pria,Wanita',
+            'no_telp' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:6',
-            'fotoProfile' => 'nullable|string|max:255',
+            'foto' => 'nullable|string|max:255',
         ]);
 
         $user = User::create([
-            'nama' => $request->nama,
+            'name' => $request->name,
             'gender' => $request->gender,
             'no_telp' => $request->no_telp,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'fotoProfile' => $request->fotoProfile,
+            'foto' => $request->foto,
         ]);
 
         $token = $user->createToken('bookygo-token')->plainTextToken;
