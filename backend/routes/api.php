@@ -30,9 +30,9 @@ Route::get('/foto-hotels/{id}', [FotoHotelController::class, 'show']);
 Route::get('/foto-kamars', [FotoKamarController::class, 'index']);
 Route::get('/foto-kamars/{id}', [FotoKamarController::class, 'show']);
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/me', [AuthController::class, 'me']);
-    Route::post('/logout', [AuthController::class, 'logout']);
+// Route::middleware('auth:sanctum')->group(function () {
+//     Route::get('/me', [AuthController::class, 'me']);
+//     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::apiResource('pemesanans', PemesananController::class);
     Route::apiResource('wishlists', WishlistController::class);
@@ -44,4 +44,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('addons', AddonController::class)->except(['index']);
     Route::apiResource('foto-hotels', FotoHotelController::class)->except(['index', 'show']);
     Route::apiResource('foto-kamars', FotoKamarController::class)->except(['index', 'show']);
-});
+// });

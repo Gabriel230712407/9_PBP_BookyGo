@@ -48,7 +48,7 @@ class KamarController extends Controller
         $request->validate([
             'hotel_id' => 'required|exists:hotels,id',
             'nama' => 'required|string|max:255',
-            'tipe_kamar' => 'required|string|max:255',
+            'smoking_policy' => 'nullable|in:smoking,non_smoking',
             'jenis_kasur' => 'required|string|max:255',
             'kapasitas' => 'required|integer|min:1',
             'harga' => 'required|numeric|min:0',
@@ -60,7 +60,7 @@ class KamarController extends Controller
         $kamar = Kamar::create([
             'hotel_id' => $request->hotel_id,
             'nama' => $request->nama,
-            'tipe_kamar' => $request->tipe_kamar,
+            'smoking_policy' => $request->smoking_policy ?? 'non_smoking',
             'jenis_kasur' => $request->jenis_kasur,
             'kapasitas' => $request->kapasitas,
             'harga' => $request->harga,
@@ -92,7 +92,7 @@ class KamarController extends Controller
         $request->validate([
             'hotel_id' => 'sometimes|required|exists:hotels,id',
             'nama' => 'sometimes|required|string|max:255',
-            'tipe_kamar' => 'sometimes|required|string|max:255',
+            'smoking_policy' => 'sometimes|nullable|in:smoking,non_smoking',
             'jenis_kasur' => 'sometimes|required|string|max:255',
             'kapasitas' => 'sometimes|required|integer|min:1',
             'harga' => 'sometimes|required|numeric|min:0',
@@ -104,7 +104,7 @@ class KamarController extends Controller
         $kamar->update($request->only([
             'hotel_id',
             'nama',
-            'tipe_kamar',
+            'smoking_policy',
             'jenis_kasur',
             'kapasitas',
             'harga',

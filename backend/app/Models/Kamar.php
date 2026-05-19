@@ -9,7 +9,7 @@ class Kamar extends Model
     protected $fillable = [
         'hotel_id',
         'nama',
-        'tipe_kamar',
+        'smoking_policy',
         'jenis_kasur',
         'kapasitas',
         'harga',
