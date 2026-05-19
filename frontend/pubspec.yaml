@@ -21,5 +21,49 @@ flutter:
     - assets/images/onboarding_bag.png
     - assets/images/empty_mascot.png
     - assets/images/Google_G_Logo.png
-    - assets/images/hotels/mbs/
-    - assets/images/kamars/mbs/mcr/
+    
+    - assets/images/hotels/bali/abr/
+    - assets/images/hotels/bali/lcr/
+
+    - assets/images/hotels/bdg/ahr/
+    - assets/images/hotels/bdg/pvl/
+
+    - assets/images/hotels/jkt/cch/
+    - assets/images/hotels/jkt/mgh/
+    - assets/images/hotels/jkt/sch/
+
+    - assets/images/hotels/jogja/bhi/
+    - assets/images/hotels/jogja/jrr/
+    - assets/images/hotels/jogja/mbs/
+    - assets/images/hotels/jogja/tsh/
+
+    - assets/images/kamars/bali/abr/cdr/
+    - assets/images/kamars/bali/abr/obs/
+    - assets/images/kamars/bali/lcr/cdr/
+    - assets/images/kamars/bali/lcr/lgr/
+    - assets/images/kamars/bali/lcr/rls/
+    - assets/images/kamars/bali/phr/hcr/
+    - assets/images/kamars/bali/phr/sps/
+
+    - assets/images/kamars/bdg/ahr/agr/
+    - assets/images/kamars/bdg/ahr/phs/
+    - assets/images/kamars/bdg/pvl/pcr/
+    - assets/images/kamars/bdg/pvl/vvr/
+
+    - assets/images/kamars/jkt/cch/ccr/
+    - assets/images/kamars/jkt/cch/cdr/
+    - assets/images/kamars/jkt/mgh/gms/
+    - assets/images/kamars/jkt/mgh/mbr/
+    - assets/images/kamars/jkt/mgh/usr/
+    - assets/images/kamars/jkt/sch/cvr/
+    - assets/images/kamars/jkt/sch/sdr/
+
+    - assets/images/kamars/jogja/bhi/hcr/
+    - assets/images/kamars/jogja/bhi/rhs/
+    - assets/images/kamars/jogja/bhi/tvr/
+    - assets/images/kamars/jogja/jrr/jcr/
+    - assets/images/kamars/jogja/jrr/rgr/
+    - assets/images/kamars/jogja/mbs/mcr/
+    - assets/images/kamars/jogja/mbs/ss/
+    - assets/images/kamars/jogja/tsh/jhs/
+    - assets/images/kamars/jogja/tsh/scr/
