@@ -17,7 +17,7 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'BookyGo',
       theme: ThemeData(useMaterial3: true, fontFamily: 'Arial'),
-      home: HomePage(),
+      home: WelcomePage(),
     );
   }
 }
