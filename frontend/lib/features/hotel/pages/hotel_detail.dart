@@ -1,82 +1,196 @@
 import 'package:flutter/material.dart';
-import '../models/hotel_model.dart';
+
+import '../../../core/theme/app_colors.dart';
 import '../../room/pages/room_page.dart';
+import '../models/hotel_model.dart';
+import '../services/hotel_service.dart';
 
-class HotelDetailPage extends StatelessWidget {
-  final HotelModel hotel;
+class HotelDetailPage extends StatefulWidget {
+  final int hotelId;
+  final DateTime checkInDate;
+  final DateTime checkOutDate;
+  final int roomCount;
+  final int guestCount;
 
-  const HotelDetailPage({super.key, required this.hotel});
+  const HotelDetailPage({
+    super.key,
+    required this.hotelId,
+    required this.checkInDate,
+    required this.checkOutDate,
+    required this.roomCount,
+    required this.guestCount,
+  });
+
+  @override
+  State<HotelDetailPage> createState() => _HotelDetailPageState();
+}
+
+class _HotelDetailPageState extends State<HotelDetailPage> {
+  late Future<HotelModel> _futureHotel;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureHotel = HotelService().fetchHotelDetail(widget.hotelId);
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  String _formatPrice(double value) {
+    final number = value.toStringAsFixed(0);
+    final buffer = StringBuffer();
+    int counter = 0;
+
+    for (int i = number.length - 1; i >= 0; i--) {
+      buffer.write(number[i]);
+      counter++;
+      if (counter % 3 == 0 && i != 0) {
+        buffer.write('.');
+      }
+    }
+
+    return 'Rp ${buffer.toString().split('').reversed.join()}';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF5F7FF),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 95),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _HeaderImage(hotel: hotel),
-                  _HotelTitle(hotel: hotel),
-                  _ReviewSection(),
-                  _FacilitySection(),
-                  _LocationSection(),
-                  _PolicySection(),
-                ],
+      body: FutureBuilder<HotelModel>(
+        future: _futureHotel,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  snapshot.error.toString(),
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-          ),
+            );
+          }
 
-          _BottomBookingBar(),
-        ],
+          final hotel = snapshot.data!;
+
+          return Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 95),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _HeaderGallery(hotel: hotel),
+                      _HotelTitle(hotel: hotel),
+                      _ReviewSection(hotel: hotel),
+                      _FacilitySection(hotel: hotel),
+                      _LocationSection(hotel: hotel),
+                      _PolicySection(
+                        checkInDate: widget.checkInDate,
+                        checkOutDate: widget.checkOutDate,
+                        formatDate: _formatDate,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _BottomBookingBar(
+                priceText: _formatPrice(hotel.lowestPrice),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RoomPage(
+                        hotel: hotel,
+                        checkInDate: widget.checkInDate,
+                        checkOutDate: widget.checkOutDate,
+                        roomCount: widget.roomCount,
+                        guestCount: widget.guestCount,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          );
+        },
       ),
-
       bottomNavigationBar: _BottomNavBar(),
     );
   }
 }
 
-class _HeaderImage extends StatelessWidget {
+class _HeaderGallery extends StatelessWidget {
   final HotelModel hotel;
 
-  const _HeaderImage({required this.hotel});
+  const _HeaderGallery({required this.hotel});
 
   @override
   Widget build(BuildContext context) {
+    final images = hotel.images;
+
     return Stack(
       children: [
         Column(
           children: [
-            //Image.asset(
-            //  hotel.image,
-            //  height: 230,
-            //  width: double.infinity,
-            //  fit: BoxFit.cover,
-            //),
-            Container(
+            _HeaderGridImage(
+              image: images.isNotEmpty ? images[0] : null,
               height: 230,
-              width: double.infinity,
-              color: Colors.grey[300],
-              child: const Icon(Icons.image, size: 50, color: Colors.white),
+              borderRadius: BorderRadius.zero,
+              onTap: images.isNotEmpty
+                  ? () => _openInfiniteGallery(context, images, 0)
+                  : null,
             ),
             Row(
-              // children: [
-              //   Expanded(child: _SmallImage(image: hotel.image)),
-              //   Expanded(child: _SmallImage(image: hotel.image)),
-              //   Expanded(child: _SmallImage(image: hotel.image)),
-              // ],
-              children: const [
-                Expanded(child: _SmallImage(image: '')),
-                Expanded(child: _SmallImage(image: '')),
-                Expanded(child: _SmallImage(image: '')),
-              ],
+              children: List.generate(3, (index) {
+                final imageIndex = index + 1;
+                final image = imageIndex < images.length
+                    ? images[imageIndex]
+                    : null;
+
+                return Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 2, right: index == 2 ? 0 : 2),
+                    child: _HeaderGridImage(
+                      image: image,
+                      height: 85,
+                      borderRadius: BorderRadius.zero,
+                      onTap: image != null
+                          ? () => _openInfiniteGallery(
+                              context,
+                              images,
+                              imageIndex,
+                            )
+                          : null,
+                    ),
+                  ),
+                );
+              }),
             ),
           ],
         ),
-
         Positioned(
           top: 38,
           left: 12,
@@ -93,19 +207,170 @@ class _HeaderImage extends StatelessWidget {
       ],
     );
   }
+
+  void _openInfiniteGallery(
+    BuildContext context,
+    List<String> images,
+    int initialIndex,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            _InfiniteImageViewer(images: images, initialIndex: initialIndex),
+      ),
+    );
+  }
 }
 
-class _SmallImage extends StatelessWidget {
-  final String image;
+class _HeaderGridImage extends StatelessWidget {
+  final String? image;
+  final double height;
+  final BorderRadius borderRadius;
+  final VoidCallback? onTap;
 
-  const _SmallImage({required this.image});
+  const _HeaderGridImage({
+    required this.image,
+    required this.height,
+    required this.borderRadius,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 72,
-      margin: const EdgeInsets.only(right: 2, top: 2),
-      //child: Image.asset(image, fit: BoxFit.cover),
+    final child = ClipRRect(
+      borderRadius: borderRadius,
+      child: Container(
+        height: height,
+        width: double.infinity,
+        color: const Color(0xffD7DCEB),
+        child: image != null && image!.isNotEmpty
+            ? Image.asset(
+                image!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) {
+                  return const Icon(Icons.image, size: 44, color: Colors.white);
+                },
+              )
+            : const Icon(Icons.image, size: 44, color: Colors.white),
+      ),
+    );
+
+    if (onTap == null) {
+      return child;
+    }
+
+    return InkWell(onTap: onTap, child: child);
+  }
+}
+
+class _InfiniteImageViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const _InfiniteImageViewer({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_InfiniteImageViewer> createState() => _InfiniteImageViewerState();
+}
+
+class _InfiniteImageViewerState extends State<_InfiniteImageViewer> {
+  late final PageController _controller;
+  late int _currentPage;
+
+  static const int _loopMultiplier = 1000;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialPage =
+        widget.images.length * _loopMultiplier + widget.initialIndex;
+    _currentPage = initialPage;
+    _controller = PageController(initialPage: initialPage);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final images = widget.images;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _controller,
+            onPageChanged: (page) {
+              setState(() => _currentPage = page);
+            },
+            itemBuilder: (context, index) {
+              final image = images[index % images.length];
+              return InteractiveViewer(
+                minScale: 1,
+                maxScale: 4,
+                child: Center(
+                  child: Image.asset(
+                    image,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) {
+                      return const Icon(
+                        Icons.broken_image,
+                        color: Colors.white,
+                        size: 56,
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+          Positioned(
+            top: 42,
+            left: 14,
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.white.withOpacity(0.18),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 26,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.45),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Text(
+                  '${(_currentPage % images.length) + 1}/${images.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -132,26 +397,24 @@ class _HotelTitle extends StatelessWidget {
               color: Color(0xff26346B),
             ),
           ),
-
           const SizedBox(height: 10),
-
           Row(
             children: [
-              const Text(
-                '4,4/5',
-                style: TextStyle(
+              Text(
+                '${hotel.rawRating.toStringAsFixed(1)}/5',
+                style: const TextStyle(
                   fontSize: 20,
                   color: Color(0xff5E7CEB),
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                '(4 review)',
-                style: TextStyle(fontSize: 11, color: Colors.grey),
+              Text(
+                '(${hotel.reviewCount} review)',
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
               ),
               const SizedBox(width: 12),
-              const Text('•', style: TextStyle(color: Colors.grey)),
+              const Text('|', style: TextStyle(color: Colors.grey)),
               const SizedBox(width: 12),
               const Icon(Icons.location_on, size: 13, color: Colors.grey),
               const SizedBox(width: 3),
@@ -170,14 +433,20 @@ class _HotelTitle extends StatelessWidget {
 }
 
 class _ReviewSection extends StatelessWidget {
+  final HotelModel hotel;
+
+  const _ReviewSection({required this.hotel});
+
   @override
   Widget build(BuildContext context) {
+    final firstReview = hotel.reviews.isNotEmpty ? hotel.reviews.first : null;
+
     return _SectionBox(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               Text(
                 'Review',
                 style: TextStyle(
@@ -197,84 +466,83 @@ class _ReviewSection extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 8),
-
-          const Text(
-            '4,4/5',
-            style: TextStyle(
+          Text(
+            '${hotel.rawRating.toStringAsFixed(1)}/5',
+            style: const TextStyle(
               fontSize: 24,
               color: Color(0xff5E7CEB),
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 12),
-
-          Container(
-            height: 118,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xffEEF3FF),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  // child: Image.asset(
-                  //   'assets/images/hotel1.jpg',
-                  //   width: 90,
-                  //   height: 98,
-                  //   fit: BoxFit.cover,
-                  // ),
-                  child: Container(
+          if (firstReview != null)
+            Container(
+              height: 118,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xffEEF3FF),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Container(
                     width: 90,
                     height: 98,
-                    color: Colors.grey[300],
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: const Icon(
                       Icons.person,
                       size: 50,
                       color: Colors.white,
                     ),
                   ),
-                ),
-
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        '5,0 /5',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xff26346B),
-                          fontSize: 18,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${firstReview.rating.toStringAsFixed(1)} /5',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xff26346B),
+                            fontSize: 18,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'AB',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
+                        const SizedBox(height: 4),
+                        Text(
+                          firstReview.userName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        'I stayed here for two nights during my trip to Yogyakarta.',
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 10, color: Colors.grey),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        Text(
+                          firstReview.comment.isEmpty
+                              ? 'No comment'
+                              : firstReview.comment,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            )
+          else
+            const Text(
+              'No review yet',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-          ),
         ],
       ),
     );
@@ -282,21 +550,52 @@ class _ReviewSection extends StatelessWidget {
 }
 
 class _FacilitySection extends StatelessWidget {
+  final HotelModel hotel;
+
+  const _FacilitySection({required this.hotel});
+
+  IconData _mapIcon(String facility) {
+    final value = facility.toLowerCase();
+
+    if (value.contains('wifi')) return Icons.wifi;
+    if (value.contains('restaurant')) return Icons.restaurant;
+    if (value.contains('airport')) return Icons.airport_shuttle;
+    if (value.contains('reception')) return Icons.room_service;
+    if (value.contains('balcony')) return Icons.balcony;
+    if (value.contains('parking')) return Icons.local_parking;
+    return Icons.check_circle_outline;
+  }
+
   @override
   Widget build(BuildContext context) {
     return _SectionBox(
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        childAspectRatio: 4.3,
-        children: const [
-          _FacilityItem(icon: Icons.wifi, text: 'WiFi'),
-          _FacilityItem(icon: Icons.ac_unit, text: 'AC'),
-          _FacilityItem(icon: Icons.restaurant, text: 'Restaurant'),
-          _FacilityItem(icon: Icons.airport_shuttle, text: 'Airport Shuttle'),
-          _FacilityItem(icon: Icons.room_service, text: '24h Reception'),
-          _FacilityItem(icon: Icons.balcony, text: 'Balcony'),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Facilities',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xff26346B),
+            ),
+          ),
+          const SizedBox(height: 2),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 5.9,
+            children: hotel.facilityList
+                .map(
+                  (facility) =>
+                      _FacilityItem(icon: _mapIcon(facility), text: facility),
+                )
+                .toList(),
+          ),
         ],
       ),
     );
@@ -314,13 +613,15 @@ class _FacilityItem extends StatelessWidget {
     return Row(
       children: [
         Icon(icon, size: 17, color: Colors.grey),
-        const SizedBox(width: 10),
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],
@@ -329,6 +630,10 @@ class _FacilityItem extends StatelessWidget {
 }
 
 class _LocationSection extends StatelessWidget {
+  final HotelModel hotel;
+
+  const _LocationSection({required this.hotel});
+
   @override
   Widget build(BuildContext context) {
     return _SectionBox(
@@ -343,17 +648,9 @@ class _LocationSection extends StatelessWidget {
               color: Color(0xff26346B),
             ),
           ),
-
           const SizedBox(height: 14),
-
           ClipRRect(
             borderRadius: BorderRadius.circular(14),
-            // child: Image.asset(
-            //   'assets/images/map.jpg',
-            //   height: 120,
-            //   width: double.infinity,
-            //   fit: BoxFit.cover,
-            // ),
             child: Container(
               height: 120,
               width: double.infinity,
@@ -361,12 +658,14 @@ class _LocationSection extends StatelessWidget {
               child: const Icon(Icons.map, size: 50, color: Colors.white),
             ),
           ),
-
           const SizedBox(height: 10),
-
-          const Text(
-            'Jl. Babarsari No.43, Janti, Caturtunggal, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281',
-            style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
+          Text(
+            hotel.address,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -375,13 +674,23 @@ class _LocationSection extends StatelessWidget {
 }
 
 class _PolicySection extends StatelessWidget {
+  final DateTime checkInDate;
+  final DateTime checkOutDate;
+  final String Function(DateTime) formatDate;
+
+  const _PolicySection({
+    required this.checkInDate,
+    required this.checkOutDate,
+    required this.formatDate,
+  });
+
   @override
   Widget build(BuildContext context) {
     return _SectionBox(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text(
+        children: [
+          const Text(
             'Accommodation Policies',
             style: TextStyle(
               fontSize: 16,
@@ -389,10 +698,8 @@ class _PolicySection extends StatelessWidget {
               color: Color(0xff26346B),
             ),
           ),
-
-          SizedBox(height: 18),
-
-          Row(
+          const SizedBox(height: 18),
+          const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
@@ -412,41 +719,35 @@ class _PolicySection extends StatelessWidget {
               ),
             ],
           ),
-
-          SizedBox(height: 14),
-
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: _PolicyText(
                   title: 'Check-in',
-                  date: '16 Mar 2026',
+                  date: formatDate(checkInDate),
                   time: 'From 13:00',
                 ),
               ),
               Expanded(
                 child: _PolicyText(
                   title: 'Check-out',
-                  date: '18 Mar 2026',
-                  time: 'before 12:00',
+                  date: formatDate(checkOutDate),
+                  time: 'Before 12:00',
                 ),
               ),
             ],
           ),
-
-          SizedBox(height: 28),
-
-          Text(
+          const SizedBox(height: 28),
+          const Text(
             'Children',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: Color(0xff26346B),
             ),
           ),
-
-          SizedBox(height: 10),
-
-          Text(
+          const SizedBox(height: 10),
+          const Text(
             'Guests of all ages are welcome to stay here',
             style: TextStyle(fontSize: 12, color: Colors.grey),
           ),
@@ -499,15 +800,19 @@ class _PolicyText extends StatelessWidget {
 
 class _SectionBox extends StatelessWidget {
   final Widget child;
+  final EdgeInsetsGeometry padding;
 
-  const _SectionBox({required this.child});
+  const _SectionBox({
+    required this.child,
+    this.padding = const EdgeInsets.fromLTRB(20, 18, 20, 18),
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 6),
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+      padding: padding,
       color: Colors.white,
       child: child,
     );
@@ -515,6 +820,11 @@ class _SectionBox extends StatelessWidget {
 }
 
 class _BottomBookingBar extends StatelessWidget {
+  final String priceText;
+  final VoidCallback onTap;
+
+  const _BottomBookingBar({required this.priceText, required this.onTap});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -526,18 +836,18 @@ class _BottomBookingBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Starts from',
                   style: TextStyle(color: Color(0xff5E7CEB), fontSize: 12),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Rp 1.234.567',
-                  style: TextStyle(
+                  priceText,
+                  style: const TextStyle(
                     color: Color(0xff26346B),
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -546,7 +856,6 @@ class _BottomBookingBar extends StatelessWidget {
               ],
             ),
           ),
-
           SizedBox(
             height: 44,
             child: ElevatedButton(
@@ -556,12 +865,7 @@ class _BottomBookingBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => RoomPage()),
-                );
-              },
+              onPressed: onTap,
               child: const Text(
                 'View rooms',
                 style: TextStyle(
