@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../widgets/benefit_item.dart';
 import '../../navigation/pages/main_nav_page.dart';
 
@@ -7,13 +8,8 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF5B74E8);
-    const darkBlue = Color(0xFF344A99);
-    const backgroundColor = Color(0xFFF5F7FF);
-    const textGrey = Color(0xFF6B7280);
-
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: AppColors.bgVeryLight,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
@@ -36,7 +32,7 @@ class WelcomePage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: primaryColor,
+                      color: AppColors.primaryEnd,
                     ),
                   ),
                 ),
@@ -61,7 +57,7 @@ class WelcomePage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  color: darkBlue,
+                  color: AppColors.darkBlue,
                   height: 1.2,
                 ),
               ),
@@ -97,8 +93,8 @@ class WelcomePage extends StatelessWidget {
                 height: 58,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primaryEnd,
+                    foregroundColor: AppColors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -112,7 +108,7 @@ class WelcomePage extends StatelessWidget {
                         width: 34,
                         height: 34,
                         decoration: const BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
@@ -143,8 +139,11 @@ class WelcomePage extends StatelessWidget {
                 height: 58,
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: primaryColor,
-                    side: const BorderSide(color: primaryColor, width: 1.6),
+                    foregroundColor: AppColors.primaryEnd,
+                    side: const BorderSide(
+                      color: AppColors.primaryEnd,
+                      width: 1.6,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -169,18 +168,21 @@ class WelcomePage extends StatelessWidget {
 
               const SizedBox(height: 18),
 
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Text(
                     'Have an account? ',
-                    style: TextStyle(fontSize: 15, color: textGrey),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                   Text(
                     'Sign in here',
                     style: TextStyle(
                       fontSize: 15,
-                      color: primaryColor,
+                      color: AppColors.primaryEnd,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -192,12 +194,16 @@ class WelcomePage extends StatelessWidget {
               const Text.rich(
                 TextSpan(
                   text: 'By signing up you accept our ',
-                  style: TextStyle(fontSize: 14, color: textGrey, height: 1.5),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textMuted,
+                    height: 1.5,
+                  ),
                   children: [
                     TextSpan(
                       text: 'Terms & Conditions',
                       style: TextStyle(
-                        color: primaryColor,
+                        color: AppColors.primaryEnd,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -205,7 +211,7 @@ class WelcomePage extends StatelessWidget {
                     TextSpan(
                       text: 'Privacy Policy.',
                       style: TextStyle(
-                        color: primaryColor,
+                        color: AppColors.primaryEnd,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
