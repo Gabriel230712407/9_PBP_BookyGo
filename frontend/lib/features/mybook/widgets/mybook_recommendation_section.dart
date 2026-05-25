@@ -7,11 +7,18 @@ class MyBookRecommendationSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const darkBlue = Color(0xFF1F2A44);
+    final double width = MediaQuery.of(context).size.width;
+    final bool isCompact = width < 360;
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+      margin: EdgeInsets.symmetric(horizontal: isCompact ? 0 : 4),
+      padding: EdgeInsets.fromLTRB(
+        isCompact ? 14 : 16,
+        isCompact ? 16 : 18,
+        isCompact ? 14 : 16,
+        isCompact ? 18 : 20,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -30,15 +37,15 @@ class MyBookRecommendationSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Your dream vacation waiting you',
             style: TextStyle(
-              fontSize: 17,
+              fontSize: isCompact ? 16 : 17,
               fontWeight: FontWeight.w800,
               color: darkBlue,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: isCompact ? 12 : 14),
           const SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -53,9 +60,9 @@ class MyBookRecommendationSection extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isCompact ? 14 : 18),
           SizedBox(
-            height: 265,
+            height: isCompact ? 248 : 265,
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: const [

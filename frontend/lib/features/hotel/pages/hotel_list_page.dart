@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/hotel_model.dart';
 import '../services/hotel_service.dart';
 import 'hotel_detail.dart';
@@ -373,23 +374,7 @@ class _HotelListPageState extends State<HotelListPage> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: 62,
-        margin: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-        decoration: BoxDecoration(
-          color: const Color(0xff5E7CEB),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Icon(Icons.home, color: Colors.white),
-            Icon(Icons.article, color: Colors.white),
-            Icon(Icons.favorite, color: Colors.white),
-            Icon(Icons.person, color: Colors.white),
-          ],
-        ),
-      ),
+      bottomNavigationBar: const AppBottomNavBar(),
     );
   }
 }

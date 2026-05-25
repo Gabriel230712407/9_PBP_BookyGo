@@ -13,9 +13,11 @@ class MyBookActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+
     return SizedBox(
-      width: 260,
-      height: 64,
+      width: (width - 48).clamp(220.0, 260.0).toDouble(),
+      height: width < 360 ? 56 : 64,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -29,9 +31,9 @@ class MyBookActionButton extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.white,
-            fontSize: 20,
+            fontSize: width < 360 ? 18 : 20,
             fontWeight: FontWeight.w700,
           ),
         ),

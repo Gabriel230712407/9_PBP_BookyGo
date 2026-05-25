@@ -18,9 +18,13 @@ class MyBookHotelCard extends StatelessWidget {
   Widget build(BuildContext context) {
     const darkBlue = Color(0xFF1F2A44);
     const textGrey = Color(0xFF7B88A8);
+    final double width = (MediaQuery.of(context).size.width * 0.52)
+        .clamp(168.0, 190.0)
+        .toDouble();
+    final double imageHeight = width < 180 ? 108 : 120;
 
     return Container(
-      width: 190,
+      width: width,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -37,13 +41,13 @@ class MyBookHotelCard extends StatelessWidget {
             ),
             child: Image.network(
               imageUrl,
-              width: 190,
-              height: 120,
+              width: double.infinity,
+              height: imageHeight,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  width: 190,
-                  height: 120,
+                  width: double.infinity,
+                  height: imageHeight,
                   color: const Color(0xFFE9EEFF),
                   alignment: Alignment.center,
                   child: const Icon(
@@ -61,8 +65,8 @@ class MyBookHotelCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: width < 180 ? 15 : 16,
                     fontWeight: FontWeight.w800,
                     color: darkBlue,
                     height: 1.2,
@@ -71,16 +75,16 @@ class MyBookHotelCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   location,
-                  style: const TextStyle(
-                    fontSize: 13,
+                  style: TextStyle(
+                    fontSize: width < 180 ? 12 : 13,
                     color: textGrey,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   ratingText,
-                  style: const TextStyle(
-                    fontSize: 13,
+                  style: TextStyle(
+                    fontSize: width < 180 ? 12 : 13,
                     color: textGrey,
                   ),
                 ),

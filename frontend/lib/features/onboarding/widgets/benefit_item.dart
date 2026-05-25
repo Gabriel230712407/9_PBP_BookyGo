@@ -4,12 +4,20 @@ class BenefitItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final double iconSize;
+  final double titleSize;
+  final double subtitleSize;
+  final double gap;
 
   const BenefitItem({
     super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.iconSize = 24,
+    this.titleSize = 17,
+    this.subtitleSize = 15,
+    this.gap = 14,
   });
 
   @override
@@ -23,17 +31,17 @@ class BenefitItem extends StatelessWidget {
         Icon(
           icon,
           color: primaryColor,
-          size: 30,
+          size: iconSize,
         ),
-        const SizedBox(width: 18),
+        SizedBox(width: gap),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 17,
+                style: TextStyle(
+                  fontSize: titleSize,
                   fontWeight: FontWeight.w700,
                   color: primaryColor,
                 ),
@@ -41,8 +49,8 @@ class BenefitItem extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  fontSize: 15,
+                style: TextStyle(
+                  fontSize: subtitleSize,
                   color: textColor,
                   height: 1.4,
                 ),

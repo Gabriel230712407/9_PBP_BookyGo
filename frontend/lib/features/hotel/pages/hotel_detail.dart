@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../../room/pages/room_page.dart';
 import '../models/hotel_model.dart';
 import '../services/hotel_service.dart';
@@ -137,7 +138,7 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
           );
         },
       ),
-      bottomNavigationBar: _BottomNavBar(),
+      bottomNavigationBar: const AppBottomNavBar(),
     );
   }
 }
@@ -881,25 +882,3 @@ class _BottomBookingBar extends StatelessWidget {
   }
 }
 
-class _BottomNavBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 58,
-      margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-      decoration: BoxDecoration(
-        color: const Color(0xff5E7CEB),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Icon(Icons.home, color: Colors.white),
-          Icon(Icons.article, color: Colors.white),
-          Icon(Icons.favorite, color: Colors.white),
-          Icon(Icons.person, color: Colors.white),
-        ],
-      ),
-    );
-  }
-}

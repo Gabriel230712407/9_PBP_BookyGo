@@ -6,16 +6,24 @@ class EmptyHistoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    final bool isCompact = width < 360;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
+        padding: EdgeInsets.fromLTRB(
+          isCompact ? 20 : 24,
+          0,
+          isCompact ? 20 : 24,
+          80,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
               'assets/images/empty_mascot.png',
-              width: 150,
-              height: 150,
+              width: isCompact ? 132 : 150,
+              height: isCompact ? 132 : 150,
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 16),
@@ -38,8 +46,10 @@ class EmptyHistoryView extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             Container(
-              width: 190,
-              height: 40,
+              width: (width - (isCompact ? 80 : 120))
+                  .clamp(180.0, 220.0)
+                  .toDouble(),
+              height: isCompact ? 42 : 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [

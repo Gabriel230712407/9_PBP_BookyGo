@@ -32,6 +32,13 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final String userName =
         isGuest ? 'User' : extractNameFromEmail(userEmail);
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isCompact = screenWidth < 360;
+    final double horizontalPadding = isCompact ? 16 : 20;
+    final double topSectionHeight = isCompact ? 530 : 565;
+    final double heroHeight = isCompact ? 200 : 215;
+    final double searchTop = isCompact ? 152 : 165;
+    final double cardImageSize = isCompact ? 72 : 80;
 
     return Scaffold(
       backgroundColor: AppColors.bgVeryLight,
@@ -42,8 +49,8 @@ class HomePage extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                const SizedBox(
-                  height: 565,
+                SizedBox(
+                  height: topSectionHeight,
                   width: double.infinity,
                 ),
 
@@ -52,7 +59,7 @@ class HomePage extends StatelessWidget {
                   left: 0,
                   right: 0,
                   child: Container(
-                    height: 215,
+                    height: heroHeight,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
@@ -76,20 +83,20 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
 
-                const Positioned(
-                  left: 16,
-                  right: 16,
-                  top: 165,
-                  child: SearchSection(),
+                Positioned(
+                  left: isCompact ? 12 : 16,
+                  right: isCompact ? 12 : 16,
+                  top: searchTop,
+                  child: const SearchSection(),
                 ),
               ],
             ),
 
             const SizedBox(height: 1),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Align(
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Popular Destinations',
@@ -107,7 +114,7 @@ class HomePage extends StatelessWidget {
             SizedBox(
               height: 42,
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding - 2),
                 scrollDirection: Axis.horizontal,
                 children: const [
                   _DestinationChip(
@@ -127,8 +134,8 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 12),
 
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.all(12),
+              margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              padding: EdgeInsets.all(isCompact ? 10 : 12),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(18),
@@ -147,12 +154,12 @@ class HomePage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
                       'assets/images/onboarding_bag.png',
-                      width: 80,
-                      height: 80,
+                      width: cardImageSize,
+                      height: cardImageSize,
                       fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: isCompact ? 8 : 10),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,18 +227,18 @@ class HomePage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: isCompact ? 6 : 8),
                   Container(
-                    width: 34,
-                    height: 34,
+                    width: isCompact ? 30 : 34,
+                    height: isCompact ? 30 : 34,
                     decoration: BoxDecoration(
                       border: Border.all(color: AppColors.blueSoft),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.favorite_border_rounded,
                       color: AppColors.primaryEnd,
-                      size: 20,
+                      size: isCompact ? 18 : 20,
                     ),
                   ),
                 ],
@@ -240,9 +247,9 @@ class HomePage extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Align(
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Special for You!',

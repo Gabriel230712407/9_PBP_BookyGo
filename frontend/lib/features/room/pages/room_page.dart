@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../hotel/models/hotel_model.dart';
+import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/room_model.dart';
 
 class RoomPage extends StatelessWidget {
@@ -61,7 +62,7 @@ class RoomPage extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: _BottomNavBar(),
+      bottomNavigationBar: const AppBottomNavBar(),
     );
   }
 }
@@ -325,25 +326,3 @@ class _RoomImageCarouselState extends State<_RoomImageCarousel> {
   }
 }
 
-class _BottomNavBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 58,
-      margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-      decoration: BoxDecoration(
-        color: const Color(0xff5E7CEB),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Icon(Icons.home, color: Colors.white),
-          Icon(Icons.article, color: Colors.white),
-          Icon(Icons.favorite, color: Colors.white),
-          Icon(Icons.person, color: Colors.white),
-        ],
-      ),
-    );
-  }
-}

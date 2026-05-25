@@ -134,160 +134,174 @@ class _SearchSectionState extends State<SearchSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isCompact = constraints.maxWidth < 360;
+
+        return Container(
+          padding: EdgeInsets.fromLTRB(
+            isCompact ? 14 : 16,
+            isCompact ? 16 : 18,
+            isCompact ? 14 : 16,
+            isCompact ? 16 : 18,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Find Your Stay',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.darkBlue,
-            ),
-          ),
-          const SizedBox(height: 18),
-          TextField(
-            controller: _destinationController,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: AppColors.textMuted,
-              ),
-              hintText: 'Destination',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: AppColors.blueSoft),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: AppColors.blueSoft),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          InkWell(
-            onTap: _pickDateRange,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _InfoBox(
-                    icon: Icons.event_available_outlined,
-                    title: 'Check-in',
-                    value: formatDate(_checkInDate),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _InfoBox(
-                    icon: Icons.event_note_outlined,
-                    title: 'Check-out',
-                    value: formatDate(_checkOutDate),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildCounterBox(
-                title: 'Room(s)',
-                value: _rooms,
-                icon: Icons.bed_rounded,
-                onAdd: () => setState(() => _rooms++),
-                onRemove: () {
-                  if (_rooms > 1) {
-                    setState(() => _rooms--);
-                  }
-                },
-              ),
-              const SizedBox(width: 10),
-              _buildCounterBox(
-                title: 'Guest(s)',
-                value: _guests,
-                icon: Icons.person_rounded,
-                onAdd: () => setState(() => _guests++),
-                onRemove: () {
-                  if (_guests > 1) {
-                    setState(() => _guests--);
-                  }
-                },
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                gradient: const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    AppColors.primaryEnd,
-                    AppColors.blueDark,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Find Your Stay',
+                style: TextStyle(
+                  fontSize: isCompact ? 16 : 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.darkBlue,
+                ),
+              ),
+              SizedBox(height: isCompact ? 14 : 18),
+              TextField(
+                controller: _destinationController,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.textMuted,
+                  ),
+                  hintText: 'Destination',
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: isCompact ? 14 : 16,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: AppColors.blueSoft),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: const BorderSide(color: AppColors.blueSoft),
+                  ),
+                ),
+              ),
+              SizedBox(height: isCompact ? 12 : 14),
+              InkWell(
+                onTap: _pickDateRange,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _InfoBox(
+                        icon: Icons.event_available_outlined,
+                        title: 'Check-in',
+                        value: formatDate(_checkInDate),
+                      ),
+                    ),
+                    SizedBox(width: isCompact ? 8 : 10),
+                    Expanded(
+                      child: _InfoBox(
+                        icon: Icons.event_note_outlined,
+                        title: 'Check-out',
+                        value: formatDate(_checkOutDate),
+                      ),
+                    ),
                   ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+              ),
+              SizedBox(height: isCompact ? 10 : 12),
+              Row(
+                children: [
+                  _buildCounterBox(
+                    title: 'Room(s)',
+                    value: _rooms,
+                    icon: Icons.bed_rounded,
+                    onAdd: () => setState(() => _rooms++),
+                    onRemove: () {
+                      if (_rooms > 1) {
+                        setState(() => _rooms--);
+                      }
+                    },
+                  ),
+                  SizedBox(width: isCompact ? 8 : 10),
+                  _buildCounterBox(
+                    title: 'Guest(s)',
+                    value: _guests,
+                    icon: Icons.person_rounded,
+                    onAdd: () => setState(() => _guests++),
+                    onRemove: () {
+                      if (_guests > 1) {
+                        setState(() => _guests--);
+                      }
+                    },
                   ),
                 ],
               ),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => HotelListPage(
-                        destination: _destinationController.text.trim(),
-                        checkInDate: _checkInDate,
-                        checkOutDate: _checkOutDate,
-                        roomCount: _rooms,
-                        guestCount: _guests,
+              SizedBox(height: isCompact ? 14 : 18),
+              SizedBox(
+                width: double.infinity,
+                height: isCompact ? 46 : 50,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    gradient: const LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        AppColors.primaryEnd,
+                        AppColors.blueDark,
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => HotelListPage(
+                            destination: _destinationController.text.trim(),
+                            checkInDate: _checkInDate,
+                            checkOutDate: _checkOutDate,
+                            roomCount: _rooms,
+                            guestCount: _guests,
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      surfaceTintColor: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
                       ),
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  surfaceTintColor: Colors.transparent,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-                child: const Text(
-                  'Search Hotel',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.white,
+                    child: Text(
+                      'Search Hotel',
+                      style: TextStyle(
+                        fontSize: isCompact ? 15 : 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

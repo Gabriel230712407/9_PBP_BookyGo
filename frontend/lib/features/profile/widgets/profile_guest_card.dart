@@ -13,55 +13,84 @@ class ProfileGuestCard extends StatelessWidget {
     const darkBlue = Color(0xFF344A99);
     const textGrey = Color(0xFF6B7280);
     const primaryColor = Color(0xFF5B74E8);
+    final double width = MediaQuery.of(context).size.width;
+    final bool isCompact = width < 360;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 16 : 20),
       child: Column(
         children: [
-          const SizedBox(height: 54),
+          SizedBox(height: isCompact ? 36 : 54),
 
-          Row(
+          Flex(
+            direction: isCompact ? Axis.vertical : Axis.horizontal,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Image.asset(
                 'assets/images/onboarding_bag.png',
-                width: 86,
-                height: 86,
+                width: isCompact ? 76 : 86,
+                height: isCompact ? 76 : 86,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(width: 18),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              SizedBox(width: isCompact ? 0 : 18, height: isCompact ? 18 : 0),
+              if (isCompact)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       'Want to book faster?',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: isCompact ? 17 : 18,
                         fontWeight: FontWeight.w800,
                         color: darkBlue,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 10),
+                    SizedBox(height: isCompact ? 8 : 10),
                     Text(
                       'Save your favorite hotels and\nmanage your stays, just sign in.',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: isCompact ? 13 : 14,
                         height: 1.5,
                         color: textGrey,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
+                )
+              else
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Want to book faster?',
+                        style: TextStyle(
+                          fontSize: isCompact ? 17 : 18,
+                          fontWeight: FontWeight.w800,
+                          color: darkBlue,
+                        ),
+                      ),
+                      SizedBox(height: isCompact ? 8 : 10),
+                      Text(
+                        'Save your favorite hotels and\nmanage your stays, just sign in.',
+                        style: TextStyle(
+                          fontSize: isCompact ? 13 : 14,
+                          height: 1.5,
+                          color: textGrey,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
 
-          const SizedBox(height: 42),
+          SizedBox(height: isCompact ? 28 : 42),
 
           SizedBox(
             width: double.infinity,
-            height: 58,
+            height: isCompact ? 54 : 58,
             child: OutlinedButton(
               onPressed: onSignInPressed,
               style: OutlinedButton.styleFrom(
@@ -78,7 +107,7 @@ class ProfileGuestCard extends StatelessWidget {
               child: const Text(
                 'Sign In',
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
               ),
