@@ -14,6 +14,11 @@ use App\Http\Controllers\FotoKamarController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+});
 
 Route::get('/hotels', [HotelController::class, 'index']);
 Route::get('/hotels/{id}', [HotelController::class, 'show']);
@@ -30,18 +35,13 @@ Route::get('/foto-hotels/{id}', [FotoHotelController::class, 'show']);
 Route::get('/foto-kamars', [FotoKamarController::class, 'index']);
 Route::get('/foto-kamars/{id}', [FotoKamarController::class, 'show']);
 
-// Route::middleware('auth:sanctum')->group(function () {
-//     Route::get('/me', [AuthController::class, 'me']);
-//     Route::post('/logout', [AuthController::class, 'logout']);
+Route::apiResource('pemesanans', PemesananController::class);
+Route::apiResource('wishlists', WishlistController::class);
+Route::apiResource('ulasans', UlasanController::class);
 
-    Route::apiResource('pemesanans', PemesananController::class);
-    Route::apiResource('wishlists', WishlistController::class);
-    Route::apiResource('ulasans', UlasanController::class);
-
-    Route::apiResource('hotels', HotelController::class)->except(['index', 'show']);
-    Route::apiResource('kamars', KamarController::class)->except(['index', 'show']);
-    Route::apiResource('fasilitas', FasilitasController::class)->except(['index']);
-    Route::apiResource('addons', AddonController::class)->except(['index']);
-    Route::apiResource('foto-hotels', FotoHotelController::class)->except(['index', 'show']);
-    Route::apiResource('foto-kamars', FotoKamarController::class)->except(['index', 'show']);
-// });
+Route::apiResource('hotels', HotelController::class)->except(['index', 'show']);
+Route::apiResource('kamars', KamarController::class)->except(['index', 'show']);
+Route::apiResource('fasilitas', FasilitasController::class)->except(['index']);
+Route::apiResource('addons', AddonController::class)->except(['index']);
+Route::apiResource('foto-hotels', FotoHotelController::class)->except(['index', 'show']);
+Route::apiResource('foto-kamars', FotoKamarController::class)->except(['index', 'show']);

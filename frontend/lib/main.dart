@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/features/onboarding/pages/splash_page.dart';
 
 void main() {
@@ -13,7 +14,15 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'BookyGo',
-      theme: ThemeData(useMaterial3: true, fontFamily: 'Arial'),
+      theme: ThemeData(
+        useMaterial3: true,
+        fontFamily: 'Arial',
+        scaffoldBackgroundColor: AppColors.bgVeryLight,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primaryEnd,
+          primary: AppColors.primaryEnd,
+        ),
+      ),
       home: const SplashPage(),
     );
   }

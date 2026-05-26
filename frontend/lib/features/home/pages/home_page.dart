@@ -6,11 +6,13 @@ import '../../../core/theme/app_colors.dart';
 class HomePage extends StatelessWidget {
   final bool isGuest;
   final String? userEmail;
+  final String? userName;
 
   const HomePage({
     super.key,
     this.isGuest = true,
     this.userEmail,
+    this.userName,
   });
 
   String extractNameFromEmail(String? email) {
@@ -30,8 +32,11 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String userName =
-        isGuest ? 'User' : extractNameFromEmail(userEmail);
+    final String displayName = isGuest
+        ? 'User'
+        : (userName != null && userName!.trim().isNotEmpty
+            ? userName!.trim()
+            : extractNameFromEmail(userEmail));
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isCompact = screenWidth < 360;
     final double horizontalPadding = isCompact ? 16 : 20;
@@ -77,11 +82,11 @@ class HomePage extends StatelessWidget {
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: SafeArea(
-                    bottom: false,
-                    child: HomeHeader(userName: userName),
+                    child: SafeArea(
+                      bottom: false,
+                      child: HomeHeader(userName: displayName),
+                    ),
                   ),
-                ),
 
                 Positioned(
                   left: isCompact ? 12 : 16,

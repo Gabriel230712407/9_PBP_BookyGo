@@ -13,20 +13,14 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'gender' => 'required|in:Pria,Wanita',
-            'no_telp' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:6',
-            'foto' => 'nullable|string|max:255',
         ]);
 
         $user = User::create([
             'name' => $request->name,
-            'gender' => $request->gender,
-            'no_telp' => $request->no_telp,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'foto' => $request->foto,
         ]);
 
         $token = $user->createToken('bookygo-token')->plainTextToken;
@@ -86,6 +80,28 @@ class AuthController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Logout berhasil',
+        ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'gender' => 'required|in:Pria,Wanita',
+            'no_telp' => 'required|string|max:255',
+            'foto' => 'nullable|string|max:2048',
+        ]);
+
+        $user = $request->user();
+        $user->update([
+            'gender' => $request->gender,
+            'no_telp' => $request->no_telp,
+            'foto' => $request->filled('foto') ? $request->foto : null,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Profile berhasil diperbarui',
+            'data' => $user->fresh(),
         ]);
     }
 }

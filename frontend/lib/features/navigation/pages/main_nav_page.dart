@@ -8,12 +8,14 @@ import '../widgets/app_bottom_nav_bar.dart';
 class MainNavPage extends StatefulWidget {
   final bool isGuest;
   final String? userEmail;
+  final String? userName;
   final int initialIndex;
 
   const MainNavPage({
     super.key,
     this.isGuest = true,
     this.userEmail,
+    this.userName,
     this.initialIndex = 0,
   });
 
@@ -42,6 +44,7 @@ class _MainNavPageState extends State<MainNavPage> {
       HomePage(
         isGuest: widget.isGuest,
         userEmail: widget.userEmail,
+        userName: widget.userName,
       ),
       MyBookPage(
         onBookNowTap: () {
@@ -49,7 +52,11 @@ class _MainNavPageState extends State<MainNavPage> {
         },
       ),
       const WishlistPage(),
-      ProfilePage(isGuest: widget.isGuest),
+      ProfilePage(
+        isGuest: widget.isGuest,
+        userName: widget.userName,
+        userEmail: widget.userEmail,
+      ),
     ];
 
     return Scaffold(

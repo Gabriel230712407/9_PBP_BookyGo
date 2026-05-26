@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:frontend/core/auth/services/auth_service.dart';
+import 'package:frontend/features/navigation/pages/main_nav_page.dart';
 
 import '../../../core/theme/app_colors.dart';
 import 'welcome_page.dart';
@@ -34,8 +36,19 @@ class _SplashPageState extends State<SplashPage> {
     await Future<void>.delayed(effectiveDuration);
     if (!mounted) return;
 
+    final session = await AuthService.restoreSession();
+    if (!mounted) return;
+
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const WelcomePage()),
+      MaterialPageRoute(
+        builder: (_) => session == null
+            ? const WelcomePage()
+            : MainNavPage(
+                isGuest: false,
+                userEmail: session.user.email,
+                userName: session.user.name,
+              ),
+      ),
     );
   }
 

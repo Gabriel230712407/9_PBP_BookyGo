@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/auth/pages/email_auth_page.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../widgets/benefit_item.dart';
-import '../../navigation/pages/main_nav_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -20,7 +21,7 @@ class WelcomePage extends StatelessWidget {
             final buttonTextSize = isCompactWidth ? 16.0 : 17.0;
             final benefitTitleSize = isCompactWidth ? 15.0 : 17.0;
             final benefitSubtitleSize = isCompactWidth ? 13.0 : 14.0;
-            final topSpacing = isCompactWidth ? 16.0 : 22.0;
+            final topSpacing = isCompactWidth ? 24.0 : 32.0;
             final itemSpacing = isCompactWidth ? 22.0 : 24.0;
             final buttonHeight = isCompactWidth ? 54.0 : 56.0;
             final contentTailSpacing = constraints.maxHeight < 720
@@ -32,56 +33,41 @@ class WelcomePage extends StatelessWidget {
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 horizontalPadding,
-                10,
+                12,
                 horizontalPadding,
                 20,
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 30,
+                  minHeight: constraints.maxHeight - 32,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const MainNavPage(isGuest: true),
-                            ),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 6,
+                    SizedBox(height: topSpacing),
+                    Container(
+                      width: 112,
+                      height: 112,
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withValues(alpha: 0.88),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            blurRadius: 24,
+                            spreadRadius: 8,
                           ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: const Text(
-                          'Skip',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primaryEnd,
-                          ),
-                        ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Image.asset(
+                        'assets/images/onboarding_bag.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    SizedBox(height: topSpacing),
-                    Image.asset(
-                      'assets/images/onboarding_bag.png',
-                      width: isCompactWidth ? 86 : 96,
-                      height: isCompactWidth ? 86 : 96,
-                      fit: BoxFit.contain,
-                    ),
-                    SizedBox(height: isCompactWidth ? 18 : 22),
+                    SizedBox(height: isCompactWidth ? 22 : 26),
                     Text(
-                      'Get more from our app.',
+                      'One account for every BookyGo stay.',
                       style: TextStyle(
                         fontSize: titleSize,
                         fontWeight: FontWeight.w800,
@@ -89,11 +75,20 @@ class WelcomePage extends StatelessWidget {
                         height: 1.15,
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Sign in with email to keep your bookings, wishlist, and travel details organized in one place.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textMuted,
+                        height: 1.5,
+                      ),
+                    ),
                     SizedBox(height: isCompactWidth ? 26 : 30),
                     BenefitItem(
                       icon: Icons.search_rounded,
-                      title: 'Smart hotel search.',
-                      subtitle: 'Find hotels by name or location.',
+                      title: 'Find your stay quickly.',
+                      subtitle: 'Search hotels and rooms faster from one account.',
                       iconSize: isCompactWidth ? 21 : 23,
                       titleSize: benefitTitleSize,
                       subtitleSize: benefitSubtitleSize,
@@ -102,8 +97,8 @@ class WelcomePage extends StatelessWidget {
                     SizedBox(height: itemSpacing),
                     BenefitItem(
                       icon: Icons.meeting_room_outlined,
-                      title: 'Easy room booking.',
-                      subtitle: 'Choose dates, rooms, and add-ons instantly.',
+                      title: 'Keep booking history in sync.',
+                      subtitle: 'View active reservations and booking history anytime.',
                       iconSize: isCompactWidth ? 21 : 23,
                       titleSize: benefitTitleSize,
                       subtitleSize: benefitSubtitleSize,
@@ -111,9 +106,9 @@ class WelcomePage extends StatelessWidget {
                     ),
                     SizedBox(height: itemSpacing),
                     BenefitItem(
-                      icon: Icons.receipt_long_outlined,
-                      title: 'Digital receipt & QR.',
-                      subtitle: 'Get your booking confirmation with QR code.',
+                      icon: Icons.person_outline_rounded,
+                      title: 'Complete your profile later.',
+                      subtitle: 'Gender, phone number, and profile photo can be added after sign-in.',
                       iconSize: isCompactWidth ? 21 : 23,
                       titleSize: benefitTitleSize,
                       subtitleSize: benefitSubtitleSize,
@@ -135,7 +130,13 @@ class WelcomePage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Google sign-in is not enabled yet.'),
+                            ),
+                          );
+                        },
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Row(
@@ -188,7 +189,14 @@ class WelcomePage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const EmailAuthPage(),
+                            ),
+                          );
+                        },
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Row(
@@ -200,7 +208,7 @@ class WelcomePage extends StatelessWidget {
                               ),
                               SizedBox(width: isCompactWidth ? 10 : 12),
                               Text(
-                                'Continue with email',
+                                'Continue with Email',
                                 style: TextStyle(
                                   fontSize: buttonTextSize,
                                   fontWeight: FontWeight.w700,
