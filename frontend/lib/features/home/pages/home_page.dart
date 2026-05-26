@@ -1,19 +1,59 @@
 import 'package:flutter/material.dart';
-import '../widgets/home_header.dart';
-import '../widgets/search_section.dart';
-import '../../../core/theme/app_colors.dart';
+import 'package:frontend/core/auth/models/auth_session.dart';
+import 'package:frontend/core/auth/services/auth_service.dart';
+import 'package:frontend/core/notifications/services/notification_service.dart';
+import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/features/home/widgets/home_header.dart';
+import 'package:frontend/features/home/widgets/search_section.dart';
+import 'package:frontend/features/notifications/pages/notification_page.dart';
 
-class HomePage extends StatelessWidget {
-  final bool isGuest;
-  final String? userEmail;
-  final String? userName;
-
+class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
     this.isGuest = true,
     this.userEmail,
     this.userName,
   });
+
+  final bool isGuest;
+  final String? userEmail;
+  final String? userName;
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  AuthSession? _session;
+  bool _notificationsEnabled = false;
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationState();
+  }
+
+  Future<void> _loadNotificationState() async {
+    if (widget.isGuest) {
+      return;
+    }
+
+    final session = await AuthService.currentSession();
+    if (session == null || !mounted) {
+      return;
+    }
+
+    final enabled = await NotificationService.isEnabled(session);
+    final unreadCount = await NotificationService.getUnreadCount(session);
+    if (!mounted) return;
+
+    setState(() {
+      _session = session;
+      _notificationsEnabled = enabled;
+      _unreadCount = unreadCount;
+    });
+  }
 
   String extractNameFromEmail(String? email) {
     if (email == null || email.isEmpty) return 'Guest';
@@ -30,13 +70,34 @@ class HomePage extends StatelessWidget {
         .join(' ');
   }
 
+  Future<void> _openNotifications() async {
+    if (_session == null || !_notificationsEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Notifications are turned off. Enable them to view live updates.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NotificationPage(session: _session!),
+      ),
+    );
+    await _loadNotificationState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final String displayName = isGuest
+    final String displayName = widget.isGuest
         ? 'User'
-        : (userName != null && userName!.trim().isNotEmpty
-            ? userName!.trim()
-            : extractNameFromEmail(userEmail));
+        : (widget.userName != null && widget.userName!.trim().isNotEmpty
+            ? widget.userName!.trim()
+            : extractNameFromEmail(widget.userEmail));
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isCompact = screenWidth < 360;
     final double horizontalPadding = isCompact ? 16 : 20;
@@ -58,7 +119,6 @@ class HomePage extends StatelessWidget {
                   height: topSectionHeight,
                   width: double.infinity,
                 ),
-
                 Positioned(
                   top: 0,
                   left: 0,
@@ -77,17 +137,21 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 Positioned(
                   top: 0,
                   left: 0,
                   right: 0,
-                    child: SafeArea(
-                      bottom: false,
-                      child: HomeHeader(userName: displayName),
+                  child: SafeArea(
+                    bottom: false,
+                    child: HomeHeader(
+                      userName: displayName,
+                      notificationsEnabled:
+                          !widget.isGuest && _notificationsEnabled,
+                      unreadCount: widget.isGuest ? 0 : _unreadCount,
+                      onNotificationTap: _openNotifications,
                     ),
                   ),
-
+                ),
                 Positioned(
                   left: isCompact ? 12 : 16,
                   right: isCompact ? 12 : 16,
@@ -96,9 +160,7 @@ class HomePage extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 1),
-
             Padding(
               padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
               child: const Align(
@@ -113,19 +175,14 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 8),
-
             SizedBox(
               height: 42,
               child: ListView(
                 padding: EdgeInsets.symmetric(horizontal: horizontalPadding - 2),
                 scrollDirection: Axis.horizontal,
                 children: const [
-                  _DestinationChip(
-                    label: 'Yogyakarta',
-                    isSelected: true,
-                  ),
+                  _DestinationChip(label: 'Yogyakarta', isSelected: true),
                   SizedBox(width: 10),
                   _DestinationChip(label: 'Bali'),
                   SizedBox(width: 10),
@@ -135,9 +192,7 @@ class HomePage extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
-
             Container(
               margin: EdgeInsets.symmetric(horizontal: horizontalPadding),
               padding: EdgeInsets.all(isCompact ? 10 : 12),
@@ -249,9 +304,7 @@ class HomePage extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
-
             Padding(
               padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
               child: const Align(
@@ -266,7 +319,6 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 40),
           ],
         ),
@@ -276,13 +328,13 @@ class HomePage extends StatelessWidget {
 }
 
 class _DestinationChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-
   const _DestinationChip({
     required this.label,
     this.isSelected = false,
   });
+
+  final String label;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -308,11 +360,11 @@ class _DestinationChip extends StatelessWidget {
 }
 
 class _Badge extends StatelessWidget {
-  final String text;
-
   const _Badge({
     required this.text,
   });
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {

@@ -6,6 +6,7 @@ import 'package:frontend/core/auth/models/auth_session.dart';
 import 'package:frontend/core/auth/models/auth_user.dart';
 import 'package:frontend/core/auth/services/auth_storage.dart';
 import 'package:frontend/core/constants/api_config.dart';
+import 'package:frontend/core/notifications/services/notification_service.dart';
 import 'package:http/http.dart' as http;
 
 class AuthService {
@@ -29,6 +30,7 @@ class AuthService {
 
     final session = _parseAuthResponse(response);
     await AuthStorage.saveSession(session);
+    await NotificationService.maybeLogLoginActivity(session);
     return session;
   }
 
@@ -145,6 +147,7 @@ class AuthService {
     final updatedUser = AuthUser.fromJson(decoded['data'] as Map<String, dynamic>);
     final updatedSession = AuthSession(token: session.token, user: updatedUser);
     await AuthStorage.saveSession(updatedSession);
+    await NotificationService.maybeLogProfileUpdate(updatedSession);
     return updatedSession;
   }
 
