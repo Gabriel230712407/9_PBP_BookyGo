@@ -47,7 +47,7 @@ class DeleteHistoryDialog extends StatelessWidget {
               backgroundColor: const Color(0xFFD81900),
               textColor: AppColors.white,
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(context, true);
               },
             ),
             const SizedBox(height: 10),
@@ -56,7 +56,7 @@ class DeleteHistoryDialog extends StatelessWidget {
               backgroundColor: AppColors.white,
               textColor: AppColors.textDark,
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(context, false);
               },
             ),
           ],

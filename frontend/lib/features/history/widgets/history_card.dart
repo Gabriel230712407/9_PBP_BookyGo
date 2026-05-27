@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/theme/app_colors.dart';
+import '../../mybook/models/booking_model.dart';
 import 'delete_history_dialog.dart';
 
 class HistoryCard extends StatelessWidget {
-  final Map<String, dynamic> history;
-
   const HistoryCard({
     super.key,
-    required this.history,
+    required this.booking,
+    required this.onDelete,
   });
+
+  final BookingModel booking;
+  final Future<void> Function() onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +38,17 @@ class HistoryCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  history['imagePath'] ?? 'assets/images/onboarding_bag.png',
+                  booking.imagePath,
                   width: 82,
                   height: 82,
                   fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 82,
+                    height: 82,
+                    color: const Color(0xFFE7ECFB),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.image_not_supported_outlined),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -46,7 +57,7 @@ class HistoryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      history['hotelName'] ?? '',
+                      booking.hotelName,
                       style: const TextStyle(
                         color: AppColors.darkBlue,
                         fontSize: 15,
@@ -55,7 +66,7 @@ class HistoryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      history['location'] ?? '',
+                      booking.hotelAddress,
                       style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 11,
@@ -63,7 +74,7 @@ class HistoryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'ID : ${history['id'] ?? ''}',
+                      'ID : ${booking.bookingCode}',
                       style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 10,
@@ -72,12 +83,9 @@ class HistoryCard extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.favorite_border,
-                  color: AppColors.mutedBlue,
-                ),
+              const Icon(
+                Icons.verified_rounded,
+                color: AppColors.primaryEnd,
               ),
             ],
           ),
@@ -99,7 +107,7 @@ class HistoryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      history['dateRange'] ?? '',
+                      booking.formattedDateRange,
                       style: const TextStyle(
                         color: AppColors.darkBlue,
                         fontSize: 13,
@@ -108,10 +116,19 @@ class HistoryCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      history['night'] ?? '',
+                      booking.stayLabel,
                       style: const TextStyle(
                         color: AppColors.textMuted,
                         fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      booking.formattedTotalPrice,
+                      style: const TextStyle(
+                        color: AppColors.primaryEnd,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
@@ -123,18 +140,32 @@ class HistoryCard extends StatelessWidget {
                     text: 'Details',
                     backgroundColor: AppColors.primaryEnd,
                     textColor: AppColors.white,
-                    onPressed: () {},
+                    onPressed: () {
+                      showModalBottomSheet<void>(
+                        context: context,
+                        backgroundColor: Colors.white,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(20)),
+                        ),
+                        builder: (_) => _BookingDetailSheet(booking: booking),
+                      );
+                    },
                   ),
                   const SizedBox(height: 8),
                   _HistoryActionButton(
                     text: 'Delete',
                     backgroundColor: AppColors.white,
                     textColor: AppColors.primaryEnd,
-                    onPressed: () {
-                      showDialog(
+                    onPressed: () async {
+                      final confirmed = await showDialog<bool>(
                         context: context,
                         builder: (_) => const DeleteHistoryDialog(),
                       );
+
+                      if (confirmed == true) {
+                        await onDelete();
+                      }
                     },
                   ),
                 ],
@@ -147,18 +178,95 @@ class HistoryCard extends StatelessWidget {
   }
 }
 
-class _HistoryActionButton extends StatelessWidget {
-  final String text;
-  final Color backgroundColor;
-  final Color textColor;
-  final VoidCallback onPressed;
+class _BookingDetailSheet extends StatelessWidget {
+  const _BookingDetailSheet({required this.booking});
 
+  final BookingModel booking;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Booking Details',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _InfoRow(label: 'Booking code', value: booking.bookingCode),
+          _InfoRow(label: 'Guest', value: booking.contactName),
+          _InfoRow(label: 'Room', value: booking.roomName),
+          _InfoRow(label: 'Payment', value: booking.paymentMethodLabel),
+          _InfoRow(label: 'Stay', value: booking.formattedDateRange),
+          _InfoRow(label: 'Phone', value: booking.contactPhone),
+          _InfoRow(label: 'Email', value: booking.contactEmail),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 92,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textDark,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HistoryActionButton extends StatelessWidget {
   const _HistoryActionButton({
     required this.text,
     required this.backgroundColor,
     required this.textColor,
     required this.onPressed,
   });
+
+  final String text;
+  final Color backgroundColor;
+  final Color textColor;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +278,7 @@ class _HistoryActionButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
+            color: Colors.black.withValues(alpha: 0.12),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -188,9 +296,7 @@ class _HistoryActionButton extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
     );

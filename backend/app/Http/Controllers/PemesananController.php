@@ -10,7 +10,7 @@ class PemesananController extends Controller
 {
     public function index()
     {
-        $pemesanans = Pemesanan::with(['user', 'kamar.hotel', 'addons', 'ulasan'])
+        $pemesanans = Pemesanan::with(['user', 'kamar.hotel.fotoHotels', 'kamar.fotoKamars', 'addons', 'ulasan'])
             ->latest()
             ->get();
 
@@ -23,7 +23,7 @@ class PemesananController extends Controller
 
     public function show($id)
     {
-        $pemesanan = Pemesanan::with(['user', 'kamar.hotel', 'addons', 'ulasan'])
+        $pemesanan = Pemesanan::with(['user', 'kamar.hotel.fotoHotels', 'kamar.fotoKamars', 'addons', 'ulasan'])
             ->find($id);
 
         if (!$pemesanan) {
@@ -40,10 +40,25 @@ class PemesananController extends Controller
         ]);
     }
 
+    public function myBookings(Request $request)
+    {
+        $user = $request->user();
+
+        $pemesanans = Pemesanan::with(['user', 'kamar.hotel.fotoHotels', 'kamar.fotoKamars', 'addons', 'ulasan'])
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data pemesanan user berhasil diambil',
+            'data' => $pemesanans
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
             'kamar_id' => 'required|exists:kamars,id',
             'tgl_checkin' => 'required|date',
             'tgl_checkout' => 'required|date|after:tgl_checkin',
@@ -57,8 +72,10 @@ class PemesananController extends Controller
             'addon_ids.*' => 'exists:addons,id',
         ]);
 
+        $user = $request->user();
+
         $pemesanan = Pemesanan::create([
-            'user_id' => $request->user_id,
+            'user_id' => $user->id,
             'kamar_id' => $request->kamar_id,
             'tgl_checkin' => $request->tgl_checkin,
             'tgl_checkout' => $request->tgl_checkout,
@@ -75,7 +92,7 @@ class PemesananController extends Controller
 
             foreach ($request->addon_ids as $addonId) {
                 $syncData[$addonId] = [
-                    'user_id' => $request->user_id,
+                    'user_id' => $user->id,
                 ];
             }
 
@@ -85,7 +102,7 @@ class PemesananController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Pemesanan berhasil dibuat',
-            'data' => $pemesanan->load(['user', 'kamar.hotel', 'addons'])
+            'data' => $pemesanan->load(['user', 'kamar.hotel.fotoHotels', 'kamar.fotoKamars', 'addons'])
         ], 201);
     }
 
@@ -100,8 +117,15 @@ class PemesananController extends Controller
             ], 404);
         }
 
+        $user = $request->user();
+        if ($user && (int) $pemesanan->user_id !== (int) $user->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Anda tidak memiliki akses ke pemesanan ini'
+            ], 403);
+        }
+
         $request->validate([
-            'user_id' => 'sometimes|required|exists:users,id',
             'kamar_id' => 'sometimes|required|exists:kamars,id',
             'tgl_checkin' => 'sometimes|required|date',
             'tgl_checkout' => 'sometimes|required|date|after:tgl_checkin',
@@ -116,7 +140,6 @@ class PemesananController extends Controller
         ]);
 
         $pemesanan->update($request->only([
-            'user_id',
             'kamar_id',
             'tgl_checkin',
             'tgl_checkout',
@@ -130,7 +153,7 @@ class PemesananController extends Controller
 
         if ($request->has('addon_ids')) {
             $syncData = [];
-            $userId = $request->user_id ?? $pemesanan->user_id;
+            $userId = $user?->id ?? $pemesanan->user_id;
 
             foreach ($request->addon_ids as $addonId) {
                 $syncData[$addonId] = [
@@ -144,11 +167,11 @@ class PemesananController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Pemesanan berhasil diperbarui',
-            'data' => $pemesanan->load(['user', 'kamar.hotel', 'addons', 'ulasan'])
+            'data' => $pemesanan->load(['user', 'kamar.hotel.fotoHotels', 'kamar.fotoKamars', 'addons', 'ulasan'])
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $pemesanan = Pemesanan::find($id);
 
@@ -157,6 +180,14 @@ class PemesananController extends Controller
                 'status' => false,
                 'message' => 'Pemesanan tidak ditemukan'
             ], 404);
+        }
+
+        $user = $request->user();
+        if ($user && (int) $pemesanan->user_id !== (int) $user->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Anda tidak memiliki akses ke pemesanan ini'
+            ], 403);
         }
 
         $pemesanan->delete();

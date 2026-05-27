@@ -18,6 +18,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::get('/my-pemesanans', [PemesananController::class, 'myBookings']);
+    Route::post('/pemesanans', [PemesananController::class, 'store']);
+    Route::put('/pemesanans/{pemesanan}', [PemesananController::class, 'update']);
+    Route::patch('/pemesanans/{pemesanan}', [PemesananController::class, 'update']);
+    Route::delete('/pemesanans/{pemesanan}', [PemesananController::class, 'destroy']);
 });
 
 Route::get('/hotels', [HotelController::class, 'index']);
@@ -35,7 +40,8 @@ Route::get('/foto-hotels/{id}', [FotoHotelController::class, 'show']);
 Route::get('/foto-kamars', [FotoKamarController::class, 'index']);
 Route::get('/foto-kamars/{id}', [FotoKamarController::class, 'show']);
 
-Route::apiResource('pemesanans', PemesananController::class);
+Route::get('/pemesanans', [PemesananController::class, 'index']);
+Route::get('/pemesanans/{pemesanan}', [PemesananController::class, 'show']);
 Route::apiResource('wishlists', WishlistController::class);
 Route::apiResource('ulasans', UlasanController::class);
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../hotel/models/hotel_model.dart';
+import '../../mybook/pages/booking_form_page.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/room_model.dart';
 
@@ -56,7 +57,16 @@ class RoomPage extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
               children: [
-                ...rooms.map((room) => _RoomCard(room: room)),
+                ...rooms.map(
+                  (room) => _RoomCard(
+                    room: room,
+                    hotel: hotel,
+                    checkInDate: checkInDate,
+                    checkOutDate: checkOutDate,
+                    roomCount: roomCount,
+                    guestCount: guestCount,
+                  ),
+                ),
               ],
             ),
           ),
@@ -117,8 +127,20 @@ class _RoomHeader extends StatelessWidget {
 
 class _RoomCard extends StatelessWidget {
   final RoomModel room;
+  final HotelModel hotel;
+  final DateTime checkInDate;
+  final DateTime checkOutDate;
+  final int roomCount;
+  final int guestCount;
 
-  const _RoomCard({required this.room});
+  const _RoomCard({
+    required this.room,
+    required this.hotel,
+    required this.checkInDate,
+    required this.checkOutDate,
+    required this.roomCount,
+    required this.guestCount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +252,21 @@ class _RoomCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BookingFormPage(
+                        hotel: hotel,
+                        room: room,
+                        checkInDate: checkInDate,
+                        checkOutDate: checkOutDate,
+                        roomCount: roomCount,
+                        guestCount: guestCount,
+                      ),
+                    ),
+                  );
+                },
                 child: const Text(
                   'Book',
                   style: TextStyle(
