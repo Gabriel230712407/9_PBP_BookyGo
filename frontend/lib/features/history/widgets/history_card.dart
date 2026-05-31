@@ -83,9 +83,36 @@ class HistoryCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.verified_rounded,
-                color: AppColors.primaryEnd,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: booking.isExpired
+                      ? AppColors.bgLight // expired → pink/soft (ganti sesuai style kamu)
+                      : booking.isPaid
+                          ? AppColors.bgLight // completed → hijau tipis (buat sesuai palet hijau)
+                          : booking.canContinuePayment
+                              ? AppColors.bgVeryLight // waiting payment → biru soft
+                              : AppColors.bgLight, // confirmed
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  booking.isExpired
+                      ? 'Expired'
+                      : booking.isPaid
+                          ? 'Completed'
+                          : booking.canContinuePayment
+                              ? 'Waiting Payment'
+                              : 'Confirmed',
+                  style: TextStyle(
+                    color: booking.isExpired
+                        ? Colors.red // expired text
+                        : booking.isPaid
+                            ? Colors.green // completed
+                            : AppColors.primaryEnd, // waiting/confirmed
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ],
           ),
