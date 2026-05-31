@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../mybook/models/booking_model.dart';
 import 'delete_history_dialog.dart';
+import '../pages/booking_detail_page.dart';
 
 class HistoryCard extends StatelessWidget {
   const HistoryCard({
@@ -83,9 +84,36 @@ class HistoryCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.verified_rounded,
-                color: AppColors.primaryEnd,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: booking.isExpired
+                      ? AppColors.bgLight // expired → pink/soft (ganti sesuai style kamu)
+                      : booking.isPaid
+                          ? AppColors.bgLight // completed → hijau tipis (buat sesuai palet hijau)
+                          : booking.canContinuePayment
+                              ? AppColors.bgVeryLight // waiting payment → biru soft
+                              : AppColors.bgLight, // confirmed
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  booking.isExpired
+                      ? 'Expired'
+                      : booking.isPaid
+                          ? 'Completed'
+                          : booking.canContinuePayment
+                              ? 'Waiting Payment'
+                              : 'Confirmed',
+                  style: TextStyle(
+                    color: booking.isExpired
+                        ? Colors.red // expired text
+                        : booking.isPaid
+                            ? Colors.green // completed
+                            : AppColors.primaryEnd, // waiting/confirmed
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
             ],
           ),
@@ -141,14 +169,11 @@ class HistoryCard extends StatelessWidget {
                     backgroundColor: AppColors.primaryEnd,
                     textColor: AppColors.white,
                     onPressed: () {
-                      showModalBottomSheet<void>(
-                        context: context,
-                        backgroundColor: Colors.white,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(20)),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookingDetailPage(booking: booking),
                         ),
-                        builder: (_) => _BookingDetailSheet(booking: booking),
                       );
                     },
                   ),
