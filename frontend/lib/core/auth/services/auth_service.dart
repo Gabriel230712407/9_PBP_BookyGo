@@ -77,7 +77,12 @@ class AuthService {
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       final user = AuthUser.fromJson(decoded['data'] as Map<String, dynamic>);
-      final refreshedSession = AuthSession(token: localSession.token, user: user);
+
+      final refreshedSession = AuthSession(
+        token: localSession.token,
+        user: user,
+      );
+
       await AuthStorage.saveSession(refreshedSession);
       return refreshedSession;
     } catch (_) {
@@ -112,43 +117,108 @@ class AuthService {
     await AuthStorage.clearSession();
   }
 
-  static Future<AuthSession> updateProfile({
-    required String gender,
-    required String phoneNumber,
-    String? photo,
-  }) async {
+  static Future<void> deleteAccount() async {
     final session = await AuthStorage.getSession();
+
     if (session == null) {
       throw const AuthException(
         'Your session was not found. Please sign in again.',
       );
     }
 
-    final response = await http
-        .put(
-          _uri('/profile'),
-          headers: {
-            'Accept': 'application/json',
-            'Authorization': 'Bearer ${session.token}',
-          },
-          body: {
-            'gender': gender,
-            'no_telp': phoneNumber,
-            if (photo != null) 'foto': photo,
-          },
-        )
-        .timeout(_requestTimeout);
+    try {
+      final response = await http
+          .delete(
+            _uri('/account'),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ${session.token}',
+            },
+          )
+          .timeout(_requestTimeout);
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw _buildAuthException(response.body);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw _buildAuthException(response.body);
+      }
+
+      await AuthStorage.clearSession();
+    } on SocketException {
+      throw const AuthException(
+        'Cannot reach the server. Make sure Laravel is running and your phone is on the same Wi-Fi network.',
+      );
+    } on TimeoutException {
+      throw const AuthException(
+        'The request timed out. Please check your server connection and try again.',
+      );
+    } on FormatException {
+      throw const AuthException('The server returned unreadable data.');
+    }
+  }
+
+  static Future<AuthSession> updateProfile({
+    String? name,
+    String? email,
+    required String gender,
+    required String phoneNumber,
+    String? photo,
+  }) async {
+    final session = await AuthStorage.getSession();
+
+    if (session == null) {
+      throw const AuthException(
+        'Your session was not found. Please sign in again.',
+      );
     }
 
-    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-    final updatedUser = AuthUser.fromJson(decoded['data'] as Map<String, dynamic>);
-    final updatedSession = AuthSession(token: session.token, user: updatedUser);
-    await AuthStorage.saveSession(updatedSession);
-    await NotificationService.maybeLogProfileUpdate(updatedSession);
-    return updatedSession;
+    final body = <String, String>{
+      if (name != null) 'name': name,
+      if (email != null) 'email': email,
+      'gender': gender,
+      'no_telp': phoneNumber,
+      if (photo != null) 'foto': photo,
+    };
+
+    try {
+      final response = await http
+          .put(
+            _uri('/profile'),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ${session.token}',
+            },
+            body: body,
+          )
+          .timeout(_requestTimeout);
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw _buildAuthException(response.body);
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+
+      final updatedUser =
+          AuthUser.fromJson(decoded['data'] as Map<String, dynamic>);
+
+      final updatedSession = AuthSession(
+        token: session.token,
+        user: updatedUser,
+      );
+
+      await AuthStorage.saveSession(updatedSession);
+      await NotificationService.maybeLogProfileUpdate(updatedSession);
+
+      return updatedSession;
+    } on SocketException {
+      throw const AuthException(
+        'Cannot reach the server. Make sure Laravel is running and your phone is on the same Wi-Fi network.',
+      );
+    } on TimeoutException {
+      throw const AuthException(
+        'The request timed out. Please check your server connection and try again.',
+      );
+    } on FormatException {
+      throw const AuthException('The server returned unreadable data.');
+    }
   }
 
   static Future<bool> shouldShowPermissionFlow(AuthSession session) async {
@@ -209,9 +279,11 @@ class AuthService {
 
       if (decoded['errors'] is Map<String, dynamic>) {
         final errors = decoded['errors'] as Map<String, dynamic>;
+
         if (errors.isNotEmpty) {
           for (final entry in errors.entries) {
             final value = entry.value;
+
             if (value is List && value.isNotEmpty) {
               fieldErrors[entry.key] = value.first.toString();
             }

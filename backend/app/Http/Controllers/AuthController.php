@@ -6,6 +6,11 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
+use App\Models\Pemesanan;
+use App\Models\Wishlist;
+use App\Models\Ulasan;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -85,23 +90,69 @@ class AuthController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $request->validate([
-            'gender' => 'required|in:Pria,Wanita',
-            'no_telp' => 'required|string|max:255',
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => [
+                'sometimes',
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'gender' => 'sometimes|required|in:Pria,Wanita',
+            'no_telp' => 'sometimes|required|string|max:255',
             'foto' => 'nullable|string|max:2048',
         ]);
 
-        $user = $request->user();
-        $user->update([
-            'gender' => $request->gender,
-            'no_telp' => $request->no_telp,
-            'foto' => $request->filled('foto') ? $request->foto : null,
-        ]);
+        if ($request->has('name')) {
+            $user->name = $validated['name'];
+        }
+
+        if ($request->has('email')) {
+            $user->email = $validated['email'];
+        }
+
+        if ($request->has('gender')) {
+            $user->gender = $validated['gender'];
+        }
+
+        if ($request->has('no_telp')) {
+            $user->no_telp = $validated['no_telp'];
+        }
+
+        if ($request->has('foto')) {
+            $user->foto = $request->filled('foto') ? $validated['foto'] : null;
+        }
+
+        $user->save();
 
         return response()->json([
             'status' => true,
             'message' => 'Profile berhasil diperbarui',
             'data' => $user->fresh(),
+        ]);
+    }
+    public function deleteAccount(Request $request)
+    {
+        $user = $request->user();
+
+        DB::transaction(function () use ($user) {
+            Wishlist::where('user_id', $user->id)->delete();
+            Ulasan::where('user_id', $user->id)->delete();
+            Pemesanan::where('user_id', $user->id)->delete();
+
+            if (method_exists($user, 'tokens')) {
+                $user->tokens()->delete();
+            }
+
+            $user->delete();
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Account berhasil dihapus',
         ]);
     }
 }
