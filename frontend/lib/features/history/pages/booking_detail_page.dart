@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../mybook/models/booking_model.dart';
+import '../../reviews/pages/review_form.dart';
 
 class BookingDetailPage extends StatefulWidget {
   final BookingModel booking;
@@ -277,40 +278,16 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
             const SizedBox(height: 16),
 
             // Tombol
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: widget.booking.isExpired
-                      ? Colors.grey
-                      : AppColors.primaryEnd,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: widget.booking.isExpired ? null : () {},
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      widget.booking.isExpired ? Icons.block : Icons.edit,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.booking.isExpired
-                          ? 'Pembayaran dibatalkan'
-                          : 'Write a Review',
-                      style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
+            BookingActionButton(
+              booking: widget.booking,
+              onReview: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ReviewFormPage(booking: widget.booking)),
+                );
+              },
             ),
+
             const SizedBox(height: 24),
           ],
         ),
@@ -399,6 +376,92 @@ class _PaymentRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class BookingActionButton extends StatelessWidget {
+  final BookingModel booking;
+  final VoidCallback? onReview;
+
+  const BookingActionButton({super.key, required this.booking, this.onReview});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final isExpired = booking.isExpired;
+    final isAfterCheckout = now.isAfter(booking.checkOutDate);
+
+    // Tentukan label dan apakah tombol disabled
+    String buttonLabel;
+    IconData iconData;
+    bool isDisabled;
+
+    if (isExpired) {
+      buttonLabel = 'Payment Expired';
+      iconData = Icons.block;
+      isDisabled = true;
+    } else if (!isAfterCheckout) {
+      buttonLabel = 'Cannot review yet';
+      iconData = Icons.block;
+      isDisabled = true;
+    } else {
+      buttonLabel = 'Write a Review';
+      iconData = Icons.edit;
+      isDisabled = false;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDisabled ? Colors.grey : AppColors.primaryEnd,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: isDisabled
+                ? null
+                : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ReviewFormPage(booking: booking),
+                      ),
+                    );
+                  },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(iconData, size: 16, color: Colors.white),
+                const SizedBox(width: 6),
+                Text(
+                  buttonLabel,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800, // bold sedikit
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (!isAfterCheckout && !isExpired) ...[
+          const SizedBox(height: 4),
+          const Text(
+            '*Review will be opened after checkout period ends',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
+          ),
+        ]
+      ],
     );
   }
 }
