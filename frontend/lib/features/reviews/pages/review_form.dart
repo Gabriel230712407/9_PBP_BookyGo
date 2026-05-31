@@ -5,7 +5,8 @@ import 'dart:io';
 
 class ReviewFormPage extends StatefulWidget {
   final BookingModel booking;
-  const ReviewFormPage({super.key, required this.booking});
+  final bool isEditing;
+  const ReviewFormPage({super.key, required this.booking, this.isEditing = false});
 
   @override
   State<ReviewFormPage> createState() => _ReviewFormPageState();

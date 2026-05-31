@@ -406,9 +406,15 @@ class BookingActionButton extends StatelessWidget {
       iconData = Icons.block;
       isDisabled = true;
     } else {
-      buttonLabel = 'Write a Review';
-      iconData = Icons.edit;
-      isDisabled = false;
+      if (booking.hasReview) {
+        buttonLabel = 'Edit Review';
+        iconData = Icons.edit;
+        isDisabled = false;
+      } else {
+        buttonLabel = 'Write a Review';
+        iconData = Icons.edit;
+        isDisabled = false;
+      }
     }
 
     return Column(
@@ -430,7 +436,10 @@ class BookingActionButton extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ReviewFormPage(booking: booking),
+                        builder: (_) => ReviewFormPage(
+                          booking: booking,
+                          isEditing: booking.hasReview, // gunakan flag ini di page review
+                        ),
                       ),
                     );
                   },

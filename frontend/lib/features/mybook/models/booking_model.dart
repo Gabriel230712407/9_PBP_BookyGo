@@ -22,6 +22,9 @@ class BookingModel {
     required this.totalPrice,
     required this.createdAt,
     required this.addons,
+    this.hasReview = false,        
+    this.reviewRating,
+    this.reviewComment,
   });
 
   final int id;
@@ -44,6 +47,9 @@ class BookingModel {
   final double totalPrice;
   final DateTime? createdAt;
   final List<Addon> addons;
+  final bool hasReview;        
+  final double? reviewRating;  
+  final String? reviewComment;
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
     final room = Map<String, dynamic>.from(json['kamar'] ?? const {});
@@ -89,6 +95,10 @@ class BookingModel {
       addons: (json['addons'] as List<dynamic>? ?? [])
           .map((e) => Addon.fromJson(e))
           .toList(),
+
+      hasReview: json['has_review'] ?? false,               
+      reviewRating: json['review_rating']?.toDouble(),
+      reviewComment: json['review_comment']?.toString(),
     );
   }
 
