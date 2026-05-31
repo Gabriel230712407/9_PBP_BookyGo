@@ -12,6 +12,11 @@ use App\Http\Controllers\UlasanController;
 use App\Http\Controllers\FotoHotelController;
 use App\Http\Controllers\FotoKamarController;
 
+use Illuminate\Http\Request;
+use App\Models\Pemesanan;
+use App\Models\Wishlist;
+use App\Models\Ulasan;
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
@@ -23,6 +28,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/pemesanans/{pemesanan}', [PemesananController::class, 'update']);
     Route::patch('/pemesanans/{pemesanan}', [PemesananController::class, 'update']);
     Route::delete('/pemesanans/{pemesanan}', [PemesananController::class, 'destroy']);
+
+    Route::get('/profile/stats', function (Request $request) {
+        $userId = $request->user()->id;
+
+        return response()->json([
+            'login_user_id' => $userId,
+
+            'total_pemesanans_all' => Pemesanan::count(),
+            'total_ulasans_all' => Ulasan::count(),
+            'total_wishlists_all' => Wishlist::count(),
+
+            'review_count' => Ulasan::where('user_id', $userId)->count(),
+            'booked_count' => Pemesanan::where('user_id', $userId)->count(),
+            'wishlist_count' => Wishlist::where('user_id', $userId)->count(),
+        ]);
+    });
 });
 
 Route::get('/hotels', [HotelController::class, 'index']);
