@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../mybook/models/booking_model.dart';
 import 'delete_history_dialog.dart';
+import '../pages/booking_detail_page.dart';
 
 class HistoryCard extends StatelessWidget {
   const HistoryCard({
@@ -168,14 +169,11 @@ class HistoryCard extends StatelessWidget {
                     backgroundColor: AppColors.primaryEnd,
                     textColor: AppColors.white,
                     onPressed: () {
-                      showModalBottomSheet<void>(
-                        context: context,
-                        backgroundColor: Colors.white,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(20)),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookingDetailPage(booking: booking),
                         ),
-                        builder: (_) => _BookingDetailSheet(booking: booking),
                       );
                     },
                   ),
