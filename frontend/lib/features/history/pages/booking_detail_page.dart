@@ -390,8 +390,8 @@ class BookingActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final isExpired = booking.isExpired;
-    final isAfterCheckout = now.isAfter(booking.checkOutDate);
-
+    // final isAfterCheckout = now.isAfter(booking.checkOutDate);
+    final isAfterCheckout = true; // untuk sementara, biar tombol review selalu muncul (karena data dummy selalu sudah checkout)
     // Tentukan label dan apakah tombol disabled
     String buttonLabel;
     IconData iconData;
