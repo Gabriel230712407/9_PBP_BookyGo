@@ -21,6 +21,7 @@ class BookingModel {
     required this.roomImage,
     required this.totalPrice,
     required this.createdAt,
+    required this.addons,
   });
 
   final int id;
@@ -42,6 +43,7 @@ class BookingModel {
   final String? roomImage;
   final double totalPrice;
   final DateTime? createdAt;
+  final List<Addon> addons;
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
     final room = Map<String, dynamic>.from(json['kamar'] ?? const {});
@@ -83,6 +85,10 @@ class BookingModel {
       roomImage: roomPhotos.isNotEmpty ? roomPhotos.first['path'] as String? : null,
       totalPrice: rawPrice,
       createdAt: _tryParseDate(json['created_at']),
+
+      addons: (json['addons'] as List<dynamic>? ?? [])
+          .map((e) => Addon.fromJson(e))
+          .toList(),
     );
   }
 
@@ -219,4 +225,22 @@ DateTime? _tryParseDate(dynamic value) {
   }
 
   return DateTime.tryParse(value.toString());
+}
+
+class Addon {
+  final int id;
+  final String name;
+  final double price;
+  bool selected;
+
+  Addon({required this.id, required this.name, required this.price, this.selected = false});
+
+  factory Addon.fromJson(Map<String, dynamic> json) {
+    return Addon(
+      id: json['id'],
+      name: json['nama'],
+      price: 60000, // harga matok per addon
+      selected: false,
+    );
+  }
 }

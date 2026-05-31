@@ -2,13 +2,25 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../mybook/models/booking_model.dart';
 
-class BookingDetailPage extends StatelessWidget {
+class BookingDetailPage extends StatefulWidget {
   final BookingModel booking;
 
   const BookingDetailPage({super.key, required this.booking});
 
   @override
+  State<BookingDetailPage> createState() => _BookingDetailPageState();
+}
+
+class _BookingDetailPageState extends State<BookingDetailPage> {
+  double get subtotal => widget.booking.totalPrice;
+  double get tax => subtotal * 0.1;
+  double get serviceFee => widget.booking.addons.fold(0.0, (sum, a) => sum + (a.selected ? a.price : 0.0));
+  double get totalPaid => subtotal + tax + serviceFee;
+
+  @override
   Widget build(BuildContext context) {
+    final isExpired = widget.booking.isExpired;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.primaryEnd,
@@ -34,25 +46,25 @@ class BookingDetailPage extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: booking.isExpired
+                  color: isExpired
                       ? const Color(0xFFFFEFF0)
-                      : booking.isPaid
+                      : widget.booking.isPaid
                           ? const Color(0xFFEAF8F0)
                           : const Color(0xFFF1F5FF),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  booking.isExpired
+                  isExpired
                       ? 'Expired'
-                      : booking.isPaid
+                      : widget.booking.isPaid
                           ? 'Completed'
-                          : booking.isPaymentPending
+                          : widget.booking.isPaymentPending
                               ? 'Waiting Payment'
                               : 'Active',
                   style: TextStyle(
-                    color: booking.isExpired
+                    color: isExpired
                         ? const Color(0xFFD85B64)
-                        : booking.isPaid
+                        : widget.booking.isPaid
                             ? const Color(0xFF1C9A5E)
                             : AppColors.primaryEnd,
                     fontWeight: FontWeight.bold,
@@ -64,11 +76,11 @@ class BookingDetailPage extends StatelessWidget {
             const SizedBox(height: 6),
             Center(
               child: Text(
-                booking.isExpired
+                isExpired
                     ? 'Payment expired'
-                    : booking.isPaid
+                    : widget.booking.isPaid
                         ? 'Stay Completed'
-                        : booking.isPaymentPending
+                        : widget.booking.isPaymentPending
                             ? 'Waiting for Payment'
                             : 'Active Booking',
                 style: const TextStyle(
@@ -93,15 +105,15 @@ class BookingDetailPage extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: booking.imagePath.startsWith('http')
+                    child: widget.booking.imagePath.startsWith('http')
                         ? Image.network(
-                            booking.imagePath,
+                            widget.booking.imagePath,
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
                           )
                         : Image.asset(
-                            booking.imagePath,
+                            widget.booking.imagePath,
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
@@ -113,7 +125,7 @@ class BookingDetailPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          booking.hotelName,
+                          widget.booking.hotelName,
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
@@ -122,7 +134,7 @@ class BookingDetailPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          booking.roomName,
+                          widget.booking.roomName,
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textMuted,
@@ -130,7 +142,7 @@ class BookingDetailPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          booking.hotelAddress,
+                          widget.booking.hotelAddress,
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textMuted,
@@ -144,6 +156,7 @@ class BookingDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
+            // Check-in / Check-out / Duration / Guests 2x2 grid
             Column(
               children: [
                 Row(
@@ -151,18 +164,18 @@ class BookingDetailPage extends StatelessWidget {
                     Expanded(
                       child: _SmallInfoCard(
                         title: 'CHECK-IN',
-                        subtitle: BookingFormatters.dayMonthYear(booking.checkInDate),
+                        subtitle: BookingFormatters.dayMonthYear(widget.booking.checkInDate),
                         extra: 'From 14:00',
-                        backgroundColor: Color(0xFFE6F0FF),
+                        backgroundColor: const Color(0xFFE6F0FF),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _SmallInfoCard(
                         title: 'CHECK-OUT',
-                        subtitle: BookingFormatters.dayMonthYear(booking.checkOutDate),
+                        subtitle: BookingFormatters.dayMonthYear(widget.booking.checkOutDate),
                         extra: 'From 12:00',
-                        backgroundColor: Color(0xFFE6F0FF),
+                        backgroundColor: const Color(0xFFE6F0FF),
                       ),
                     ),
                   ],
@@ -173,9 +186,9 @@ class BookingDetailPage extends StatelessWidget {
                     Expanded(
                       child: _SmallInfoCard(
                         title: 'DURATION',
-                        subtitle: booking.stayLabel,
+                        subtitle: widget.booking.stayLabel,
                         icon: Icons.nightlight_round,
-                        backgroundColor: Color(0xFFE6F0FF),
+                        backgroundColor: const Color(0xFFE6F0FF),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -184,7 +197,7 @@ class BookingDetailPage extends StatelessWidget {
                         title: 'GUESTS',
                         subtitle: '2 Adults',
                         icon: Icons.person,
-                        backgroundColor: Color(0xFFE6F0FF),
+                        backgroundColor: const Color(0xFFE6F0FF),
                       ),
                     ),
                   ],
@@ -193,6 +206,7 @@ class BookingDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
+            // Payment Summary
             const Text(
               'Payment Summary',
               style: TextStyle(
@@ -209,79 +223,89 @@ class BookingDetailPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
-                  _PaymentRow(label: 'Subtotal', value: 'IDR 1,000,000'),
-                  _PaymentRow(label: 'Tax (10%)', value: 'IDR 102,050'),
-                  _PaymentRow(label: 'Service Fee', value: 'IDR 75,000'),
+                  _PaymentRow(
+                      label: 'Subtotal',
+                      value: BookingFormatters.currency(subtotal)),
+                  _PaymentRow(label: 'Tax (10%)', value: BookingFormatters.currency(tax)),
+                  _PaymentRow(label: 'Service Fee', value: BookingFormatters.currency(serviceFee)),
                   const Divider(),
                   _PaymentRow(
                     label: 'TOTAL PAID',
-                    value: 'IDR 1,177,050',
+                    value: BookingFormatters.currency(totalPaid),
                     valueColor: AppColors.primaryEnd,
                   ),
                   const SizedBox(height: 6),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.blueSoft,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.credit_card, size: 14),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'BRI Virtual Account',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w700),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryEnd.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
+                  if (!widget.booking.isExpired) // <-- hanya tampil jika tidak expired
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.blueSoft,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.credit_card, size: 14),
+                          const SizedBox(width: 6),
+                          Text(
+                            widget.booking.paymentMethodLabel,
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w700),
                           ),
-                          child: const Text(
-                            'PAID',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primaryEnd),
-                          ),
-                        )
-                      ],
+                          const Spacer(),
+                          if (widget.booking.isPaid)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryEnd.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'PAID',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.primaryEnd),
+                              ),
+                            )
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // Write a Review Button
+            // Tombol
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryEnd,
+                  backgroundColor: widget.booking.isExpired
+                      ? Colors.grey
+                      : AppColors.primaryEnd,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: () {},
+                onPressed: widget.booking.isExpired ? null : () {},
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.edit, size: 16, color: AppColors.white),
-                    SizedBox(width: 6),
+                  children: [
+                    Icon(
+                      widget.booking.isExpired ? Icons.block : Icons.edit,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 6),
                     Text(
-                      'Write a Review',
-                      style: TextStyle(
+                      widget.booking.isExpired
+                          ? 'Pembayaran dibatalkan'
+                          : 'Write a Review',
+                      style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.white),
+                          color: Colors.white),
                     ),
                   ],
                 ),
@@ -316,7 +340,7 @@ class _SmallInfoCard extends StatelessWidget {
       width: 150,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: backgroundColor, // pakai color card biru muda
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -368,7 +392,7 @@ class _PaymentRow extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              fontSize: 13,                  
+              fontSize: 13,
               fontWeight: FontWeight.w700,
               color: valueColor ?? AppColors.darkBlue,
             ),
