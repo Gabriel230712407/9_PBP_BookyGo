@@ -18,7 +18,7 @@ class ReviewFormPage extends StatefulWidget {
 }
 
 class _ReviewFormPageState extends State<ReviewFormPage> {
-  double _rating = 0; // default rating supaya tombol aktif
+  double _rating = 0; // default rating 
   final TextEditingController _commentController = TextEditingController();
   final List<String> _photos = [];
 
@@ -144,70 +144,70 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
   }
 
   Widget _buildPhotoItem(String path) {
-  final cleanPath = path.replaceAll(r'\/', '/');
+    final cleanPath = path.replaceAll(r'\/', '/');
 
-  final bool isNetworkImage = cleanPath.startsWith('http');
-  final bool isLocalFile = cleanPath.startsWith('/');
+    final bool isNetworkImage = cleanPath.startsWith('http');
+    final bool isLocalFile = cleanPath.startsWith('/');
 
-  String imageUrl = cleanPath;
+    String imageUrl = cleanPath;
 
-  if (!isNetworkImage && !isLocalFile) {
-    final base = ApiConfig.baseUrl.replaceAll('/api', '');
-    imageUrl = '$base/storage/$cleanPath';
-  }
+    if (!isNetworkImage && !isLocalFile) {
+      final base = ApiConfig.baseUrl.replaceAll('/api', '');
+      imageUrl = '$base/storage/$cleanPath';
+    }
 
-  debugPrint('REVIEW PHOTO PATH: $path');
-  debugPrint('REVIEW PHOTO CLEAN PATH: $cleanPath');
-  debugPrint('REVIEW PHOTO URL: $imageUrl');
+    debugPrint('REVIEW PHOTO PATH: $path');
+    debugPrint('REVIEW PHOTO CLEAN PATH: $cleanPath');
+    debugPrint('REVIEW PHOTO URL: $imageUrl');
 
-  return Stack(
-    children: [
-      Container(
-        width: 80,
-        height: 80,
-        margin: const EdgeInsets.only(right: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+    return Stack(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: isLocalFile
+              ? Image.file(
+                  File(cleanPath),
+                  fit: BoxFit.cover,
+                )
+              : Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    debugPrint('ERROR LOAD REVIEW IMAGE: $error');
+
+                    return Container(
+                      color: const Color(0xFFE6F0FF),
+                      child: const Icon(
+                        Icons.broken_image,
+                        color: AppColors.textMuted,
+                      ),
+                    );
+                  },
+                ),
         ),
-        clipBehavior: Clip.antiAlias,
-        child: isLocalFile
-            ? Image.file(
-                File(cleanPath),
-                fit: BoxFit.cover,
-              )
-            : Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  debugPrint('ERROR LOAD REVIEW IMAGE: $error');
-
-                  return Container(
-                    color: const Color(0xFFE6F0FF),
-                    child: const Icon(
-                      Icons.broken_image,
-                      color: AppColors.textMuted,
-                    ),
-                  );
-                },
+        Positioned(
+          top: 0,
+          right: 0,
+          child: GestureDetector(
+            onTap: () => _removePhoto(path),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.black.withOpacity(0.5),
               ),
-      ),
-      Positioned(
-        top: 0,
-        right: 0,
-        child: GestureDetector(
-          onTap: () => _removePhoto(path),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black.withOpacity(0.5),
+              child: const Icon(Icons.close, size: 18, color: Colors.white),
             ),
-            child: const Icon(Icons.close, size: 18, color: Colors.white),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   Future<void> _showSuccessDialog() async {
     await showDialog(
@@ -215,61 +215,81 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
       barrierDismissible: false,
       builder: (context) {
         return Dialog(
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 82),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/vector_success.png',
-                  width: 90,
-                  height: 90,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Successful!',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.darkBlue,
+          child: SizedBox(
+            width: 210,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 26, 18, 22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/vector_success.png',
+                    width: 82,
+                    height: 82,
+                    fit: BoxFit.contain,
                   ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Thank you for your review!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 22),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryEnd,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
+
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    'Successful!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.darkBlue,
                     ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 6),
+
+                  const Text(
+                    'Thank you for your review!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.2,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  SizedBox(
+                    width: 122,
+                    height: 42,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        elevation: 4,
+                        shadowColor: AppColors.primaryEnd.withOpacity(0.25),
+                        backgroundColor: AppColors.primaryEnd,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                      ),
+                      child: const Text(
+                        'Continue',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -278,84 +298,108 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
   }
 
   Future<bool?> _showDeleteDialog() {
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
+  return showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      return Dialog(
+        backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 82),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: SizedBox(
+          width: 210,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            padding: const EdgeInsets.fromLTRB(18, 26, 18, 22),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset(
                   'assets/images/vector_permission.png',
-                  width: 90,
-                  height: 90,
+                  width: 82,
+                  height: 82,
+                  fit: BoxFit.contain,
                 ),
-                const SizedBox(height: 16),
+
+                const SizedBox(height: 10),
+
                 const Text(
                   'Remove Review?',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 16,
+                    height: 1.1,
                     fontWeight: FontWeight.w800,
                     color: AppColors.darkBlue,
                   ),
                 ),
+
                 const SizedBox(height: 6),
+
                 const Text(
-                  'Are you sure want to delete this review?',
+                  'Are you sure want to delete this\nreview?',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 11,
+                    height: 1.2,
+                    fontWeight: FontWeight.w400,
                     color: AppColors.textMuted,
                   ),
                 ),
-                const SizedBox(height: 22),
+
+                const SizedBox(height: 18),
+
                 SizedBox(
-                  width: double.infinity,
+                  width: 122,
+                  height: 42,
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context, true);
                     },
                     style: ElevatedButton.styleFrom(
+                      elevation: 4,
+                      shadowColor: const Color(0xFFD91E18).withOpacity(0.25),
                       backgroundColor: const Color(0xFFD91E18),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(7),
                       ),
                     ),
                     child: const Text(
                       'Remove',
                       style: TextStyle(
                         color: Colors.white,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 10),
+
                 SizedBox(
-                  width: double.infinity,
+                  width: 122,
+                  height: 42,
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context, false);
                     },
                     style: ElevatedButton.styleFrom(
+                      elevation: 3,
+                      shadowColor: Colors.black.withOpacity(0.16),
                       backgroundColor: Colors.white,
-                      elevation: 2,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(7),
                       ),
                     ),
                     child: const Text(
                       'Cancel',
                       style: TextStyle(
                         color: AppColors.textMuted,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -364,10 +408,11 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
               ],
             ),
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Future<void> _deleteReview() async {
     debugPrint('REVIEW ID DELETE: ${widget.booking.reviewId}');
@@ -520,7 +565,7 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _submitReview, // tombol pasti bisa diklik untuk testing
+                onPressed: _submitReview, 
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryEnd,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -530,7 +575,7 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.white)),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
             if (widget.isEditing) ...[
               Center(
                 child: TextButton.icon(
