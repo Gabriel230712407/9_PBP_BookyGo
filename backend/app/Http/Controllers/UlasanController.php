@@ -43,76 +43,84 @@ class UlasanController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'pemesanan_id' => 'required|exists:pemesanans,id|unique:ulasans,pemesanan_id',
             'kamar_id' => 'required|exists:kamars,id',
             'user_id' => 'required|exists:users,id',
             'hotel_id' => 'required|exists:hotels,id',
             'rating' => 'required|numeric|min:1|max:5',
-            'komentar' => 'nullable|string|max:255',
+            'komentar' => 'nullable|string',
+            'photos.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        $photoPaths = [];
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $photoPaths[] = $photo->store('reviews', 'public');
+            }
+        }
 
         $ulasan = Ulasan::create([
-            'pemesanan_id' => $request->pemesanan_id,
-            'kamar_id' => $request->kamar_id,
-            'user_id' => $request->user_id,
-            'hotel_id' => $request->hotel_id,
-            'rating' => $request->rating,
-            'komentar' => $request->komentar,
+            'pemesanan_id' => $validated['pemesanan_id'],
+            'kamar_id' => $validated['kamar_id'],
+            'user_id' => $validated['user_id'],
+            'hotel_id' => $validated['hotel_id'],
+            'rating' => $validated['rating'],
+            'komentar' => $validated['komentar'] ?? null,
+            'photos' => $photoPaths,
         ]);
 
-        $this->updateRatingHotel($request->hotel_id);
-        $this->updateJumlahUlasanKamar($request->kamar_id);
-
         return response()->json([
-            'status' => true,
-            'message' => 'Ulasan berhasil ditambahkan',
-            'data' => $ulasan->load(['pemesanan', 'user', 'kamar', 'hotel'])
+            'message' => 'Ulasan berhasil disimpan',
+            'data' => $ulasan,
         ], 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Ulasan $ulasan)
     {
-        $ulasan = Ulasan::find($id);
-
-        if (!$ulasan) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Ulasan tidak ditemukan'
-            ], 404);
-        }
-
-        $request->validate([
-            'pemesanan_id' => 'sometimes|required|exists:pemesanans,id|unique:ulasans,pemesanan_id,' . $ulasan->id,
-            'kamar_id' => 'sometimes|required|exists:kamars,id',
-            'user_id' => 'sometimes|required|exists:users,id',
-            'hotel_id' => 'sometimes|required|exists:hotels,id',
-            'rating' => 'sometimes|required|numeric|min:1|max:5',
-            'komentar' => 'nullable|string|max:255',
+        $validated = $request->validate([
+            'pemesanan_id' => 'required|exists:pemesanans,id|unique:ulasans,pemesanan_id,' . $ulasan->id,
+            'kamar_id' => 'required|exists:kamars,id',
+            'user_id' => 'required|exists:users,id',
+            'hotel_id' => 'required|exists:hotels,id',
+            'rating' => 'required|numeric|min:1|max:5',
+            'komentar' => 'nullable|string',
+            'photos.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'existing_photos' => 'nullable|string',
         ]);
 
-        $oldHotelId = $ulasan->hotel_id;
-        $oldKamarId = $ulasan->kamar_id;
+        $photoPaths = [];
 
-        $ulasan->update($request->only([
-            'pemesanan_id',
-            'kamar_id',
-            'user_id',
-            'hotel_id',
-            'rating',
-            'komentar',
-        ]));
+        if ($request->filled('existing_photos')) {
+            $decodedExistingPhotos = json_decode($request->existing_photos, true);
 
-        $this->updateRatingHotel($oldHotelId);
-        $this->updateRatingHotel($ulasan->hotel_id);
+            if (is_array($decodedExistingPhotos)) {
+                $photoPaths = $decodedExistingPhotos;
+            }
+        } else {
+            $photoPaths = $ulasan->photos ?? [];
+        }
 
-        $this->updateJumlahUlasanKamar($oldKamarId);
-        $this->updateJumlahUlasanKamar($ulasan->kamar_id);
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $photoPaths[] = $photo->store('reviews', 'public');
+            }
+        }
+
+        $ulasan->update([
+            'pemesanan_id' => $validated['pemesanan_id'],
+            'kamar_id' => $validated['kamar_id'],
+            'user_id' => $validated['user_id'],
+            'hotel_id' => $validated['hotel_id'],
+            'rating' => $validated['rating'],
+            'komentar' => $validated['komentar'] ?? null,
+            'photos' => $photoPaths,
+        ]);
 
         return response()->json([
-            'status' => true,
-            'message' => 'Ulasan berhasil diperbarui',
-            'data' => $ulasan->load(['pemesanan', 'user', 'kamar', 'hotel'])
+            'message' => 'Ulasan berhasil diupdate',
+            'data' => $ulasan->fresh(),
         ]);
     }
 
