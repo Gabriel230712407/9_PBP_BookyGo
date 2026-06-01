@@ -13,6 +13,12 @@ class Ulasan extends Model
         'hotel_id',
         'rating',
         'komentar',
+        'photos',
+    ];
+
+    protected $casts = [
+        'photos' => 'array',
+        'rating' => 'double',
     ];
 
     public function pemesanan()

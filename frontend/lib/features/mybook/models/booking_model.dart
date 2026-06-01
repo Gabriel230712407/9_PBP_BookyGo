@@ -1,10 +1,13 @@
+import 'dart:convert';
+
 import '../../room/models/room_model.dart';
 
 class BookingModel {
-  const BookingModel({
+  BookingModel({
     required this.id,
     required this.userId,
     required this.roomId,
+    required this.hotelId,
     required this.bookingCode,
     required this.contactName,
     required this.contactEmail,
@@ -25,11 +28,14 @@ class BookingModel {
     this.hasReview = false,        
     this.reviewRating,
     this.reviewComment,
+    this.reviewId,
+    this.reviewPhotos,
   });
 
   final int id;
   final int userId;
   final int roomId;
+  final int hotelId;
   final String bookingCode;
   final String contactName;
   final String contactEmail;
@@ -47,9 +53,11 @@ class BookingModel {
   final double totalPrice;
   final DateTime? createdAt;
   final List<Addon> addons;
-  final bool hasReview;        
-  final double? reviewRating;  
-  final String? reviewComment;
+  bool hasReview;        
+  double? reviewRating;  
+  String? reviewComment;
+  int? reviewId;           
+  List<String>? reviewPhotos;
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
     final room = Map<String, dynamic>.from(json['kamar'] ?? const {});
@@ -75,6 +83,7 @@ class BookingModel {
       id: _toInt(json['id']),
       userId: _toInt(json['user_id']),
       roomId: _toInt(json['kamar_id']),
+      hotelId: _toInt(hotel['id']),
       bookingCode: (json['kode_booking'] ?? '').toString(),
       contactName: (json['nama'] ?? '').toString(),
       contactEmail: (json['email'] ?? '').toString(),
@@ -96,9 +105,11 @@ class BookingModel {
           .map((e) => Addon.fromJson(e))
           .toList(),
 
-      hasReview: json['has_review'] ?? false,               
-      reviewRating: json['review_rating']?.toDouble(),
-      reviewComment: json['review_comment']?.toString(),
+      hasReview: _toBool(json['has_review'] ?? json['ulasan'] != null),
+      reviewRating: _tryDouble(json['review_rating'] ?? json['ulasan']?['rating']),
+      reviewComment: (json['review_comment'] ?? json['ulasan']?['komentar'])?.toString(),
+      reviewId: _tryInt(json['ulasan']?['id']),
+      reviewPhotos: _parsePhotos(json['ulasan']?['photos']),
     );
   }
 
@@ -229,6 +240,33 @@ double _toDouble(dynamic value) {
   return double.tryParse('$value') ?? 0;
 }
 
+int? _tryInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value.toString());
+}
+
+double? _tryDouble(dynamic value) {
+  if (value == null) return null;
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value.toString());
+}
+
+bool _toBool(dynamic value) {
+  if (value is bool) return value;
+
+  if (value is int) return value == 1;
+
+  if (value is String) {
+    final lower = value.toLowerCase();
+    return lower == 'true' || lower == '1' || lower == 'yes';
+  }
+
+  return false;
+}
+
 DateTime? _tryParseDate(dynamic value) {
   if (value == null) {
     return null;
@@ -247,10 +285,37 @@ class Addon {
 
   factory Addon.fromJson(Map<String, dynamic> json) {
     return Addon(
-      id: json['id'],
-      name: json['nama'],
-      price: 60000, // harga matok per addon
+      id: _toInt(json['id']),
+      name: (json['nama'] ?? '').toString(),
+      price: _toDouble(json['harga'] ?? 60000),
       selected: false,
     );
   }
+}
+List<String>? _parsePhotos(dynamic value) {
+  if (value == null) return null;
+
+  if (value is List) {
+    return value.map((e) => e.toString().replaceAll(r'\/', '/')).toList();
+  }
+
+  if (value is String) {
+    final trimmed = value.trim();
+
+    if (trimmed.isEmpty) return null;
+
+    try {
+      final decoded = jsonDecode(trimmed);
+
+      if (decoded is List) {
+        return decoded
+            .map((e) => e.toString().replaceAll(r'\/', '/'))
+            .toList();
+      }
+    } catch (_) {
+      return [trimmed.replaceAll(r'\/', '/')];
+    }
+  }
+
+  return null;
 }

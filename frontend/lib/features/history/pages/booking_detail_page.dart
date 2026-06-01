@@ -13,6 +13,14 @@ class BookingDetailPage extends StatefulWidget {
 }
 
 class _BookingDetailPageState extends State<BookingDetailPage> {
+  late bool _hasReview;
+
+  @override
+  void initState() {
+    super.initState();
+    _hasReview = widget.booking.hasReview;
+  }
+
   double get subtotal => widget.booking.totalPrice;
   double get tax => subtotal * 0.1;
   double get serviceFee => widget.booking.addons.fold(0.0, (sum, a) => sum + (a.selected ? a.price : 0.0));
@@ -280,14 +288,37 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
             // Tombol
             BookingActionButton(
               booking: widget.booking,
-              onReview: () {
-                Navigator.push(
+              hasReview: _hasReview,
+              onReview: () async {
+                final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => ReviewFormPage(booking: widget.booking)),
+                  MaterialPageRoute(
+                    builder: (_) => ReviewFormPage(
+                      booking: widget.booking,
+                      isEditing: _hasReview,
+                    ),
+                  ),
                 );
+
+                if (result == true) {
+                  setState(() {
+                    _hasReview = true;
+                    widget.booking.hasReview = true;
+                  });
+                }
+
+                if (result == 'deleted') {
+                  setState(() {
+                    _hasReview = false;
+                    widget.booking.hasReview = false;
+                    widget.booking.reviewId = null;
+                    widget.booking.reviewRating = null;
+                    widget.booking.reviewComment = null;
+                    widget.booking.reviewPhotos = null;
+                  });
+                }
               },
             ),
-
             const SizedBox(height: 24),
           ],
         ),
@@ -382,17 +413,25 @@ class _PaymentRow extends StatelessWidget {
 
 class BookingActionButton extends StatelessWidget {
   final BookingModel booking;
+  final bool hasReview;
   final VoidCallback? onReview;
 
-  const BookingActionButton({super.key, required this.booking, this.onReview});
+  const BookingActionButton({
+    super.key,
+    required this.booking,
+    required this.hasReview,
+    this.onReview,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
     final isExpired = booking.isExpired;
-    // final isAfterCheckout = now.isAfter(booking.checkOutDate);
-    final isAfterCheckout = true; // untuk sementara, biar tombol review selalu muncul (karena data dummy selalu sudah checkout)
-    // Tentukan label dan apakah tombol disabled
+
+    // Kalau mau pakai tanggal asli nanti:
+    // final isAfterCheckout = DateTime.now().isAfter(booking.checkOutDate);
+
+    final isAfterCheckout = true; // sementara untuk data dummy
+
     String buttonLabel;
     IconData iconData;
     bool isDisabled;
@@ -406,13 +445,13 @@ class BookingActionButton extends StatelessWidget {
       iconData = Icons.block;
       isDisabled = true;
     } else {
-      if (booking.hasReview) {
+      if (hasReview) {
         buttonLabel = 'Edit Review';
         iconData = Icons.edit;
         isDisabled = false;
       } else {
         buttonLabel = 'Write a Review';
-        iconData = Icons.edit;
+        iconData = Icons.rate_review;
         isDisabled = false;
       }
     }
@@ -430,19 +469,7 @@ class BookingActionButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            onPressed: isDisabled
-                ? null
-                : () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ReviewFormPage(
-                          booking: booking,
-                          isEditing: booking.hasReview, // gunakan flag ini di page review
-                        ),
-                      ),
-                    );
-                  },
+            onPressed: isDisabled ? null : onReview,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -452,7 +479,7 @@ class BookingActionButton extends StatelessWidget {
                   buttonLabel,
                   style: const TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w800, // bold sedikit
+                    fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
                 ),
@@ -460,6 +487,7 @@ class BookingActionButton extends StatelessWidget {
             ),
           ),
         ),
+
         if (!isAfterCheckout && !isExpired) ...[
           const SizedBox(height: 4),
           const Text(
@@ -469,7 +497,7 @@ class BookingActionButton extends StatelessWidget {
               color: AppColors.textMuted,
             ),
           ),
-        ]
+        ],
       ],
     );
   }
