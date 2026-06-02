@@ -6,6 +6,10 @@ import '../../room/pages/room_page.dart';
 import '../models/hotel_model.dart';
 import '../services/hotel_service.dart';
 
+import '../../reviews/pages/review_list.dart';
+import '../../reviews/models/review_model.dart';
+import '../../reviews/services/review_service.dart';
+
 class HotelDetailPage extends StatefulWidget {
   final int hotelId;
   final DateTime checkInDate;
@@ -104,8 +108,26 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _HeaderGallery(hotel: hotel),
-                      _HotelTitle(hotel: hotel),
-                      _ReviewSection(hotel: hotel),
+                      FutureBuilder<ReviewResponse>(
+                        future: ReviewService().getReviews(hotelId: hotel.id),
+                        builder: (context, reviewSnapshot) {
+                          final reviewResponse = reviewSnapshot.data;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _HotelTitle(
+                                hotel: hotel,
+                                reviewSummary: reviewResponse?.summary,
+                              ),
+                              _ReviewSection(
+                                hotel: hotel,
+                                reviewResponse: reviewResponse,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                       _FacilitySection(hotel: hotel),
                       _LocationSection(hotel: hotel),
                       _PolicySection(
@@ -378,11 +400,18 @@ class _InfiniteImageViewerState extends State<_InfiniteImageViewer> {
 
 class _HotelTitle extends StatelessWidget {
   final HotelModel hotel;
+  final ReviewSummary? reviewSummary;
 
-  const _HotelTitle({required this.hotel});
+  const _HotelTitle({
+    required this.hotel,
+    required this.reviewSummary,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final averageRating = reviewSummary?.averageRating ?? 0.0;
+    final totalReview = reviewSummary?.totalReview ?? 0;
+
     return Container(
       width: double.infinity,
       color: Colors.white,
@@ -402,7 +431,7 @@ class _HotelTitle extends StatelessWidget {
           Row(
             children: [
               Text(
-                '${hotel.rawRating.toStringAsFixed(1)}/5',
+                '${averageRating.toStringAsFixed(1)}/5',
                 style: const TextStyle(
                   fontSize: 20,
                   color: Color(0xff5E7CEB),
@@ -411,7 +440,7 @@ class _HotelTitle extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '(${hotel.reviewCount} review)',
+                '($totalReview review)',
                 style: const TextStyle(fontSize: 11, color: Colors.grey),
               ),
               const SizedBox(width: 12),
@@ -435,117 +464,177 @@ class _HotelTitle extends StatelessWidget {
 
 class _ReviewSection extends StatelessWidget {
   final HotelModel hotel;
+  final ReviewResponse? reviewResponse;
 
-  const _ReviewSection({required this.hotel});
-
+  const _ReviewSection({
+    required this.hotel,
+    required this.reviewResponse,
+  });
+  
   @override
   Widget build(BuildContext context) {
-    final firstReview = hotel.reviews.isNotEmpty ? hotel.reviews.first : null;
+    return FutureBuilder<ReviewResponse>(
+      future: ReviewService().getReviews(hotelId: hotel.id),
+      builder: (context, snapshot) {
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
 
-    return _SectionBox(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
+        final summary = snapshot.data?.summary;
+        final reviews = snapshot.data?.reviews ?? [];
+        final firstReview = reviews.isNotEmpty ? reviews.first : null;
+
+        final averageRating = summary?.averageRating ?? 0.0;
+        final totalReview = summary?.totalReview ?? 0;
+
+        return _SectionBox(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Review',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff26346B),
-                ),
-              ),
-              Spacer(),
-              Text(
-                'See All',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xff26346B),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${hotel.rawRating.toStringAsFixed(1)}/5',
-            style: const TextStyle(
-              fontSize: 24,
-              color: Color(0xff5E7CEB),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (firstReview != null)
-            Container(
-              height: 118,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xffEEF3FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
+              Row(
                 children: [
-                  Container(
-                    width: 90,
-                    height: 98,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Colors.white,
+                  const Text(
+                    'Review',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff26346B),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${firstReview.rating.toStringAsFixed(1)} /5',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xff26346B),
-                            fontSize: 18,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          firstReview.userName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          firstReview.comment.isEmpty
-                              ? 'No comment'
-                              : firstReview.comment,
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: totalReview == 0
+                        ? null
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ReviewListPage(
+                                  hotelId: hotel.id,
+                                  title: 'Reviews',
+                                ),
+                              ),
+                            );
+                          },
+                    child: Text(
+                      'See All',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: totalReview == 0
+                            ? Colors.grey
+                            : const Color(0xff26346B),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
-            )
-          else
-            const Text(
-              'No review yet',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-        ],
-      ),
+
+              const SizedBox(height: 8),
+
+              if (isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else ...[
+                Text(
+                  '($totalReview review)',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                if (firstReview != null)
+                  Container(
+                    height: 118,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xffEEF3FF),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: 90,
+                            height: 98,
+                            color: Colors.grey[300],
+                            child: firstReview.photoUrls.isNotEmpty
+                                ? Image.network(
+                                    firstReview.photoUrls.first,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) {
+                                      return const Icon(
+                                        Icons.person,
+                                        size: 50,
+                                        color: Colors.white,
+                                      );
+                                    },
+                                  )
+                                : const Icon(
+                                    Icons.person,
+                                    size: 50,
+                                    color: Colors.white,
+                                  ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${firstReview.rating.toStringAsFixed(1)} /5',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xff26346B),
+                                  fontSize: 18,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                firstReview.userName ?? 'User',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                firstReview.komentar.isEmpty
+                                    ? 'No comment'
+                                    : firstReview.komentar,
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  const Text(
+                    'No review yet',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

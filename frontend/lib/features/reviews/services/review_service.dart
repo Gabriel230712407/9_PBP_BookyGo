@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import '../../../core/constants/api_config.dart';
+import '../models/review_model.dart';
 
 class ReviewService {
   Future<Map<String, dynamic>?> createReview(
@@ -140,6 +141,43 @@ class ReviewService {
 
     if (response.statusCode == 200 || response.statusCode == 204) {
       return true;
+    }
+
+    throw Exception(response.body);
+  }
+
+  Future<ReviewResponse> getReviews({
+    int? hotelId,
+    int? kamarId,
+  }) async {
+    final queryParams = <String, String>{};
+
+    if (hotelId != null) {
+      queryParams['hotel_id'] = hotelId.toString();
+    }
+
+    if (kamarId != null) {
+      queryParams['kamar_id'] = kamarId.toString();
+    }
+
+    final uri = Uri.parse('${ApiConfig.baseUrl}/ulasans').replace(
+      queryParameters: queryParams,
+    );
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+      },
+    );
+
+    print('GET REVIEWS URL: $uri');
+    print('GET REVIEWS STATUS: ${response.statusCode}');
+    print('GET REVIEWS BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      return ReviewResponse.fromJson(decoded);
     }
 
     throw Exception(response.body);
