@@ -510,6 +510,9 @@ class _ReviewSection extends StatelessWidget {
                                 builder: (_) => ReviewListPage(
                                   hotelId: hotel.id,
                                   title: 'Reviews',
+                                  hotelName: hotel.name,
+                                  hotelLocation: hotel.location,
+                                  hotelImage: hotel.images.isNotEmpty ? hotel.images.first : null,
                                 ),
                               ),
                             );
