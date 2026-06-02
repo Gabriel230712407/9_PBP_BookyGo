@@ -83,6 +83,8 @@ class UlasanController extends Controller
             'komentar' => $validated['komentar'] ?? null,
             'photos' => $photoPaths,
         ]);
+        $this->updateJumlahUlasanKamar($validated['kamar_id']);
+        $this->updateRatingHotel($validated['hotel_id']);
 
         return response()->json([
             'message' => 'Ulasan berhasil disimpan',
@@ -130,6 +132,9 @@ class UlasanController extends Controller
             'komentar' => $validated['komentar'] ?? null,
             'photos' => $photoPaths,
         ]);
+
+        $this->updateJumlahUlasanKamar($validated['kamar_id']);
+        $this->updateRatingHotel($validated['hotel_id']);
 
         return response()->json([
             'message' => 'Ulasan berhasil diupdate',

@@ -5,6 +5,10 @@ import '../../mybook/pages/booking_form_page.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/room_model.dart';
 
+import '../../reviews/pages/room_review_list.dart';
+import '../../reviews/models/review_model.dart';
+import '../../reviews/services/review_service.dart';
+
 class RoomPage extends StatelessWidget {
   final HotelModel hotel;
   final DateTime checkInDate;
@@ -209,18 +213,42 @@ class _RoomCard extends StatelessWidget {
               ],
             ),
             const Divider(height: 24),
-            Row(
-              children: [
-                const Icon(Icons.comment, size: 18, color: Color(0xff5E7CEB)),
-                const SizedBox(width: 4),
-                Text(
-                  'See Reviews(${room.reviewCount})',
-                  style: const TextStyle(
-                    color: Color(0xff5E7CEB),
-                    fontWeight: FontWeight.bold,
+            FutureBuilder<ReviewResponse>(
+              future: ReviewService().getReviews(kamarId: room.id),
+              builder: (context, snapshot) {
+                final totalReview = snapshot.data?.summary.totalReview ?? room.reviewCount;
+
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RoomReviewListPage(
+                          kamarId: room.id,
+                          title: 'Reviews',
+                        ),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.comment,
+                        size: 18,
+                        color: Color(0xff5E7CEB),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'See Reviews($totalReview)',
+                        style: const TextStyle(
+                          color: Color(0xff5E7CEB),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                );
+              },
             ),
             const SizedBox(height: 28),
             RichText(
