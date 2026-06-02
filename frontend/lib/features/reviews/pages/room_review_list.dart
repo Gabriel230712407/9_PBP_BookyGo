@@ -107,37 +107,71 @@ class _RoomReviewListPageState extends State<RoomReviewListPage> {
   }
 }
 
-class _RoomReviewCard extends StatelessWidget {
+class _RoomReviewCard extends StatefulWidget {
   final ReviewModel review;
 
   const _RoomReviewCard({
     required this.review,
   });
 
+  @override
+  State<_RoomReviewCard> createState() => _RoomReviewCardState();
+}
+
+class _RoomReviewCardState extends State<_RoomReviewCard> {
+  bool _isSubmittingHelpful = false;
+
+  void _toggleHelpful() async {
+    if (_isSubmittingHelpful) return;
+
+    setState(() {
+      _isSubmittingHelpful = true;
+    });
+
+    try {
+      final response = await ReviewService().toggleHelpful(
+        reviewId: widget.review.id,
+        userId: 1, // ganti dengan user login
+      );
+
+      if (response != null) {
+        setState(() {
+          widget.review.helpfulCount = response['helpful_count'];
+          widget.review.isHelpful = response['is_helpful'];
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error toggle helpful: $e')),
+      );
+    } finally {
+      setState(() {
+        _isSubmittingHelpful = false;
+      });
+    }
+  }
+
   String _timeAgo(DateTime? date) {
     if (date == null) return '';
-
     final now = DateTime.now();
     final difference = now.difference(date);
-
     if (difference.inDays >= 30) {
       final month = (difference.inDays / 30).floor();
       return '$month month${month > 1 ? 's' : ''} ago';
     }
-
     if (difference.inDays >= 1) {
       return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
     }
-
     if (difference.inHours >= 1) {
       return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
     }
-
     return 'just now';
   }
 
   @override
   Widget build(BuildContext context) {
+    final review = widget.review;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
@@ -164,9 +198,7 @@ class _RoomReviewCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 8),
-
           Row(
             children: [
               ...List.generate(5, (index) {
@@ -189,9 +221,7 @@ class _RoomReviewCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 8),
-
           Text(
             review.komentar.isEmpty ? 'No comment' : review.komentar,
             style: const TextStyle(
@@ -201,28 +231,32 @@ class _RoomReviewCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-
           const SizedBox(height: 10),
-
-          Row(
-            children: [
-              const Icon(
-                Icons.thumb_up_alt_outlined,
-                color: Color(0xFF5E7CEB),
-                size: 14,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Helpful (0)',
-                style: TextStyle(
-                  color: AppColors.primaryEnd,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+          // Tombol Helpful
+          InkWell(
+            onTap: _toggleHelpful,
+            child: Row(
+              children: [
+                Icon(
+                  review.isHelpful
+                      ? Icons.thumb_up
+                      : Icons.thumb_up_alt_outlined,
+                  color: review.isHelpful ? Colors.blue : const Color(0xFF5E7CEB),
+                  size: 14,
                 ),
-              ),
-            ],
+                const SizedBox(width: 4),
+                Text(
+                  'Helpful (${review.helpfulCount})',
+                  style: const TextStyle(
+                    color: AppColors.primaryEnd,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
-
+          // Foto review tetap sama
           if (review.photoUrls.isNotEmpty) ...[
             const SizedBox(height: 12),
             _ReviewPhotos(photos: review.photoUrls),

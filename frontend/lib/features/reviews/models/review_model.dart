@@ -17,6 +17,9 @@ class ReviewModel {
   final String? hotelName;
   final DateTime? createdAt;
 
+  int helpfulCount;
+  bool isHelpful;
+
   ReviewModel({
     required this.id,
     required this.pemesananId,
@@ -31,6 +34,8 @@ class ReviewModel {
     this.roomName,
     this.hotelName,
     this.createdAt,
+    this.helpfulCount = 0,
+    this.isHelpful = false,
   });
 
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
@@ -60,6 +65,8 @@ class ReviewModel {
       roomName: (kamar['nama'] ?? '').toString(),
       hotelName: (hotel['nama'] ?? '').toString(),
       createdAt: _tryParseDate(json['created_at']),
+      helpfulCount: _toInt(json['helpful_count']),
+      isHelpful: json['is_helpful'] == true,
     );
   }
 

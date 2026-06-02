@@ -5,6 +5,7 @@ import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/review_model.dart';
 import '../services/review_service.dart';
 
+
 class ReviewListPage extends StatefulWidget {
   final int? hotelId;
   final int? kamarId;
@@ -242,31 +243,47 @@ class _HotelReviewHeader extends StatelessWidget {
   }
 }
 
-class _ReviewCard extends StatelessWidget {
+class _ReviewCard extends StatefulWidget {
   final ReviewModel review;
 
   const _ReviewCard({required this.review});
 
-  String _timeAgo(DateTime? date) {
-    if (date == null) return '';
+  @override
+  State<_ReviewCard> createState() => _ReviewCardState();
+}
 
-    final now = DateTime.now();
-    final difference = now.difference(date);
+class _ReviewCardState extends State<_ReviewCard> {
+  bool _isSubmittingHelpful = false;
 
-    if (difference.inDays >= 30) {
-      final month = (difference.inDays / 30).floor();
-      return '$month month${month > 1 ? 's' : ''} ago';
+  void _toggleHelpful() async {
+    if (_isSubmittingHelpful) return;
+
+    setState(() {
+      _isSubmittingHelpful = true;
+    });
+
+    try {
+      // Panggil API toggle helpful
+      final response = await ReviewService().toggleHelpful(
+        reviewId: widget.review.id,
+        userId: 1, // ganti dengan user login
+      );
+
+      if (response != null) {
+        setState(() {
+          widget.review.helpfulCount = response['helpful_count'];
+          widget.review.isHelpful = response['is_helpful'];
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() {
+        _isSubmittingHelpful = false;
+      });
     }
-
-    if (difference.inDays >= 1) {
-      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
-    }
-
-    if (difference.inHours >= 1) {
-      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
-    }
-
-    return 'just now';
   }
 
   @override
@@ -283,11 +300,11 @@ class _ReviewCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _AvatarImage(url: review.userPhoto),
+              _AvatarImage(url: widget.review.userPhoto),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  review.userName ?? 'User',
+                  widget.review.userName ?? 'User',
                   style: const TextStyle(
                     color: AppColors.darkBlue,
                     fontSize: 14,
@@ -297,14 +314,12 @@ class _ReviewCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 8),
-
           Row(
             children: [
               ...List.generate(5, (index) {
                 return Icon(
-                  index < review.rating.round()
+                  index < widget.review.rating.round()
                       ? Icons.star
                       : Icons.star_border,
                   color: const Color(0xFFFFC107),
@@ -313,7 +328,7 @@ class _ReviewCard extends StatelessWidget {
               }),
               const SizedBox(width: 6),
               Text(
-                _timeAgo(review.createdAt),
+                _timeAgo(widget.review.createdAt),
                 style: const TextStyle(
                   color: Color(0xFF9DA5B7),
                   fontSize: 10,
@@ -322,11 +337,9 @@ class _ReviewCard extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 8),
-
           Text(
-            review.komentar.isEmpty ? 'No comment' : review.komentar,
+            widget.review.komentar.isEmpty ? 'No comment' : widget.review.komentar,
             style: const TextStyle(
               color: AppColors.darkBlue,
               fontSize: 13,
@@ -334,37 +347,51 @@ class _ReviewCard extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-
           const SizedBox(height: 10),
 
-          Row(
-            children: [
-              const Icon(
-                Icons.thumb_up_alt_outlined,
-                color: Color(0xFF5E7CEB),
-                size: 14,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Helpful (0)',
-                style: TextStyle(
-                  color: AppColors.primaryEnd,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+          // Tombol Helpful
+          InkWell(
+            onTap: _toggleHelpful,
+            child: Row(
+              children: [
+                Icon(
+                  widget.review.isHelpful ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
+                  color: widget.review.isHelpful ? Colors.blue : Color(0xFF5E7CEB),
+                  size: 14,
                 ),
-              ),
-            ],
+                const SizedBox(width: 4),
+                Text(
+                  'Helpful (${widget.review.helpfulCount})',
+                  style: TextStyle(
+                    color: AppColors.primaryEnd,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          if (review.photoUrls.isNotEmpty) ...[
+          // Foto review (tidak diubah, tetap pakai _ReviewPhotos)
+          if (widget.review.photoUrls.isNotEmpty) ...[
             const SizedBox(height: 12),
             _ReviewPhotos(
-              photos: review.photoUrls,
+              photos: widget.review.photoUrls,
             ),
           ],
         ],
       ),
     );
+  }
+
+  String _timeAgo(DateTime? date) {
+    if (date == null) return '';
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    if (diff.inDays >= 30) return '${(diff.inDays / 30).floor()} month ago';
+    if (diff.inDays >= 1) return '${diff.inDays} day ago';
+    if (diff.inHours >= 1) return '${diff.inHours} hour ago';
+    return 'just now';
   }
 }
 

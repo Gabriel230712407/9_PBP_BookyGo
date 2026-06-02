@@ -182,4 +182,32 @@ class ReviewService {
 
     throw Exception(response.body);
   }
+
+  Future<Map<String, dynamic>?> toggleHelpful({
+    required int reviewId,
+    required int userId,
+  }) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/ulasans/$reviewId/helpful');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Accept': 'application/json',
+      },
+      body: {
+        'user_id': userId.toString(),
+      },
+    );
+
+    print('TOGGLE HELPFUL URL: $url');
+    print('TOGGLE HELPFUL BODY: user_id=$userId');
+    print('TOGGLE HELPFUL STATUS: ${response.statusCode}');
+    print('TOGGLE HELPFUL BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed toggle helpful: ${response.body}');
+  }
 }
