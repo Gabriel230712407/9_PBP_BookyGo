@@ -9,15 +9,28 @@ use Illuminate\Http\Request;
 
 class UlasanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $ulasans = Ulasan::with(['pemesanan', 'user', 'kamar', 'hotel'])
-            ->latest()
-            ->get();
+        $query = Ulasan::with(['pemesanan', 'user', 'kamar', 'hotel'])
+            ->latest();
+
+        if ($request->filled('hotel_id')) {
+            $query->where('hotel_id', $request->hotel_id);
+        }
+
+        if ($request->filled('kamar_id')) {
+            $query->where('kamar_id', $request->kamar_id);
+        }
+
+        $ulasans = $query->get();
 
         return response()->json([
             'status' => true,
             'message' => 'Data ulasan berhasil diambil',
+            'summary' => [
+                'average_rating' => round($ulasans->avg('rating') ?? 0, 1),
+                'total_review' => $ulasans->count(),
+            ],
             'data' => $ulasans
         ]);
     }
