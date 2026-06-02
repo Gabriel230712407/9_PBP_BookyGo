@@ -40,4 +40,9 @@ class Ulasan extends Model
     {
         return $this->belongsTo(Hotel::class, 'hotel_id');
     }
+
+    public function helpfuls()
+    {
+        return $this->hasMany(UlasanHelpful::class, 'ulasan_id');
+    }
 }

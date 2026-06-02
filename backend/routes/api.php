@@ -65,6 +65,7 @@ Route::get('/pemesanans', [PemesananController::class, 'index']);
 Route::get('/pemesanans/{pemesanan}', [PemesananController::class, 'show']);
 
 Route::apiResource('wishlists', WishlistController::class);
+Route::post('/ulasans/{ulasan}/helpful', [UlasanController::class, 'toggleHelpful']);
 Route::apiResource('ulasans', UlasanController::class);
 
 Route::apiResource('hotels', HotelController::class)->except(['index', 'show']);

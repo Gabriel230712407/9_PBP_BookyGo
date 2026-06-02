@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Ulasan;
 use App\Models\Kamar;
 use App\Models\Hotel;
+use App\Models\UlasanHelpful;
 use Illuminate\Http\Request;
 
 class UlasanController extends Controller
@@ -12,6 +13,7 @@ class UlasanController extends Controller
     public function index(Request $request)
     {
         $query = Ulasan::with(['pemesanan', 'user', 'kamar', 'hotel'])
+            ->withCount('helpfuls')
             ->latest();
 
         if ($request->filled('hotel_id')) {
@@ -188,4 +190,37 @@ class UlasanController extends Controller
             ]);
         }
     }
+    
+    public function toggleHelpful(Request $request, Ulasan $ulasan)
+{
+    $request->validate([
+        'user_id' => 'required|exists:users,id',
+    ]);
+
+    $helpful = UlasanHelpful::where('ulasan_id', $ulasan->id)
+        ->where('user_id', $request->user_id)
+        ->first();
+
+    if ($helpful) {
+        $helpful->delete();
+        return response()->json([
+            'status' => true,
+            'message' => 'Helpful dibatalkan',
+            'is_helpful' => false,
+            'helpful_count' => $ulasan->helpfuls()->count(),
+        ]);
+    }
+
+    UlasanHelpful::create([
+        'ulasan_id' => $ulasan->id,
+        'user_id' => $request->user_id,
+    ]);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Review ditandai helpful',
+        'is_helpful' => true,
+        'helpful_count' => $ulasan->helpfuls()->count(),
+    ]);
+}
 }
