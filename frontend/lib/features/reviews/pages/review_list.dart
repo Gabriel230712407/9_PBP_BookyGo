@@ -153,7 +153,7 @@ class _HotelReviewHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withOpacity(0.78),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -275,7 +275,7 @@ class _ReviewCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withOpacity(0.78),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Column(
