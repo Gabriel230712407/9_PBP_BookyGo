@@ -149,6 +149,7 @@ class ReviewService {
   Future<ReviewResponse> getReviews({
     int? hotelId,
     int? kamarId,
+    String? token,
   }) async {
     final queryParams = <String, String>{};
 

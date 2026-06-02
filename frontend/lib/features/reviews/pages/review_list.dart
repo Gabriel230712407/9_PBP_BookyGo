@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/review_model.dart';
 import '../services/review_service.dart';
-
+import '../../../core/auth/services/auth_service.dart';
 
 class ReviewListPage extends StatefulWidget {
   final int? hotelId;
@@ -42,9 +42,12 @@ class _ReviewListPageState extends State<ReviewListPage> {
 
   Future<void> _loadReviews() async {
     try {
+      final session = await AuthService.currentSession();
+      if (session == null) throw Exception('User not logged in');
       final result = await ReviewService().getReviews(
         hotelId: widget.hotelId,
         kamarId: widget.kamarId,
+        token: session?.token,
       );
 
       setState(() {
@@ -254,37 +257,36 @@ class _ReviewCard extends StatefulWidget {
 
 class _ReviewCardState extends State<_ReviewCard> {
   bool _isSubmittingHelpful = false;
+  
+  Future<void> _toggleHelpful() async {
+  if (_isSubmittingHelpful) return;
 
-  void _toggleHelpful() async {
-    if (_isSubmittingHelpful) return;
+  setState(() => _isSubmittingHelpful = true);
 
-    setState(() {
-      _isSubmittingHelpful = true;
-    });
+  try {
+    final session = await AuthService.currentSession();
+    final currentUserId = session?.user.id;
+    if (currentUserId == null) throw Exception('User not logged in');
 
-    try {
-      // Panggil API toggle helpful
-      final response = await ReviewService().toggleHelpful(
-        reviewId: widget.review.id,
-        userId: 1, // ganti dengan user login
-      );
+    final response = await ReviewService().toggleHelpful(
+      reviewId: widget.review.id,
+      userId: currentUserId,
+    );
 
-      if (response != null) {
-        setState(() {
-          widget.review.helpfulCount = response['helpful_count'];
-          widget.review.isHelpful = response['is_helpful'];
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
+    if (response != null) {
       setState(() {
-        _isSubmittingHelpful = false;
+        widget.review.helpfulCount = response['helpful_count'];
+        widget.review.isHelpful = response['is_helpful'];
       });
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  } finally {
+    setState(() => _isSubmittingHelpful = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -355,14 +357,16 @@ class _ReviewCardState extends State<_ReviewCard> {
             child: Row(
               children: [
                 Icon(
-                  widget.review.isHelpful ? Icons.thumb_up : Icons.thumb_up_alt_outlined,
-                  color: widget.review.isHelpful ? Colors.blue : Color(0xFF5E7CEB),
+                  widget.review.isHelpful
+                      ? Icons.thumb_up
+                      : Icons.thumb_up_alt_outlined,
+                  color: widget.review.isHelpful ? Colors.blue : const Color(0xFF5E7CEB),
                   size: 14,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   'Helpful (${widget.review.helpfulCount})',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: AppColors.primaryEnd,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

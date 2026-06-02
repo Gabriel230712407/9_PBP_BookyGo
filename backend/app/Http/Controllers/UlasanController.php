@@ -12,6 +12,7 @@ class UlasanController extends Controller
 {
     public function index(Request $request)
     {
+        $userId = optional($request->user())->id;
         $query = Ulasan::with(['pemesanan', 'user', 'kamar', 'hotel'])
             ->withCount('helpfuls')
             ->latest();
@@ -25,6 +26,15 @@ class UlasanController extends Controller
         }
 
         $ulasans = $query->get();
+
+        $ulasans->transform(function($ulasan) use ($userId) {
+            if ($userId) {
+                $ulasan->isHelpful = $ulasan->helpfuls()->where('user_id', $userId)->exists();
+            } else {
+                $ulasan->isHelpful = false;
+            }
+            return $ulasan;
+        });
 
         return response()->json([
             'status' => true,
@@ -192,35 +202,35 @@ class UlasanController extends Controller
     }
     
     public function toggleHelpful(Request $request, Ulasan $ulasan)
-{
-    $request->validate([
-        'user_id' => 'required|exists:users,id',
-    ]);
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
 
-    $helpful = UlasanHelpful::where('ulasan_id', $ulasan->id)
-        ->where('user_id', $request->user_id)
-        ->first();
+        $helpful = UlasanHelpful::where('ulasan_id', $ulasan->id)
+            ->where('user_id', $request->user_id)
+            ->first();
 
-    if ($helpful) {
-        $helpful->delete();
+        if ($helpful) {
+            $helpful->delete();
+            return response()->json([
+                'status' => true,
+                'message' => 'Helpful dibatalkan',
+                'is_helpful' => false,
+                'helpful_count' => $ulasan->helpfuls()->count(),
+            ]);
+        }
+
+        UlasanHelpful::create([
+            'ulasan_id' => $ulasan->id,
+            'user_id' => $request->user_id,
+        ]);
+
         return response()->json([
             'status' => true,
-            'message' => 'Helpful dibatalkan',
-            'is_helpful' => false,
+            'message' => 'Review ditandai helpful',
+            'is_helpful' => true,
             'helpful_count' => $ulasan->helpfuls()->count(),
         ]);
     }
-
-    UlasanHelpful::create([
-        'ulasan_id' => $ulasan->id,
-        'user_id' => $request->user_id,
-    ]);
-
-    return response()->json([
-        'status' => true,
-        'message' => 'Review ditandai helpful',
-        'is_helpful' => true,
-        'helpful_count' => $ulasan->helpfuls()->count(),
-    ]);
-}
 }
