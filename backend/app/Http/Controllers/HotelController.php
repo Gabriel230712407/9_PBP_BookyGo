@@ -10,8 +10,8 @@ class HotelController extends Controller
     public function index()
     {
         $hotels = Hotel::with(['fasilitas', 'fotoHotels', 'kamars'])
-            ->withCount('ulasans')                          // ✅ hitung jumlah ulasan
-            ->withAvg('ulasans', 'rating')                  // ✅ hitung rata-rata rating
+            ->withCount('ulasans')
+            ->withAvg('ulasans', 'rating')
             ->latest()
             ->get();
 
@@ -46,7 +46,7 @@ class HotelController extends Controller
         }
 
         $hotel->total_rating = round($hotel->ulasans->avg('rating') ?? 0, 1);
-        $hotel->total_review = $hotel->ulasans->count(); // ✅ bonus: kirim juga total review
+        $hotel->total_review = $hotel->ulasans->count();
 
         return response()->json([
             'status' => true,
