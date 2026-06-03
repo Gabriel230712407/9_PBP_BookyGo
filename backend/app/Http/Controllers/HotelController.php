@@ -10,8 +10,16 @@ class HotelController extends Controller
     public function index()
     {
         $hotels = Hotel::with(['fasilitas', 'fotoHotels', 'kamars'])
+            ->withCount('ulasans')
+            ->withAvg('ulasans', 'rating')
             ->latest()
             ->get();
+
+        $hotels->transform(function ($hotel) {
+            $hotel->total_rating = round($hotel->ulasans_avg_rating ?? 0, 1);
+            $hotel->total_review = $hotel->ulasans_count ?? 0;
+            return $hotel;
+        });
 
         return response()->json([
             'status' => true,
@@ -36,6 +44,9 @@ class HotelController extends Controller
                 'message' => 'Hotel tidak ditemukan'
             ], 404);
         }
+
+        $hotel->total_rating = round($hotel->ulasans->avg('rating') ?? 0, 1);
+        $hotel->total_review = $hotel->ulasans->count();
 
         return response()->json([
             'status' => true,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import '../../../core/constants/api_config.dart';
+import '../models/review_model.dart';
 
 class ReviewService {
   Future<Map<String, dynamic>?> createReview(
@@ -143,5 +144,69 @@ class ReviewService {
     }
 
     throw Exception(response.body);
+  }
+
+  Future<ReviewResponse> getReviews({
+    int? hotelId,
+    int? kamarId,
+    String? token,
+    int? userId,
+  }) async {
+    final queryParams = <String, String>{};
+
+    if (hotelId != null) queryParams['hotel_id'] = hotelId.toString();
+    if (kamarId != null) queryParams['kamar_id'] = kamarId.toString();
+    if (userId != null) queryParams['user_id'] = userId.toString();
+
+    final uri = Uri.parse('${ApiConfig.baseUrl}/ulasans').replace(
+      queryParameters: queryParams,
+    );
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Accept': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('GET REVIEWS URL: $uri');
+    print('GET REVIEWS STATUS: ${response.statusCode}');
+    print('GET REVIEWS BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      return ReviewResponse.fromJson(decoded);
+    }
+
+    throw Exception(response.body);
+  }
+
+  Future<Map<String, dynamic>?> toggleHelpful({
+    required int reviewId,
+    required int userId,
+  }) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/ulasans/$reviewId/helpful');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Accept': 'application/json',
+      },
+      body: {
+        'user_id': userId.toString(),
+      },
+    );
+
+    print('TOGGLE HELPFUL URL: $url');
+    print('TOGGLE HELPFUL BODY: user_id=$userId');
+    print('TOGGLE HELPFUL STATUS: ${response.statusCode}');
+    print('TOGGLE HELPFUL BODY: ${response.body}');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+
+    throw Exception('Failed toggle helpful: ${response.body}');
   }
 }

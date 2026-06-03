@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/auth/services/auth_service.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../../room/pages/room_page.dart';
 import '../models/hotel_model.dart';
 import '../services/hotel_service.dart';
+import '../../reviews/pages/review_list.dart';
+import '../../reviews/models/review_model.dart';
+import '../../reviews/services/review_service.dart';
 
 class HotelDetailPage extends StatefulWidget {
   final int hotelId;
@@ -28,29 +32,33 @@ class HotelDetailPage extends StatefulWidget {
 
 class _HotelDetailPageState extends State<HotelDetailPage> {
   late Future<HotelModel> _futureHotel;
+  late Future<ReviewResponse> _futureReviews;
+  int? _currentUserId;
 
   @override
   void initState() {
     super.initState();
     _futureHotel = HotelService().fetchHotelDetail(widget.hotelId);
+    _futureReviews = _loadUserAndReviews();
+  }
+
+  Future<ReviewResponse> _loadUserAndReviews() async {
+    final session = await AuthService.currentSession();
+    final userId = session?.user.id;
+    if (mounted) {
+      setState(() => _currentUserId = userId);
+    }
+    return ReviewService().getReviews(
+      hotelId: widget.hotelId,
+      userId: userId,
+    );
   }
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
-
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
@@ -58,15 +66,11 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
     final number = value.toStringAsFixed(0);
     final buffer = StringBuffer();
     int counter = 0;
-
     for (int i = number.length - 1; i >= 0; i--) {
       buffer.write(number[i]);
       counter++;
-      if (counter % 3 == 0 && i != 0) {
-        buffer.write('.');
-      }
+      if (counter % 3 == 0 && i != 0) buffer.write('.');
     }
-
     return 'Rp ${buffer.toString().split('').reversed.join()}';
   }
 
@@ -80,7 +84,6 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (snapshot.hasError) {
             return Center(
               child: Padding(
@@ -104,8 +107,30 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _HeaderGallery(hotel: hotel),
-                      _HotelTitle(hotel: hotel),
-                      _ReviewSection(hotel: hotel),
+
+                      FutureBuilder<ReviewResponse>(
+                        future: _futureReviews,
+                        builder: (context, reviewSnapshot) {
+                          final reviewResponse = reviewSnapshot.data;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _HotelTitle(
+                                hotel: hotel,
+                                reviewSummary: reviewResponse?.summary,
+                              ),
+                              _ReviewSection(
+                                hotel: hotel,
+                                reviewResponse: reviewResponse,
+                                isLoading: reviewSnapshot.connectionState ==
+                                    ConnectionState.waiting,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+
                       _FacilitySection(hotel: hotel),
                       _LocationSection(hotel: hotel),
                       _PolicySection(
@@ -167,23 +192,19 @@ class _HeaderGallery extends StatelessWidget {
             Row(
               children: List.generate(3, (index) {
                 final imageIndex = index + 1;
-                final image = imageIndex < images.length
-                    ? images[imageIndex]
-                    : null;
-
+                final image =
+                    imageIndex < images.length ? images[imageIndex] : null;
                 return Expanded(
                   child: Padding(
-                    padding: EdgeInsets.only(top: 2, right: index == 2 ? 0 : 2),
+                    padding:
+                        EdgeInsets.only(top: 2, right: index == 2 ? 0 : 2),
                     child: _HeaderGridImage(
                       image: image,
                       height: 85,
                       borderRadius: BorderRadius.zero,
                       onTap: image != null
-                          ? () => _openInfiniteGallery(
-                              context,
-                              images,
-                              imageIndex,
-                            )
+                          ? () =>
+                              _openInfiniteGallery(context, images, imageIndex)
                           : null,
                     ),
                   ),
@@ -210,10 +231,7 @@ class _HeaderGallery extends StatelessWidget {
   }
 
   void _openInfiniteGallery(
-    BuildContext context,
-    List<String> images,
-    int initialIndex,
-  ) {
+      BuildContext context, List<String> images, int initialIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -249,18 +267,13 @@ class _HeaderGridImage extends StatelessWidget {
             ? Image.asset(
                 image!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) {
-                  return const Icon(Icons.image, size: 44, color: Colors.white);
-                },
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.image, size: 44, color: Colors.white),
               )
             : const Icon(Icons.image, size: 44, color: Colors.white),
       ),
     );
-
-    if (onTap == null) {
-      return child;
-    }
-
+    if (onTap == null) return child;
     return InkWell(onTap: onTap, child: child);
   }
 }
@@ -302,16 +315,13 @@ class _InfiniteImageViewerState extends State<_InfiniteImageViewer> {
   @override
   Widget build(BuildContext context) {
     final images = widget.images;
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
           PageView.builder(
             controller: _controller,
-            onPageChanged: (page) {
-              setState(() => _currentPage = page);
-            },
+            onPageChanged: (page) => setState(() => _currentPage = page),
             itemBuilder: (context, index) {
               final image = images[index % images.length];
               return InteractiveViewer(
@@ -321,13 +331,11 @@ class _InfiniteImageViewerState extends State<_InfiniteImageViewer> {
                   child: Image.asset(
                     image,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) {
-                      return const Icon(
-                        Icons.broken_image,
-                        color: Colors.white,
-                        size: 56,
-                      );
-                    },
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.broken_image,
+                      color: Colors.white,
+                      size: 56,
+                    ),
                   ),
                 ),
               );
@@ -338,7 +346,7 @@ class _InfiniteImageViewerState extends State<_InfiniteImageViewer> {
             left: 14,
             child: CircleAvatar(
               radius: 20,
-              backgroundColor: Colors.white.withOpacity(0.18),
+              backgroundColor: Colors.white.withValues(alpha: 0.18),
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () => Navigator.pop(context),
@@ -351,12 +359,10 @@ class _InfiniteImageViewerState extends State<_InfiniteImageViewer> {
             right: 0,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.45),
+                  color: Colors.black.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Text(
@@ -378,11 +384,15 @@ class _InfiniteImageViewerState extends State<_InfiniteImageViewer> {
 
 class _HotelTitle extends StatelessWidget {
   final HotelModel hotel;
+  final ReviewSummary? reviewSummary;
 
-  const _HotelTitle({required this.hotel});
+  const _HotelTitle({required this.hotel, required this.reviewSummary});
 
   @override
   Widget build(BuildContext context) {
+    final averageRating = reviewSummary?.averageRating ?? 0.0;
+    final totalReview = reviewSummary?.totalReview ?? 0;
+
     return Container(
       width: double.infinity,
       color: Colors.white,
@@ -402,7 +412,7 @@ class _HotelTitle extends StatelessWidget {
           Row(
             children: [
               Text(
-                '${hotel.rawRating.toStringAsFixed(1)}/5',
+                '${averageRating.toStringAsFixed(1)}/5',
                 style: const TextStyle(
                   fontSize: 20,
                   color: Color(0xff5E7CEB),
@@ -411,7 +421,7 @@ class _HotelTitle extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '(${hotel.reviewCount} review)',
+                '($totalReview ${totalReview == 1 ? 'review' : 'reviews'})',
                 style: const TextStyle(fontSize: 11, color: Colors.grey),
               ),
               const SizedBox(width: 12),
@@ -432,23 +442,31 @@ class _HotelTitle extends StatelessWidget {
     );
   }
 }
-
 class _ReviewSection extends StatelessWidget {
   final HotelModel hotel;
+  final ReviewResponse? reviewResponse;
+  final bool isLoading; 
 
-  const _ReviewSection({required this.hotel});
+  const _ReviewSection({
+    required this.hotel,
+    required this.reviewResponse,
+    required this.isLoading,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final firstReview = hotel.reviews.isNotEmpty ? hotel.reviews.first : null;
+    final summary = reviewResponse?.summary;
+    final reviews = reviewResponse?.reviews ?? [];
+    final firstReview = reviews.isNotEmpty ? reviews.first : null;
+    final totalReview = summary?.totalReview ?? 0;
 
     return _SectionBox(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Text(
+              const Text(
                 'Review',
                 style: TextStyle(
                   fontSize: 16,
@@ -456,94 +474,137 @@ class _ReviewSection extends StatelessWidget {
                   color: Color(0xff26346B),
                 ),
               ),
-              Spacer(),
-              Text(
-                'See All',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xff26346B),
-                  fontWeight: FontWeight.bold,
+              const Spacer(),
+              GestureDetector(
+                onTap: totalReview == 0
+                    ? null
+                    : () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReviewListPage(
+                              hotelId: hotel.id,
+                              title: 'Reviews',
+                              hotelName: hotel.name,
+                              hotelLocation: hotel.location,
+                              hotelImage: hotel.images.isNotEmpty
+                                  ? hotel.images.first
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                child: Text(
+                  'See All',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: totalReview == 0
+                        ? Colors.grey
+                        : const Color(0xff26346B),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
+
           const SizedBox(height: 8),
-          Text(
-            '${hotel.rawRating.toStringAsFixed(1)}/5',
-            style: const TextStyle(
-              fontSize: 24,
-              color: Color(0xff5E7CEB),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (firstReview != null)
-            Container(
-              height: 118,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xffEEF3FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 90,
-                    height: 98,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${firstReview.rating.toStringAsFixed(1)} /5',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xff26346B),
-                            fontSize: 18,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          firstReview.userName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          firstReview.comment.isEmpty
-                              ? 'No comment'
-                              : firstReview.comment,
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
             )
-          else
-            const Text(
-              'No review yet',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+          else ...[
+            Text(
+              '($totalReview ${totalReview == 1 ? 'review' : 'reviews'})',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
             ),
+
+            const SizedBox(height: 12),
+
+            if (firstReview != null)
+              Container(
+                height: 118,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xffEEF3FF),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 90,
+                        height: 98,
+                        color: Colors.grey[300],
+                        child: firstReview.photoUrls.isNotEmpty
+                            ? Image.network(
+                                firstReview.photoUrls.first,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.person,
+                                  size: 50,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Colors.white,
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${firstReview.rating.toStringAsFixed(1)} /5',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xff26346B),
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            firstReview.userName ?? 'User',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            firstReview.komentar.isEmpty
+                                ? 'No comment'
+                                : firstReview.komentar,
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              const Text(
+                'No review yet',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+          ],
         ],
       ),
     );
@@ -557,7 +618,6 @@ class _FacilitySection extends StatelessWidget {
 
   IconData _mapIcon(String facility) {
     final value = facility.toLowerCase();
-
     if (value.contains('wifi')) return Icons.wifi;
     if (value.contains('restaurant')) return Icons.restaurant;
     if (value.contains('airport')) return Icons.airport_shuttle;
@@ -591,10 +651,8 @@ class _FacilitySection extends StatelessWidget {
             crossAxisSpacing: 10,
             childAspectRatio: 5.9,
             children: hotel.facilityList
-                .map(
-                  (facility) =>
-                      _FacilityItem(icon: _mapIcon(facility), text: facility),
-                )
+                .map((facility) =>
+                    _FacilityItem(icon: _mapIcon(facility), text: facility))
                 .toList(),
           ),
         ],
@@ -662,11 +720,7 @@ class _LocationSection extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             hotel.address,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-              height: 1.4,
-            ),
+            style: const TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
           ),
         ],
       ),
@@ -742,10 +796,7 @@ class _PolicySection extends StatelessWidget {
           const SizedBox(height: 28),
           const Text(
             'Children',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Color(0xff26346B),
-            ),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xff26346B)),
           ),
           const SizedBox(height: 10),
           const Text(
@@ -785,14 +836,12 @@ class _PolicyText extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            date,
-            style: const TextStyle(fontSize: 11, color: Color(0xff26346B)),
-          ),
-          Text(
-            time,
-            style: const TextStyle(fontSize: 11, color: Color(0xff26346B)),
-          ),
+          Text(date,
+              style:
+                  const TextStyle(fontSize: 11, color: Color(0xff26346B))),
+          Text(time,
+              style:
+                  const TextStyle(fontSize: 11, color: Color(0xff26346B))),
         ],
       ),
     );
@@ -869,10 +918,7 @@ class _BottomBookingBar extends StatelessWidget {
               onPressed: onTap,
               child: const Text(
                 'View rooms',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -881,4 +927,3 @@ class _BottomBookingBar extends StatelessWidget {
     );
   }
 }
-

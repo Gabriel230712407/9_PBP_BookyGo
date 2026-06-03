@@ -1,34 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../navigation/widgets/app_bottom_nav_bar.dart';
+import '../../../core/auth/services/auth_service.dart';
 import '../models/review_model.dart';
 import '../services/review_service.dart';
-import '../../../core/auth/services/auth_service.dart';
 
-class ReviewListPage extends StatefulWidget {
-  final int? hotelId;
-  final int? kamarId;
+class RoomReviewListPage extends StatefulWidget {
+  final int kamarId;
   final String title;
-  final String? hotelName;
-  final String? hotelLocation;
-  final String? hotelImage;
 
-  const ReviewListPage({
+  const RoomReviewListPage({
     super.key,
-    this.hotelId,
-    this.kamarId,
+    required this.kamarId,
     this.title = 'Reviews',
-    this.hotelName,
-    this.hotelLocation,
-    this.hotelImage,
   });
 
   @override
-  State<ReviewListPage> createState() => _ReviewListPageState();
+  State<RoomReviewListPage> createState() => _RoomReviewListPageState();
 }
 
-class _ReviewListPageState extends State<ReviewListPage> {
+class _RoomReviewListPageState extends State<RoomReviewListPage> {
   bool _isLoading = true;
   String? _errorMessage;
   ReviewResponse? _reviewResponse;
@@ -39,26 +30,23 @@ class _ReviewListPageState extends State<ReviewListPage> {
     _loadReviews();
   }
 
- Future<void> _loadReviews() async {
-  try {
-    final session = await AuthService.currentSession();
-    final currentUserId = session?.user.id;
+  Future<void> _loadReviews() async {
+    try {
+      final session = await AuthService.currentSession();
+      final currentUserId = session?.user.id;
 
-    print('SESSION: $session');
-    print('USER ID: $currentUserId');
+      final result = await ReviewService().getReviews(
+        kamarId: widget.kamarId,
+        userId: currentUserId,
+      );
 
-    final result = await ReviewService().getReviews(
-      hotelId: widget.hotelId,
-      kamarId: widget.kamarId,
-      token: session?.token,
-      userId: currentUserId,
-    );
-
+      if (!mounted) return;
       setState(() {
         _reviewResponse = result;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
@@ -80,7 +68,6 @@ class _ReviewListPageState extends State<ReviewListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final summary = _reviewResponse?.summary;
     final reviews = _reviewResponse?.reviews ?? [];
 
     return Scaffold(
@@ -132,172 +119,48 @@ class _ReviewListPageState extends State<ReviewListPage> {
                     ),
                   ),
                 )
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 90),
-                  children: [
-                    _HotelReviewHeader(
-                      hotelName: widget.hotelName ?? 'Hotel',
-                      hotelLocation: widget.hotelLocation ?? '',
-                      hotelImage: widget.hotelImage,
-                      averageRating: summary?.averageRating ?? 0,
-                      totalReview: summary?.totalReview ?? 0,
-                    ),
-                    const SizedBox(height: 12),
-                    if (reviews.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 60),
-                        child: Center(
-                          child: Text(
-                            'No reviews yet',
-                            style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      ...reviews.map(
-                        (review) => _ReviewCard(
-                          key: ValueKey(review.id),
-                          review: review,
-                          onUpdated: _updateLocalReview,
-                        ),
-                      ),
-                  ],
-                ),
-      bottomNavigationBar: const AppBottomNavBar(),
-    );
-  }
-}
-
-class _HotelReviewHeader extends StatelessWidget {
-  final String hotelName;
-  final String hotelLocation;
-  final String? hotelImage;
-  final double averageRating;
-  final int totalReview;
-
-  const _HotelReviewHeader({
-    required this.hotelName,
-    required this.hotelLocation,
-    required this.hotelImage,
-    required this.averageRating,
-    required this.totalReview,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
-        borderRadius: BorderRadius.circular(13),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: SizedBox(
-              width: 74,
-              height: 74,
-              child: _SmartImage(
-                image: hotelImage,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  hotelName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.darkBlue,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    height: 1.15,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Row(
-                  children: [
-                    Text(
-                      '${averageRating.toStringAsFixed(1)}/5',
-                      style: const TextStyle(
-                        color: Color(0xFF5E7CEB),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(width: 7),
-                    Text(
-                      '($totalReview ${totalReview == 1 ? 'review' : 'reviews'})',
-                      style: const TextStyle(
-                        color: Color(0xFF8F97A8),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      '•',
-                      style: TextStyle(
-                        color: Color(0xFF8F97A8),
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
+              : reviews.isEmpty
+                  ? const Center(
                       child: Text(
-                        hotelLocation,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF8F97A8),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                        'No reviews yet',
+                        style: TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+                      itemCount: reviews.length,
+                      itemBuilder: (context, index) {
+                        return _RoomReviewCard(
+                          key: ValueKey(reviews[index].id),
+                          review: reviews[index],
+                          onUpdated: _updateLocalReview,
+                        );
+                      },
                     ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
 
-class _ReviewCard extends StatefulWidget {
+class _RoomReviewCard extends StatefulWidget {
   final ReviewModel review;
   final Function(ReviewModel updatedReview)? onUpdated;
 
-  const _ReviewCard({
+  const _RoomReviewCard({
     super.key,
     required this.review,
     this.onUpdated,
   });
 
   @override
-  State<_ReviewCard> createState() => _ReviewCardState();
+  State<_RoomReviewCard> createState() => _RoomReviewCardState();
 }
 
-class _ReviewCardState extends State<_ReviewCard> {
+class _RoomReviewCardState extends State<_RoomReviewCard> {
   bool _isSubmittingHelpful = false;
-
   late ReviewModel _review;
 
   @override
@@ -307,7 +170,7 @@ class _ReviewCardState extends State<_ReviewCard> {
   }
 
   @override
-  void didUpdateWidget(covariant _ReviewCard oldWidget) {
+  void didUpdateWidget(covariant _RoomReviewCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.review != widget.review) {
       _review = widget.review;
@@ -326,19 +189,17 @@ class _ReviewCardState extends State<_ReviewCard> {
 
       final response = await ReviewService().toggleHelpful(
         reviewId: _review.id,
-        userId: currentUserId,
+        userId: currentUserId, 
       );
 
       if (response != null) {
+        // FIX 2: Gunakan copyWith, jangan mutasi langsung
         final updatedReview = _review.copyWith(
           helpfulCount: response['helpful_count'] as int,
           isHelpful: response['is_helpful'] as bool,
         );
 
-        setState(() {
-          _review = updatedReview; 
-        });
-
+        setState(() => _review = updatedReview);
         widget.onUpdated?.call(updatedReview);
       }
     } catch (e) {
@@ -354,11 +215,36 @@ class _ReviewCardState extends State<_ReviewCard> {
     }
   }
 
+  String _timeAgo(DateTime? date) {
+    if (date == null) return '';
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    if (difference.inDays >= 365) {
+      final years = (difference.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    }
+    if (difference.inDays >= 30) {
+      final month = (difference.inDays / 30).floor();
+      return '$month ${month == 1 ? 'month' : 'months'} ago';
+    }
+    if (difference.inDays >= 1) {
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+    }
+    if (difference.inHours >= 1) {
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    }
+    if (difference.inMinutes >= 1) {
+      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+    }
+    return 'just now';
+  }
+
   @override
   Widget build(BuildContext context) {
+    // FIX 3: Render dari _review (local state), bukan widget.review
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(13),
@@ -434,7 +320,6 @@ class _ReviewCardState extends State<_ReviewCard> {
                           _review.isHelpful
                               ? Icons.thumb_up
                               : Icons.thumb_up_alt_outlined,
-                          // FIX MINOR: warna konsisten saat helpful/tidak
                           color: _review.isHelpful
                               ? AppColors.primaryEnd
                               : const Color(0xFF5E7CEB),
@@ -461,30 +346,6 @@ class _ReviewCardState extends State<_ReviewCard> {
       ),
     );
   }
-
-  String _timeAgo(DateTime? date) {
-    if (date == null) return '';
-    final now = DateTime.now();
-    final diff = now.difference(date);
-    if (diff.inDays >= 365) {
-      final years = (diff.inDays / 365).floor();
-      return '$years ${years == 1 ? 'year' : 'years'} ago';
-    }
-    if (diff.inDays >= 30) {
-      final months = (diff.inDays / 30).floor();
-      return '$months ${months == 1 ? 'month' : 'months'} ago';
-    }
-    if (diff.inDays >= 1) {
-      return '${diff.inDays} ${diff.inDays == 1 ? 'day' : 'days'} ago';
-    }
-    if (diff.inHours >= 1) {
-      return '${diff.inHours} ${diff.inHours == 1 ? 'hour' : 'hours'} ago';
-    }
-    if (diff.inMinutes >= 1) {
-      return '${diff.inMinutes} ${diff.inMinutes == 1 ? 'minute' : 'minutes'} ago';
-    }
-    return 'just now';
-  }
 }
 
 class _AvatarImage extends StatelessWidget {
@@ -498,11 +359,7 @@ class _AvatarImage extends StatelessWidget {
       return const CircleAvatar(
         radius: 18,
         backgroundColor: Color(0xFFDCE4F5),
-        child: Icon(
-          Icons.person,
-          color: Colors.white,
-          size: 21,
-        ),
+        child: Icon(Icons.person, color: Colors.white, size: 21),
       );
     }
 
@@ -593,70 +450,11 @@ class _PhotoTile extends StatelessWidget {
               width: width,
               height: height,
               color: const Color(0xFFE6F0FF),
-              child: const Icon(
-                Icons.broken_image,
-                color: Colors.grey,
-              ),
+              child: const Icon(Icons.broken_image, color: Colors.grey),
             );
           },
         ),
       ),
-    );
-  }
-}
-
-class _SmartImage extends StatelessWidget {
-  final String? image;
-  final BoxFit fit;
-
-  const _SmartImage({
-    required this.image,
-    this.fit = BoxFit.cover,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (image == null || image!.isEmpty) {
-      return Container(
-        color: const Color(0xFFDCE4F5),
-        child: const Icon(
-          Icons.image,
-          color: Colors.white,
-          size: 28,
-        ),
-      );
-    }
-
-    if (image!.startsWith('http')) {
-      return Image.network(
-        image!,
-        fit: fit,
-        errorBuilder: (_, __, ___) {
-          return Container(
-            color: const Color(0xFFDCE4F5),
-            child: const Icon(
-              Icons.broken_image,
-              color: Colors.white,
-              size: 28,
-            ),
-          );
-        },
-      );
-    }
-
-    return Image.asset(
-      image!,
-      fit: fit,
-      errorBuilder: (_, __, ___) {
-        return Container(
-          color: const Color(0xFFDCE4F5),
-          child: const Icon(
-            Icons.broken_image,
-            color: Colors.white,
-            size: 28,
-          ),
-        );
-      },
     );
   }
 }
@@ -701,9 +499,7 @@ class _ReviewPhotoViewerState extends State<_ReviewPhotoViewer> {
             controller: _controller,
             itemCount: widget.photos.length,
             onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
+              setState(() => _currentIndex = index);
             },
             itemBuilder: (context, index) {
               return InteractiveViewer(
