@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/auth/services/auth_service.dart';
 import '../models/review_model.dart';
 import '../services/review_service.dart';
 
@@ -31,18 +32,36 @@ class _RoomReviewListPageState extends State<RoomReviewListPage> {
 
   Future<void> _loadReviews() async {
     try {
+      final session = await AuthService.currentSession();
+      final currentUserId = session?.user.id;
+
       final result = await ReviewService().getReviews(
         kamarId: widget.kamarId,
+        userId: currentUserId,
       );
 
+      if (!mounted) return;
       setState(() {
         _reviewResponse = result;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  void _updateLocalReview(ReviewModel updatedReview) {
+    final reviews = _reviewResponse?.reviews;
+    if (reviews == null) return;
+
+    final index = reviews.indexWhere((r) => r.id == updatedReview.id);
+    if (index >= 0) {
+      setState(() {
+        reviews[index] = updatedReview;
       });
     }
   }
@@ -73,13 +92,30 @@ class _RoomReviewListPageState extends State<RoomReviewListPage> {
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(18),
-                    child: Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 13,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _isLoading = true;
+                              _errorMessage = null;
+                            });
+                            _loadReviews();
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Coba lagi'),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -99,7 +135,9 @@ class _RoomReviewListPageState extends State<RoomReviewListPage> {
                       itemCount: reviews.length,
                       itemBuilder: (context, index) {
                         return _RoomReviewCard(
+                          key: ValueKey(reviews[index].id),
                           review: reviews[index],
+                          onUpdated: _updateLocalReview,
                         );
                       },
                     ),
@@ -109,9 +147,12 @@ class _RoomReviewListPageState extends State<RoomReviewListPage> {
 
 class _RoomReviewCard extends StatefulWidget {
   final ReviewModel review;
+  final Function(ReviewModel updatedReview)? onUpdated;
 
   const _RoomReviewCard({
+    super.key,
     required this.review,
+    this.onUpdated,
   });
 
   @override
@@ -120,34 +161,57 @@ class _RoomReviewCard extends StatefulWidget {
 
 class _RoomReviewCardState extends State<_RoomReviewCard> {
   bool _isSubmittingHelpful = false;
+  late ReviewModel _review;
 
-  void _toggleHelpful() async {
+  @override
+  void initState() {
+    super.initState();
+    _review = widget.review;
+  }
+
+  @override
+  void didUpdateWidget(covariant _RoomReviewCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.review != widget.review) {
+      _review = widget.review;
+    }
+  }
+
+  Future<void> _toggleHelpful() async {
     if (_isSubmittingHelpful) return;
 
-    setState(() {
-      _isSubmittingHelpful = true;
-    });
+    setState(() => _isSubmittingHelpful = true);
 
     try {
+      final session = await AuthService.currentSession();
+      final currentUserId = session?.user.id;
+      if (currentUserId == null) throw Exception('User not logged in');
+
       final response = await ReviewService().toggleHelpful(
-        reviewId: widget.review.id,
-        userId: 1, // ganti dengan user login
+        reviewId: _review.id,
+        userId: currentUserId, 
       );
 
       if (response != null) {
-        setState(() {
-          widget.review.helpfulCount = response['helpful_count'];
-          widget.review.isHelpful = response['is_helpful'];
-        });
+        // FIX 2: Gunakan copyWith, jangan mutasi langsung
+        final updatedReview = _review.copyWith(
+          helpfulCount: response['helpful_count'] as int,
+          isHelpful: response['is_helpful'] as bool,
+        );
+
+        setState(() => _review = updatedReview);
+        widget.onUpdated?.call(updatedReview);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error toggle helpful: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     } finally {
-      setState(() {
-        _isSubmittingHelpful = false;
-      });
+      if (mounted) {
+        setState(() => _isSubmittingHelpful = false);
+      }
     }
   }
 
@@ -155,28 +219,34 @@ class _RoomReviewCardState extends State<_RoomReviewCard> {
     if (date == null) return '';
     final now = DateTime.now();
     final difference = now.difference(date);
+    if (difference.inDays >= 365) {
+      final years = (difference.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    }
     if (difference.inDays >= 30) {
       final month = (difference.inDays / 30).floor();
-      return '$month month${month > 1 ? 's' : ''} ago';
+      return '$month ${month == 1 ? 'month' : 'months'} ago';
     }
     if (difference.inDays >= 1) {
-      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
     }
     if (difference.inHours >= 1) {
-      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    }
+    if (difference.inMinutes >= 1) {
+      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
     }
     return 'just now';
   }
 
   @override
   Widget build(BuildContext context) {
-    final review = widget.review;
-
+    // FIX 3: Render dari _review (local state), bukan widget.review
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.78),
+        color: Colors.white.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Column(
@@ -184,11 +254,11 @@ class _RoomReviewCardState extends State<_RoomReviewCard> {
         children: [
           Row(
             children: [
-              _AvatarImage(url: review.userPhoto),
+              _AvatarImage(url: _review.userPhoto),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  review.userName ?? 'User',
+                  _review.userName ?? 'User',
                   style: const TextStyle(
                     color: AppColors.darkBlue,
                     fontSize: 14,
@@ -203,7 +273,7 @@ class _RoomReviewCardState extends State<_RoomReviewCard> {
             children: [
               ...List.generate(5, (index) {
                 return Icon(
-                  index < review.rating.round()
+                  index < _review.rating.round()
                       ? Icons.star
                       : Icons.star_border,
                   color: const Color(0xFFFFC107),
@@ -212,7 +282,7 @@ class _RoomReviewCardState extends State<_RoomReviewCard> {
               }),
               const SizedBox(width: 6),
               Text(
-                _timeAgo(review.createdAt),
+                _timeAgo(_review.createdAt),
                 style: const TextStyle(
                   color: Color(0xFF9DA5B7),
                   fontSize: 10,
@@ -223,7 +293,7 @@ class _RoomReviewCardState extends State<_RoomReviewCard> {
           ),
           const SizedBox(height: 8),
           Text(
-            review.komentar.isEmpty ? 'No comment' : review.komentar,
+            _review.komentar.isEmpty ? 'No comment' : _review.komentar,
             style: const TextStyle(
               color: AppColors.darkBlue,
               fontSize: 13,
@@ -232,34 +302,45 @@ class _RoomReviewCardState extends State<_RoomReviewCard> {
             ),
           ),
           const SizedBox(height: 10),
-          // Tombol Helpful
           InkWell(
-            onTap: _toggleHelpful,
-            child: Row(
-              children: [
-                Icon(
-                  review.isHelpful
-                      ? Icons.thumb_up
-                      : Icons.thumb_up_alt_outlined,
-                  color: review.isHelpful ? Colors.blue : const Color(0xFF5E7CEB),
-                  size: 14,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Helpful (${review.helpfulCount})',
-                  style: const TextStyle(
-                    color: AppColors.primaryEnd,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+            onTap: _isSubmittingHelpful ? null : _toggleHelpful,
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _isSubmittingHelpful
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 1.5),
+                        )
+                      : Icon(
+                          _review.isHelpful
+                              ? Icons.thumb_up
+                              : Icons.thumb_up_alt_outlined,
+                          color: _review.isHelpful
+                              ? AppColors.primaryEnd
+                              : const Color(0xFF5E7CEB),
+                          size: 14,
+                        ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Helpful (${_review.helpfulCount})',
+                    style: const TextStyle(
+                      color: AppColors.primaryEnd,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          // Foto review tetap sama
-          if (review.photoUrls.isNotEmpty) ...[
+          if (_review.photoUrls.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _ReviewPhotos(photos: review.photoUrls),
+            _ReviewPhotos(photos: _review.photoUrls),
           ],
         ],
       ),
@@ -278,11 +359,7 @@ class _AvatarImage extends StatelessWidget {
       return const CircleAvatar(
         radius: 18,
         backgroundColor: Color(0xFFDCE4F5),
-        child: Icon(
-          Icons.person,
-          color: Colors.white,
-          size: 21,
-        ),
+        child: Icon(Icons.person, color: Colors.white, size: 21),
       );
     }
 
@@ -298,9 +375,7 @@ class _AvatarImage extends StatelessWidget {
 class _ReviewPhotos extends StatelessWidget {
   final List<String> photos;
 
-  const _ReviewPhotos({
-    required this.photos,
-  });
+  const _ReviewPhotos({required this.photos});
 
   @override
   Widget build(BuildContext context) {
@@ -375,10 +450,7 @@ class _PhotoTile extends StatelessWidget {
               width: width,
               height: height,
               color: const Color(0xFFE6F0FF),
-              child: const Icon(
-                Icons.broken_image,
-                color: Colors.grey,
-              ),
+              child: const Icon(Icons.broken_image, color: Colors.grey),
             );
           },
         ),
@@ -427,9 +499,7 @@ class _ReviewPhotoViewerState extends State<_ReviewPhotoViewer> {
             controller: _controller,
             itemCount: widget.photos.length,
             onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
+              setState(() => _currentIndex = index);
             },
             itemBuilder: (context, index) {
               return InteractiveViewer(
@@ -439,6 +509,17 @@ class _ReviewPhotoViewerState extends State<_ReviewPhotoViewer> {
                   child: Image.network(
                     widget.photos[index],
                     fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.broken_image,
+                      color: Colors.white54,
+                      size: 48,
+                    ),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: CircularProgressIndicator(color: Colors.white54),
+                      );
+                    },
                   ),
                 ),
               );
@@ -448,37 +529,38 @@ class _ReviewPhotoViewerState extends State<_ReviewPhotoViewer> {
             top: 42,
             left: 16,
             child: CircleAvatar(
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
           ),
-          Positioned(
-            bottom: 32,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.45),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${_currentIndex + 1}/${widget.photos.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
+          if (widget.photos.length > 1)
+            Positioned(
+              bottom: 32,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_currentIndex + 1}/${widget.photos.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
