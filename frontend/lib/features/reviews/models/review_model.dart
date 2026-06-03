@@ -38,6 +38,42 @@ class ReviewModel {
     this.isHelpful = false,
   });
 
+  ReviewModel copyWith({
+    int? id,
+    int? pemesananId,
+    int? kamarId,
+    int? userId,
+    int? hotelId,
+    double? rating,
+    String? komentar,
+    List<String>? photos,
+    String? userName,
+    String? userPhoto,
+    String? roomName,
+    String? hotelName,
+    DateTime? createdAt,
+    int? helpfulCount,
+    bool? isHelpful,
+  }) {
+    return ReviewModel(
+      id: id ?? this.id,
+      pemesananId: pemesananId ?? this.pemesananId,
+      kamarId: kamarId ?? this.kamarId,
+      userId: userId ?? this.userId,
+      hotelId: hotelId ?? this.hotelId,
+      rating: rating ?? this.rating,
+      komentar: komentar ?? this.komentar,
+      photos: photos ?? this.photos,
+      userName: userName ?? this.userName,
+      userPhoto: userPhoto ?? this.userPhoto,
+      roomName: roomName ?? this.roomName,
+      hotelName: hotelName ?? this.hotelName,
+      createdAt: createdAt ?? this.createdAt,
+      helpfulCount: helpfulCount ?? this.helpfulCount,
+      isHelpful: isHelpful ?? this.isHelpful,
+    );
+  }
+
   factory ReviewModel.fromJson(Map<String, dynamic> json) {
     final user = json['user'] is Map<String, dynamic>
         ? json['user'] as Map<String, dynamic>
@@ -65,8 +101,8 @@ class ReviewModel {
       roomName: (kamar['nama'] ?? '').toString(),
       hotelName: (hotel['nama'] ?? '').toString(),
       createdAt: _tryParseDate(json['created_at']),
-      helpfulCount: _toInt(json['helpful_count']),
-      isHelpful: json['is_helpful'] == true,
+      helpfulCount: _toInt(json['helpful_count'] ?? json['helpfuls_count']),
+      isHelpful: json['isHelpful'] == true || json['is_helpful'] == true,
     );
   }
 

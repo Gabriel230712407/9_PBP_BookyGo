@@ -150,11 +150,13 @@ class ReviewService {
     int? hotelId,
     int? kamarId,
     String? token,
+    int? userId,
   }) async {
     final queryParams = <String, String>{};
 
     if (hotelId != null) queryParams['hotel_id'] = hotelId.toString();
     if (kamarId != null) queryParams['kamar_id'] = kamarId.toString();
+    if (userId != null) queryParams['user_id'] = userId.toString();
 
     final uri = Uri.parse('${ApiConfig.baseUrl}/ulasans').replace(
       queryParameters: queryParams,

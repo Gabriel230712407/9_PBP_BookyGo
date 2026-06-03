@@ -12,8 +12,7 @@ class UlasanController extends Controller
 {
     public function index(Request $request)
     {
-        $userId = optional($request->user())->id;
-
+        $userId = optional($request->user())->id ?? $request->query('user_id');
         $query = Ulasan::with(['pemesanan', 'user', 'kamar', 'hotel'])
             ->withCount('helpfuls')
             ->latest();

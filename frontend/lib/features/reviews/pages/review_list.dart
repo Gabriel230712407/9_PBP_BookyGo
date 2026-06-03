@@ -39,14 +39,20 @@ class _ReviewListPageState extends State<ReviewListPage> {
     _loadReviews();
   }
 
-  Future<void> _loadReviews() async {
-    try {
-      final session = await AuthService.currentSession();
-      final result = await ReviewService().getReviews(
-        hotelId: widget.hotelId,
-        kamarId: widget.kamarId,
-        token: session?.token,
-      );
+ Future<void> _loadReviews() async {
+  try {
+    final session = await AuthService.currentSession();
+    final currentUserId = session?.user.id;
+
+    print('SESSION: $session');
+    print('USER ID: $currentUserId');
+
+    final result = await ReviewService().getReviews(
+      hotelId: widget.hotelId,
+      kamarId: widget.kamarId,
+      token: session?.token,
+      userId: currentUserId,
+    );
 
       setState(() {
         _reviewResponse = result;
@@ -60,12 +66,14 @@ class _ReviewListPageState extends State<ReviewListPage> {
     }
   }
 
-  // Callback untuk update state review lokal tanpa reload
   void _updateLocalReview(ReviewModel updatedReview) {
-    final index = _reviewResponse?.reviews.indexWhere((r) => r.id == updatedReview.id);
-    if (index != null && index >= 0) {
+    final reviews = _reviewResponse?.reviews;
+    if (reviews == null) return;
+
+    final index = reviews.indexWhere((r) => r.id == updatedReview.id);
+    if (index >= 0) {
       setState(() {
-        _reviewResponse?.reviews[index] = updatedReview;
+        reviews[index] = updatedReview;
       });
     }
   }
@@ -97,13 +105,30 @@ class _ReviewListPageState extends State<ReviewListPage> {
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(18),
-                    child: Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.textMuted,
-                        fontSize: 13,
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _isLoading = true;
+                              _errorMessage = null;
+                            });
+                            _loadReviews();
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Coba lagi'),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -135,8 +160,9 @@ class _ReviewListPageState extends State<ReviewListPage> {
                     else
                       ...reviews.map(
                         (review) => _ReviewCard(
+                          key: ValueKey(review.id),
                           review: review,
-                          onUpdated: _updateLocalReview, // Pasang callback
+                          onUpdated: _updateLocalReview,
                         ),
                       ),
                   ],
@@ -166,7 +192,7 @@ class _HotelReviewHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.78),
+        color: Colors.white.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -215,7 +241,7 @@ class _HotelReviewHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 7),
                     Text(
-                      '($totalReview review)',
+                      '($totalReview ${totalReview == 1 ? 'review' : 'reviews'})',
                       style: const TextStyle(
                         color: Color(0xFF8F97A8),
                         fontSize: 11,
@@ -259,7 +285,11 @@ class _ReviewCard extends StatefulWidget {
   final ReviewModel review;
   final Function(ReviewModel updatedReview)? onUpdated;
 
-  const _ReviewCard({required this.review, this.onUpdated});
+  const _ReviewCard({
+    super.key,
+    required this.review,
+    this.onUpdated,
+  });
 
   @override
   State<_ReviewCard> createState() => _ReviewCardState();
@@ -267,6 +297,22 @@ class _ReviewCard extends StatefulWidget {
 
 class _ReviewCardState extends State<_ReviewCard> {
   bool _isSubmittingHelpful = false;
+
+  late ReviewModel _review;
+
+  @override
+  void initState() {
+    super.initState();
+    _review = widget.review;
+  }
+
+  @override
+  void didUpdateWidget(covariant _ReviewCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.review != widget.review) {
+      _review = widget.review;
+    }
+  }
 
   Future<void> _toggleHelpful() async {
     if (_isSubmittingHelpful) return;
@@ -279,27 +325,32 @@ class _ReviewCardState extends State<_ReviewCard> {
       if (currentUserId == null) throw Exception('User not logged in');
 
       final response = await ReviewService().toggleHelpful(
-        reviewId: widget.review.id,
+        reviewId: _review.id,
         userId: currentUserId,
       );
 
       if (response != null) {
+        final updatedReview = _review.copyWith(
+          helpfulCount: response['helpful_count'] as int,
+          isHelpful: response['is_helpful'] as bool,
+        );
+
         setState(() {
-          widget.review.helpfulCount = response['helpful_count'];
-          widget.review.isHelpful = response['is_helpful'];
+          _review = updatedReview; 
         });
 
-        // Update state di ReviewListPage tanpa reload backend
-        if (widget.onUpdated != null) {
-          widget.onUpdated!(widget.review);
-        }
+        widget.onUpdated?.call(updatedReview);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     } finally {
-      setState(() => _isSubmittingHelpful = false);
+      if (mounted) {
+        setState(() => _isSubmittingHelpful = false);
+      }
     }
   }
 
@@ -309,7 +360,7 @@ class _ReviewCardState extends State<_ReviewCard> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.78),
+        color: Colors.white.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Column(
@@ -317,11 +368,11 @@ class _ReviewCardState extends State<_ReviewCard> {
         children: [
           Row(
             children: [
-              _AvatarImage(url: widget.review.userPhoto),
+              _AvatarImage(url: _review.userPhoto),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  widget.review.userName ?? 'User',
+                  _review.userName ?? 'User',
                   style: const TextStyle(
                     color: AppColors.darkBlue,
                     fontSize: 14,
@@ -336,7 +387,7 @@ class _ReviewCardState extends State<_ReviewCard> {
             children: [
               ...List.generate(5, (index) {
                 return Icon(
-                  index < widget.review.rating.round()
+                  index < _review.rating.round()
                       ? Icons.star
                       : Icons.star_border,
                   color: const Color(0xFFFFC107),
@@ -345,7 +396,7 @@ class _ReviewCardState extends State<_ReviewCard> {
               }),
               const SizedBox(width: 6),
               Text(
-                _timeAgo(widget.review.createdAt),
+                _timeAgo(_review.createdAt),
                 style: const TextStyle(
                   color: Color(0xFF9DA5B7),
                   fontSize: 10,
@@ -356,7 +407,7 @@ class _ReviewCardState extends State<_ReviewCard> {
           ),
           const SizedBox(height: 8),
           Text(
-            widget.review.komentar.isEmpty ? 'No comment' : widget.review.komentar,
+            _review.komentar.isEmpty ? 'No comment' : _review.komentar,
             style: const TextStyle(
               color: AppColors.darkBlue,
               fontSize: 13,
@@ -366,31 +417,45 @@ class _ReviewCardState extends State<_ReviewCard> {
           ),
           const SizedBox(height: 10),
           InkWell(
-            onTap: _toggleHelpful,
-            child: Row(
-              children: [
-                Icon(
-                  widget.review.isHelpful
-                      ? Icons.thumb_up
-                      : Icons.thumb_up_alt_outlined,
-                  color: widget.review.isHelpful ? Colors.blue : const Color(0xFF5E7CEB),
-                  size: 14,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Helpful (${widget.review.helpfulCount})',
-                  style: const TextStyle(
-                    color: AppColors.primaryEnd,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+            onTap: _isSubmittingHelpful ? null : _toggleHelpful,
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _isSubmittingHelpful
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 1.5),
+                        )
+                      : Icon(
+                          _review.isHelpful
+                              ? Icons.thumb_up
+                              : Icons.thumb_up_alt_outlined,
+                          // FIX MINOR: warna konsisten saat helpful/tidak
+                          color: _review.isHelpful
+                              ? AppColors.primaryEnd
+                              : const Color(0xFF5E7CEB),
+                          size: 14,
+                        ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Helpful (${_review.helpfulCount})',
+                    style: const TextStyle(
+                      color: AppColors.primaryEnd,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          if (widget.review.photoUrls.isNotEmpty) ...[
+          if (_review.photoUrls.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _ReviewPhotos(photos: widget.review.photoUrls),
+            _ReviewPhotos(photos: _review.photoUrls),
           ],
         ],
       ),
@@ -401,9 +466,23 @@ class _ReviewCardState extends State<_ReviewCard> {
     if (date == null) return '';
     final now = DateTime.now();
     final diff = now.difference(date);
-    if (diff.inDays >= 30) return '${(diff.inDays / 30).floor()} month ago';
-    if (diff.inDays >= 1) return '${diff.inDays} day ago';
-    if (diff.inHours >= 1) return '${diff.inHours} hour ago';
+    if (diff.inDays >= 365) {
+      final years = (diff.inDays / 365).floor();
+      return '$years ${years == 1 ? 'year' : 'years'} ago';
+    }
+    if (diff.inDays >= 30) {
+      final months = (diff.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    }
+    if (diff.inDays >= 1) {
+      return '${diff.inDays} ${diff.inDays == 1 ? 'day' : 'days'} ago';
+    }
+    if (diff.inHours >= 1) {
+      return '${diff.inHours} ${diff.inHours == 1 ? 'hour' : 'hours'} ago';
+    }
+    if (diff.inMinutes >= 1) {
+      return '${diff.inMinutes} ${diff.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+    }
     return 'just now';
   }
 }
@@ -634,6 +713,17 @@ class _ReviewPhotoViewerState extends State<_ReviewPhotoViewer> {
                   child: Image.network(
                     widget.photos[index],
                     fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.broken_image,
+                      color: Colors.white54,
+                      size: 48,
+                    ),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: CircularProgressIndicator(color: Colors.white54),
+                      );
+                    },
                   ),
                 ),
               );
@@ -643,37 +733,38 @@ class _ReviewPhotoViewerState extends State<_ReviewPhotoViewer> {
             top: 42,
             left: 16,
             child: CircleAvatar(
-              backgroundColor: Colors.white.withOpacity(0.2),
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
           ),
-          Positioned(
-            bottom: 32,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.45),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${_currentIndex + 1}/${widget.photos.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
+          if (widget.photos.length > 1)
+            Positioned(
+              bottom: 32,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_currentIndex + 1}/${widget.photos.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

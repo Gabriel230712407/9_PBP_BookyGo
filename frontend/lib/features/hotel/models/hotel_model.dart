@@ -59,6 +59,7 @@ class HotelModel {
 
     final roomModels = kamars.map(RoomModel.fromJson).toList();
     final reviewModels = ulasans.map(HotelReviewModel.fromJson).toList();
+    final totalReview = _toInt(json['total_review'] ?? reviewModels.length);
     final rawRating = _toDouble(json['total_rating']);
 
     return HotelModel(
@@ -66,7 +67,8 @@ class HotelModel {
       name: (json['nama'] ?? '').toString(),
       location: (json['alamat'] ?? '').toString(),
       rating: '${rawRating.toStringAsFixed(1)}/5',
-      review: '${reviewModels.length} review',
+      review: '$totalReview review',
+      reviewCount: totalReview,
       image: imagePaths.isNotEmpty ? imagePaths.first : null,
       facilities: facilityNames.isNotEmpty
           ? facilityNames.take(3).join(', ')
@@ -75,7 +77,6 @@ class HotelModel {
       city: (json['kota'] ?? '').toString(),
       address: (json['alamat'] ?? '').toString(),
       rawRating: rawRating,
-      reviewCount: reviewModels.length,
       images: imagePaths,
       facilityList: facilityNames,
       rooms: roomModels,
