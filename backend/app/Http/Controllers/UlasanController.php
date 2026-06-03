@@ -13,6 +13,7 @@ class UlasanController extends Controller
     public function index(Request $request)
     {
         $userId = optional($request->user())->id;
+
         $query = Ulasan::with(['pemesanan', 'user', 'kamar', 'hotel'])
             ->withCount('helpfuls')
             ->latest();
@@ -28,11 +29,9 @@ class UlasanController extends Controller
         $ulasans = $query->get();
 
         $ulasans->transform(function($ulasan) use ($userId) {
-            if ($userId) {
-                $ulasan->isHelpful = $ulasan->helpfuls()->where('user_id', $userId)->exists();
-            } else {
-                $ulasan->isHelpful = false;
-            }
+            $ulasan->isHelpful = $userId
+                ? $ulasan->helpfuls()->where('user_id', $userId)->exists()
+                : false; // default false kalau user belum login
             return $ulasan;
         });
 

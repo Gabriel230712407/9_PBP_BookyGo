@@ -153,13 +153,8 @@ class ReviewService {
   }) async {
     final queryParams = <String, String>{};
 
-    if (hotelId != null) {
-      queryParams['hotel_id'] = hotelId.toString();
-    }
-
-    if (kamarId != null) {
-      queryParams['kamar_id'] = kamarId.toString();
-    }
+    if (hotelId != null) queryParams['hotel_id'] = hotelId.toString();
+    if (kamarId != null) queryParams['kamar_id'] = kamarId.toString();
 
     final uri = Uri.parse('${ApiConfig.baseUrl}/ulasans').replace(
       queryParameters: queryParams,
@@ -169,6 +164,7 @@ class ReviewService {
       uri,
       headers: {
         'Accept': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
       },
     );
 

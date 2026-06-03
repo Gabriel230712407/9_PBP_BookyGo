@@ -10,7 +10,6 @@ class ReviewListPage extends StatefulWidget {
   final int? hotelId;
   final int? kamarId;
   final String title;
-
   final String? hotelName;
   final String? hotelLocation;
   final String? hotelImage;
@@ -43,7 +42,6 @@ class _ReviewListPageState extends State<ReviewListPage> {
   Future<void> _loadReviews() async {
     try {
       final session = await AuthService.currentSession();
-      if (session == null) throw Exception('User not logged in');
       final result = await ReviewService().getReviews(
         hotelId: widget.hotelId,
         kamarId: widget.kamarId,
@@ -58,6 +56,16 @@ class _ReviewListPageState extends State<ReviewListPage> {
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  // Callback untuk update state review lokal tanpa reload
+  void _updateLocalReview(ReviewModel updatedReview) {
+    final index = _reviewResponse?.reviews.indexWhere((r) => r.id == updatedReview.id);
+    if (index != null && index >= 0) {
+      setState(() {
+        _reviewResponse?.reviews[index] = updatedReview;
       });
     }
   }
@@ -109,9 +117,7 @@ class _ReviewListPageState extends State<ReviewListPage> {
                       averageRating: summary?.averageRating ?? 0,
                       totalReview: summary?.totalReview ?? 0,
                     ),
-
                     const SizedBox(height: 12),
-
                     if (reviews.isEmpty)
                       const Padding(
                         padding: EdgeInsets.only(top: 60),
@@ -128,7 +134,10 @@ class _ReviewListPageState extends State<ReviewListPage> {
                       )
                     else
                       ...reviews.map(
-                        (review) => _ReviewCard(review: review),
+                        (review) => _ReviewCard(
+                          review: review,
+                          onUpdated: _updateLocalReview, // Pasang callback
+                        ),
                       ),
                   ],
                 ),
@@ -248,8 +257,9 @@ class _HotelReviewHeader extends StatelessWidget {
 
 class _ReviewCard extends StatefulWidget {
   final ReviewModel review;
+  final Function(ReviewModel updatedReview)? onUpdated;
 
-  const _ReviewCard({required this.review});
+  const _ReviewCard({required this.review, this.onUpdated});
 
   @override
   State<_ReviewCard> createState() => _ReviewCardState();
@@ -257,42 +267,47 @@ class _ReviewCard extends StatefulWidget {
 
 class _ReviewCardState extends State<_ReviewCard> {
   bool _isSubmittingHelpful = false;
-  
+
   Future<void> _toggleHelpful() async {
-  if (_isSubmittingHelpful) return;
+    if (_isSubmittingHelpful) return;
 
-  setState(() => _isSubmittingHelpful = true);
+    setState(() => _isSubmittingHelpful = true);
 
-  try {
-    final session = await AuthService.currentSession();
-    final currentUserId = session?.user.id;
-    if (currentUserId == null) throw Exception('User not logged in');
+    try {
+      final session = await AuthService.currentSession();
+      final currentUserId = session?.user.id;
+      if (currentUserId == null) throw Exception('User not logged in');
 
-    final response = await ReviewService().toggleHelpful(
-      reviewId: widget.review.id,
-      userId: currentUserId,
-    );
+      final response = await ReviewService().toggleHelpful(
+        reviewId: widget.review.id,
+        userId: currentUserId,
+      );
 
-    if (response != null) {
-      setState(() {
-        widget.review.helpfulCount = response['helpful_count'];
-        widget.review.isHelpful = response['is_helpful'];
-      });
+      if (response != null) {
+        setState(() {
+          widget.review.helpfulCount = response['helpful_count'];
+          widget.review.isHelpful = response['is_helpful'];
+        });
+
+        // Update state di ReviewListPage tanpa reload backend
+        if (widget.onUpdated != null) {
+          widget.onUpdated!(widget.review);
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      setState(() => _isSubmittingHelpful = false);
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
-    );
-  } finally {
-    setState(() => _isSubmittingHelpful = false);
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.78),
         borderRadius: BorderRadius.circular(13),
@@ -350,8 +365,6 @@ class _ReviewCardState extends State<_ReviewCard> {
             ),
           ),
           const SizedBox(height: 10),
-
-          // Tombol Helpful
           InkWell(
             onTap: _toggleHelpful,
             child: Row(
@@ -375,13 +388,9 @@ class _ReviewCardState extends State<_ReviewCard> {
               ],
             ),
           ),
-
-          // Foto review (tidak diubah, tetap pakai _ReviewPhotos)
           if (widget.review.photoUrls.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _ReviewPhotos(
-              photos: widget.review.photoUrls,
-            ),
+            _ReviewPhotos(photos: widget.review.photoUrls),
           ],
         ],
       ),
