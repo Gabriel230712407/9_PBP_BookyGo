@@ -10,6 +10,7 @@ import '../services/booking_service.dart';
 import '../widgets/mybook_action_button.dart';
 import '../widgets/mybook_header.dart';
 import '../widgets/mybook_recommendation_section.dart';
+import '../../../core/notifications/services/notification_service.dart';
 
 class MyBookPage extends StatefulWidget {
   const MyBookPage({
@@ -32,6 +33,7 @@ class _MyBookPageState extends State<MyBookPage> {
   void initState() {
     super.initState();
     _futureBookings = _bookingService.fetchMyBookings();
+    _futureBookings.then(_generateReviewNotifs);
     _statusTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {});
@@ -51,6 +53,27 @@ class _MyBookPageState extends State<MyBookPage> {
       _futureBookings = bookings;
     });
     await bookings;
+    final result = await bookings;
+    await _generateReviewNotifs(result);
+  }
+
+  Future<void> _generateReviewNotifs(List<BookingModel> bookings) async {
+    final session = await AuthService.currentSession();
+    if (session == null) return;
+
+    for (final booking in bookings) {
+      if (!booking.isPaid) continue;
+      if (DateTime.now().isBefore(booking.checkOutDate)) continue;
+      if (booking.hasReview) continue; 
+
+      await NotificationService.maybeGenerateReviewNotification(
+        session,
+        pemesananId: booking.id.toString(),
+        hotelNama: booking.hotelName,
+        kodeBooking: booking.bookingCode,
+        tglCheckout: booking.checkOutDate,
+      );
+    }
   }
 
   @override

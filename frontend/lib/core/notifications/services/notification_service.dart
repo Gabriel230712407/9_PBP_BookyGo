@@ -43,6 +43,7 @@ class NotificationService {
     required String title,
     required String message,
     required String type,
+    Map<String, dynamic>? data,
   }) async {
     final items = await getNotifications(session);
     final nextItems = [
@@ -52,6 +53,7 @@ class NotificationService {
         message: message,
         createdAt: DateTime.now(),
         type: type,
+        data: data,
       ),
       ...items,
     ];
@@ -62,6 +64,46 @@ class NotificationService {
     final items = await getNotifications(session);
     final updated = items.map((item) => item.copyWith(isRead: true)).toList();
     await _saveNotifications(session, updated);
+  }
+
+  static Future<void> markAsRead(AuthSession session, String notifId) async {
+    final items = await getNotifications(session);
+    final updated = items.map((item) {
+      return item.id == notifId ? item.copyWith(isRead: true) : item;
+    }).toList();
+    await _saveNotifications(session, updated);
+  }
+
+  static Future<void> maybeGenerateReviewNotification(
+    AuthSession session, {
+    required String pemesananId,
+    required String hotelNama,
+    required String kodeBooking,
+    required DateTime tglCheckout,
+  }) async {
+    if (!await isEnabled(session)) return;
+
+    // Jangan buat duplikat
+    final items = await getNotifications(session);
+    final alreadyExists = items.any((item) =>
+        item.type == 'review' &&
+        item.data?['pemesanan_id'] == pemesananId);
+    if (alreadyExists) return;
+
+    // Hanya generate kalau sudah lewat checkout
+    if (DateTime.now().isBefore(tglCheckout)) return;
+
+    await addNotification(
+      session,
+      title: 'How was your stay?',
+      message: 'You just checked out from $hotelNama. Share your experience!',
+      type: 'review',
+      data: {
+        'pemesanan_id': pemesananId,
+        'hotel_nama': hotelNama,
+        'kode_booking': kodeBooking,
+      },
+    );
   }
 
   static Future<void> seedAfterNotificationEnabled(AuthSession session) async {
@@ -132,6 +174,12 @@ class NotificationService {
       _itemsKey(session),
       items.map((item) => item.toStorageValue()).toList(),
     );
+  }
+
+  static Future<void> deleteNotification(AuthSession session, String notifId) async {
+    final items = await getNotifications(session);
+    final updated = items.where((item) => item.id != notifId).toList();
+    await _saveNotifications(session, updated);
   }
 
   static String _enabledKey(AuthSession session) {

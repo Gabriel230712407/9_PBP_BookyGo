@@ -13,7 +13,7 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\UlasanController;
 use App\Http\Controllers\FotoHotelController;
 use App\Http\Controllers\FotoKamarController;
-
+use App\Http\Controllers\NotificationController;
 use App\Models\Pemesanan;
 use App\Models\Wishlist;
 use App\Models\Ulasan;
@@ -74,3 +74,11 @@ Route::apiResource('fasilitas', FasilitasController::class)->except(['index']);
 Route::apiResource('addons', AddonController::class)->except(['index']);
 Route::apiResource('foto-hotels', FotoHotelController::class)->except(['index', 'show']);
 Route::apiResource('foto-kamars', FotoKamarController::class)->except(['index', 'show']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/generate-review', [NotificationController::class, 'generateReviewNotifications']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+});

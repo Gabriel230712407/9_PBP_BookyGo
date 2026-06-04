@@ -33,8 +33,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  bool _emailReminder = true;
-  bool _notificationReminder = false;
 
   Future<ProfileStatsModel>? _profileStatsFuture;
 
@@ -191,20 +189,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       const ProfileSectionDivider(),
 
-                      ProfileReminderSection(
-                        emailValue: _emailReminder,
-                        notificationValue: _notificationReminder,
-                        onEmailChanged: (value) {
-                          setState(() {
-                            _emailReminder = value;
-                          });
-                        },
-                        onNotificationChanged: (value) {
-                          setState(() {
-                            _notificationReminder = value;
-                          });
-                        },
-                      ),
+                      const ProfileReminderSection(),
 
                       const ProfileSectionDivider(),
 
