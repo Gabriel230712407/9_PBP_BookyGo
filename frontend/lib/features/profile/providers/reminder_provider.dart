@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/core/auth/services/auth_service.dart';
+import 'package:frontend/core/notifications/services/notification_service.dart';
 
 class ReminderProvider extends ChangeNotifier {
   static const _keyEmail = 'reminder_email';
@@ -27,5 +29,14 @@ class ReminderProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyNotification, value);
+
+    // Sync ke NotificationService ← tambah ini
+    final session = await AuthService.currentSession();
+    if (session != null) {
+      await NotificationService.setEnabled(session, value);
+      if (value) {
+        await NotificationService.seedAfterNotificationEnabled(session);
+      }
+    }
   }
 }

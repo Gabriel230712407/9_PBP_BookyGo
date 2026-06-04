@@ -3,6 +3,9 @@ import 'package:frontend/core/auth/models/auth_session.dart';
 import 'package:frontend/core/notifications/models/app_notification.dart';
 import 'package:frontend/core/notifications/services/notification_service.dart';
 import 'package:frontend/core/theme/app_colors.dart';
+import 'package:frontend/features/mybook/models/booking_model.dart';
+import 'package:frontend/features/mybook/services/booking_service.dart';
+import 'package:frontend/features/reviews/pages/review_form.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({
@@ -41,6 +44,52 @@ class _NotificationPageState extends State<NotificationPage> {
     await _load();
   }
 
+  Future<void> _handleNotifTap(AppNotification item) async {
+  await NotificationService.markAsRead(widget.session, item.id);
+
+  if (!mounted) return;
+
+  if (item.type == 'review' && item.data != null) {
+    final pemesananId = item.data!['pemesanan_id'] as String?;
+    if (pemesananId == null) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final booking = await BookingService().fetchBookingById(int.parse(pemesananId));
+      if (!mounted) return;
+      Navigator.pop(context); // tutup loading
+
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ReviewFormPage(booking: booking),
+        ),
+      );
+
+      if (result == true) {
+        // Hapus notif
+        await NotificationService.deleteNotification(widget.session, item.id);
+        if (!mounted) return;
+        // Langsung ke homepage — pop semua route sampai root
+        Navigator.popUntil(context, (route) => route.isFirst);
+      } else {
+        await _load();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load booking data')),
+      );
+    }
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,7 +117,10 @@ class _NotificationPageState extends State<NotificationPage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final item = _items[index];
-                    return _NotificationCard(item: item);
+                    return GestureDetector(
+                      onTap: () => _handleNotifTap(item),
+                      child: _NotificationCard(item: item),
+                    );
                   },
                 ),
     );
@@ -173,6 +225,8 @@ class _NotificationCard extends StatelessWidget {
         return Icons.hotel_rounded;
       case 'activity':
         return Icons.bolt_rounded;
+      case 'review':                          // ← tambah ini
+        return Icons.rate_review_outlined;
       default:
         return Icons.notifications_rounded;
     }

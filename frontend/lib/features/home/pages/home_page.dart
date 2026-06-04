@@ -8,7 +8,7 @@ import 'package:frontend/features/home/widgets/search_section.dart';
 import 'package:frontend/features/notifications/pages/notification_page.dart';
 import 'package:frontend/features/profile/providers/reminder_provider.dart';
 import 'package:provider/provider.dart';
-
+import 'package:frontend/features/mybook/services/booking_service.dart';
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
@@ -41,6 +41,8 @@ class _HomePageState extends State<HomePage> {
     final session = await AuthService.currentSession();
     if (session == null || !mounted) return;
 
+    await _generateReviewNotifsFromHistory(session); // ← tambah await
+
     final unreadCount = await NotificationService.getUnreadCount(session);
     if (!mounted) return;
 
@@ -48,6 +50,27 @@ class _HomePageState extends State<HomePage> {
       _session = session;
       _unreadCount = unreadCount;
     });
+  }
+
+  Future<void> _generateReviewNotifsFromHistory(AuthSession session) async {
+    try {
+      final bookings = await BookingService().fetchMyBookings();
+      for (final booking in bookings) {
+        if (!booking.isPaid) continue;
+        if (DateTime.now().isBefore(booking.checkOutDate)) continue;
+        if (booking.hasReview) continue;
+
+        await NotificationService.maybeGenerateReviewNotification(
+          session,
+          pemesananId: booking.id.toString(),
+          hotelNama: booking.hotelName,
+          kodeBooking: booking.bookingCode,
+          tglCheckout: booking.checkOutDate,
+        );
+      }
+    } catch (e) {
+      debugPrint('Generate review notif error: $e');
+    }
   }
 
   String extractNameFromEmail(String? email) {

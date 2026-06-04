@@ -8,6 +8,7 @@ class AppNotification {
     required this.createdAt,
     required this.type,
     this.isRead = false,
+    this.data,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class AppNotification {
   final DateTime createdAt;
   final String type;
   final bool isRead;
+  final Map<String, dynamic>? data;
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
     return AppNotification(
@@ -25,6 +27,9 @@ class AppNotification {
       createdAt: DateTime.parse(json['createdAt'] as String),
       type: json['type'] as String,
       isRead: (json['isRead'] as bool?) ?? false,
+      data: json['data'] != null  // ← tambah ini
+          ? Map<String, dynamic>.from(json['data'] as Map)
+          : null,
     );
   }
 
@@ -40,6 +45,7 @@ class AppNotification {
       'createdAt': createdAt.toIso8601String(),
       'type': type,
       'isRead': isRead,
+      'data': data,
     };
   }
 
@@ -47,6 +53,7 @@ class AppNotification {
 
   AppNotification copyWith({
     bool? isRead,
+    Map<String, dynamic>? data,
   }) {
     return AppNotification(
       id: id,
@@ -55,6 +62,7 @@ class AppNotification {
       createdAt: createdAt,
       type: type,
       isRead: isRead ?? this.isRead,
+      data: data ?? this.data,
     );
   }
 }
