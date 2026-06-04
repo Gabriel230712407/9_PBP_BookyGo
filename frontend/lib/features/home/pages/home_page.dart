@@ -41,7 +41,7 @@ class _HomePageState extends State<HomePage> {
     final session = await AuthService.currentSession();
     if (session == null || !mounted) return;
 
-    await _generateReviewNotifsFromHistory(session); // ← tambah await
+    await _generateReviewNotifsFromHistory(session); 
 
     final unreadCount = await NotificationService.getUnreadCount(session);
     if (!mounted) return;

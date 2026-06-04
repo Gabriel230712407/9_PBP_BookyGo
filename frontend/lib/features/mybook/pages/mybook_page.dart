@@ -62,10 +62,9 @@ class _MyBookPageState extends State<MyBookPage> {
     if (session == null) return;
 
     for (final booking in bookings) {
-      // Hanya yang sudah checkout dan sudah dibayar
       if (!booking.isPaid) continue;
       if (DateTime.now().isBefore(booking.checkOutDate)) continue;
-      if (booking.hasReview) continue; // sudah punya review, skip
+      if (booking.hasReview) continue; 
 
       await NotificationService.maybeGenerateReviewNotification(
         session,

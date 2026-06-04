@@ -30,7 +30,6 @@ class ReminderProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyNotification, value);
 
-    // Sync ke NotificationService ← tambah ini
     final session = await AuthService.currentSession();
     if (session != null) {
       await NotificationService.setEnabled(session, value);

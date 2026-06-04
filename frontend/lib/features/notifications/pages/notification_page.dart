@@ -44,6 +44,14 @@ class _NotificationPageState extends State<NotificationPage> {
     await _load();
   }
 
+  Future<void> _deleteNotification(AppNotification item) async {
+    await NotificationService.deleteNotification(widget.session, item.id);
+    if (!mounted) return;
+    setState(() {
+      _items = _items.where((n) => n.id != item.id).toList();
+    });
+  }
+
   Future<void> _handleNotifTap(AppNotification item) async {
   await NotificationService.markAsRead(widget.session, item.id);
 
@@ -62,7 +70,7 @@ class _NotificationPageState extends State<NotificationPage> {
     try {
       final booking = await BookingService().fetchBookingById(int.parse(pemesananId));
       if (!mounted) return;
-      Navigator.pop(context); // tutup loading
+      Navigator.pop(context);
 
       final result = await Navigator.push(
         context,
@@ -72,10 +80,8 @@ class _NotificationPageState extends State<NotificationPage> {
       );
 
       if (result == true) {
-        // Hapus notif
         await NotificationService.deleteNotification(widget.session, item.id);
         if (!mounted) return;
-        // Langsung ke homepage — pop semua route sampai root
         Navigator.popUntil(context, (route) => route.isFirst);
       } else {
         await _load();
@@ -117,9 +123,37 @@ class _NotificationPageState extends State<NotificationPage> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final item = _items[index];
-                    return GestureDetector(
-                      onTap: () => _handleNotifTap(item),
-                      child: _NotificationCard(item: item),
+                    return Dismissible(
+                      key: ValueKey(item.id),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (_) => _deleteNotification(item),
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(255, 255, 4, 0),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete_outline_rounded, color: Colors.white, size: 24),
+                            SizedBox(height: 4),
+                            Text(
+                              'Delete',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onTap: () => _handleNotifTap(item),
+                        child: _NotificationCard(item: item),
+                      ),
                     );
                   },
                 ),
@@ -225,7 +259,7 @@ class _NotificationCard extends StatelessWidget {
         return Icons.hotel_rounded;
       case 'activity':
         return Icons.bolt_rounded;
-      case 'review':                          // ← tambah ini
+      case 'review':                         
         return Icons.rate_review_outlined;
       default:
         return Icons.notifications_rounded;

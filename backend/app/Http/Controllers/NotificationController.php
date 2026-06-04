@@ -9,23 +9,20 @@ use Carbon\Carbon;
 
 class NotificationController extends Controller
 {
-    // Dipanggil otomatis saat user buka app — generate notif review yang belum ada
     public function generateReviewNotifications(Request $request)
     {
         $user = $request->user();
 
-        // Cari booking yang sudah checkout dan belum punya ulasan dan belum ada notifnya
         $bookings = Pemesanan::with(['kamar.hotel', 'ulasan'])
             ->where('user_id', $user->id)
             ->where('tgl_checkout', '<=', Carbon::now())
-            ->where('status_pesan', 'confirmed') // sesuaikan dengan status kamu
+            ->where('status_pesan', 'confirmed') 
             ->get();
 
         foreach ($bookings as $booking) {
             // Skip kalau sudah direview
             if ($booking->ulasan) continue;
 
-            // Skip kalau notif sudah ada
             $exists = Notification::where('user_id', $user->id)
                 ->where('type', 'review')
                 ->where('data->pemesanan_id', $booking->id)
@@ -33,7 +30,6 @@ class NotificationController extends Controller
 
             if ($exists) continue;
 
-            // Buat notifikasi baru
             Notification::create([
                 'user_id'  => $user->id,
                 'type'     => 'review',

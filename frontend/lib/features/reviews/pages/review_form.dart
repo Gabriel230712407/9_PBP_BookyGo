@@ -469,7 +469,6 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hotel Card
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: const Color(0xFFE6F0FF), borderRadius: BorderRadius.circular(12)),
