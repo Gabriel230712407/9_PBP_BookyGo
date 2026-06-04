@@ -6,6 +6,8 @@ import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/features/home/widgets/home_header.dart';
 import 'package:frontend/features/home/widgets/search_section.dart';
 import 'package:frontend/features/notifications/pages/notification_page.dart';
+import 'package:frontend/features/profile/providers/reminder_provider.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -25,7 +27,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   AuthSession? _session;
-  bool _notificationsEnabled = false;
   int _unreadCount = 0;
 
   @override
@@ -35,22 +36,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _loadNotificationState() async {
-    if (widget.isGuest) {
-      return;
-    }
+    if (widget.isGuest) return;
 
     final session = await AuthService.currentSession();
-    if (session == null || !mounted) {
-      return;
-    }
+    if (session == null || !mounted) return;
 
-    final enabled = await NotificationService.isEnabled(session);
     final unreadCount = await NotificationService.getUnreadCount(session);
     if (!mounted) return;
 
     setState(() {
       _session = session;
-      _notificationsEnabled = enabled;
       _unreadCount = unreadCount;
     });
   }
@@ -71,7 +66,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _openNotifications() async {
-    if (_session == null || !_notificationsEnabled) {
+    final reminderEnabled = context.read<ReminderProvider>().notificationEnabled;
+
+    if (_session == null || !reminderEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -93,6 +90,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final reminderEnabled = context.watch<ReminderProvider>().notificationEnabled;
     final String displayName = widget.isGuest
         ? 'User'
         : (widget.userName != null && widget.userName!.trim().isNotEmpty
@@ -145,8 +143,7 @@ class _HomePageState extends State<HomePage> {
                     bottom: false,
                     child: HomeHeader(
                       userName: displayName,
-                      notificationsEnabled:
-                          !widget.isGuest && _notificationsEnabled,
+                      notificationsEnabled: !widget.isGuest && reminderEnabled, 
                       unreadCount: widget.isGuest ? 0 : _unreadCount,
                       onNotificationTap: _openNotifications,
                     ),

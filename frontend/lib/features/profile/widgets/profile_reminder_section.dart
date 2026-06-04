@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/profile/providers/reminder_provider.dart';
+import 'package:provider/provider.dart';
 import 'profile_palette.dart';
 
 class ProfileReminderSection extends StatelessWidget {
-  final bool emailValue;
-  final bool notificationValue;
-  final ValueChanged<bool> onEmailChanged;
-  final ValueChanged<bool> onNotificationChanged;
-
-  const ProfileReminderSection({
-    super.key,
-    required this.emailValue,
-    required this.notificationValue,
-    required this.onEmailChanged,
-    required this.onNotificationChanged,
-  });
+  const ProfileReminderSection({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final reminder = context.watch<ReminderProvider>();
+
     return Container(
       color: ProfilePalette.white,
       padding: const EdgeInsets.fromLTRB(32, 18, 32, 22),
@@ -44,17 +37,17 @@ class ProfileReminderSection extends StatelessWidget {
           const SizedBox(height: 12),
           _ReminderSwitchRow(
             title: 'Email',
-            value: emailValue,
-            onChanged: onEmailChanged,
+            value: reminder.emailEnabled,
+            onChanged: (val) => context.read<ReminderProvider>().setEmail(val),
           ),
           Container(
             height: 1,
             color: ProfilePalette.divider,
           ),
           _ReminderSwitchRow(
-            title: 'Nottification',
-            value: notificationValue,
-            onChanged: onNotificationChanged,
+            title: 'Notification', // typo 'Nottification' diperbaiki
+            value: reminder.notificationEnabled,
+            onChanged: (val) => context.read<ReminderProvider>().setNotification(val),
           ),
         ],
       ),
