@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/my-wishlists', [WishlistController::class, 'myWishlists']);
     Route::post('/wishlists/toggle', [WishlistController::class, 'toggle']);
+
+    Route::post('/profile/foto', [AuthController::class, 'updateFoto']);
 });
 
 Route::get('/hotels', [HotelController::class, 'index']);

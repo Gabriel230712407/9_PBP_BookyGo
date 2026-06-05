@@ -33,13 +33,11 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-
   Future<ProfileStatsModel>? _profileStatsFuture;
 
   @override
   void initState() {
     super.initState();
-
     if (!widget.isGuest) {
       _loadProfileStats();
     }
@@ -48,7 +46,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void didUpdateWidget(covariant ProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (oldWidget.isGuest != widget.isGuest && !widget.isGuest) {
       _loadProfileStats();
     }
@@ -58,34 +55,6 @@ class _ProfilePageState extends State<ProfilePage> {
     _profileStatsFuture = ProfileService.getProfileStats();
   }
 
-  Future<void> _refreshProfileStats() async {
-    if (widget.isGuest) return;
-
-    try {
-      setState(() {
-        _loadProfileStats();
-      });
-
-      await _profileStatsFuture;
-    } catch (e) {
-      debugPrint('Refresh profile stats error: $e');
-    }
-  }
-
-  Future<void> _handleLogout() async {
-    await AuthService.logout();
-
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const WelcomePage(),
-      ),
-      (route) => false,
-    );
-  }
-
   Future<void> _goToEditProfile() async {
     await Navigator.push(
       context,
@@ -93,12 +62,20 @@ class _ProfilePageState extends State<ProfilePage> {
         builder: (_) => const ProfileEditPage(),
       ),
     );
-
     if (!mounted || widget.isGuest) return;
-
     setState(() {
       _loadProfileStats();
     });
+  }
+
+  Future<void> _handleLogout() async {
+    await AuthService.logout();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const WelcomePage()),
+      (route) => false,
+    );
   }
 
   Widget _buildProfileStatsSection() {
@@ -115,38 +92,11 @@ class _ProfilePageState extends State<ProfilePage> {
     return FutureBuilder<ProfileStatsModel>(
       future: future,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const ProfileFeatureSection(
-            reviewCount: 0,
-            bookedCount: 0,
-            wishlistCount: 0,
-          );
-        }
-
-        if (snapshot.hasError) {
-          debugPrint('Profile stats error: ${snapshot.error}');
-
-          return const ProfileFeatureSection(
-            reviewCount: 0,
-            bookedCount: 0,
-            wishlistCount: 0,
-          );
-        }
-
-        if (!snapshot.hasData) {
-          return const ProfileFeatureSection(
-            reviewCount: 0,
-            bookedCount: 0,
-            wishlistCount: 0,
-          );
-        }
-
-        final stats = snapshot.data!;
-
+        final stats = snapshot.data;
         return ProfileFeatureSection(
-          reviewCount: stats.reviewCount,
-          bookedCount: stats.bookedCount,
-          wishlistCount: stats.wishlistCount,
+          reviewCount: stats?.reviewCount ?? 0,
+          bookedCount: stats?.bookedCount ?? 0,
+          wishlistCount: stats?.wishlistCount ?? 0,
         );
       },
     );
@@ -163,44 +113,29 @@ class _ProfilePageState extends State<ProfilePage> {
                 onSignInPressed: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const WelcomePage(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const WelcomePage()),
                     (route) => false,
                   );
                 },
               )
-            : RefreshIndicator(
-                onRefresh: _refreshProfileStats,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ProfileHeader(
-                        userName: widget.userName ?? 'UserMantap',
-                        onEditTap: _goToEditProfile,
-                      ),
-
-                      const ProfileSectionDivider(),
-
-                      const ProfileSectionTitle(title: 'Account Features'),
-                      _buildProfileStatsSection(),
-
-                      const ProfileSectionDivider(),
-
-                      const ProfileReminderSection(),
-
-                      const ProfileSectionDivider(),
-
-                      ProfileOtherSection(
-                        onLogoutTap: _handleLogout,
-                      ),
-
-                      const SizedBox(height: 24),
-                    ],
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ProfileHeader(
+                    userName: widget.userName ?? 'User',
+                    onEditTap: _goToEditProfile,
                   ),
-                ),
+                  const ProfileSectionDivider(),
+                  const ProfileSectionTitle(title: 'Account Features'),
+                  _buildProfileStatsSection(),
+                  const ProfileSectionDivider(),
+                  const ProfileReminderSection(),
+                  const ProfileSectionDivider(),
+                  ProfileOtherSection(
+                    onLogoutTap: _handleLogout,
+                  ),
+                ],
               ),
       ),
     );

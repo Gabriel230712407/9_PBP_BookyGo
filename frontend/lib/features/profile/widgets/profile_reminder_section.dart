@@ -12,15 +12,15 @@ class ProfileReminderSection extends StatelessWidget {
 
     return Container(
       color: ProfilePalette.white,
-      padding: const EdgeInsets.fromLTRB(32, 18, 32, 22),
+      padding: const EdgeInsets.fromLTRB(32, 12, 32, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Reminder',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
               color: ProfilePalette.darkText,
             ),
           ),
@@ -28,7 +28,7 @@ class ProfileReminderSection extends StatelessWidget {
           const Text(
             'Get reminders for payment, check-in, price\ndrops on wishlist, and more',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 13,
               height: 1.35,
               fontWeight: FontWeight.w400,
               color: ProfilePalette.mutedText,
@@ -45,9 +45,10 @@ class ProfileReminderSection extends StatelessWidget {
             color: ProfilePalette.divider,
           ),
           _ReminderSwitchRow(
-            title: 'Notification', // typo 'Nottification' diperbaiki
+            title: 'Notification',
             value: reminder.notificationEnabled,
-            onChanged: (val) => context.read<ReminderProvider>().setNotification(val),
+            onChanged: (val) =>
+                context.read<ReminderProvider>().setNotification(val),
           ),
         ],
       ),
@@ -69,14 +70,14 @@ class _ReminderSwitchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 58,
+      height: 46,
       child: Row(
         children: [
           Expanded(
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 19,
+                fontSize: 15,
                 fontWeight: FontWeight.w500,
                 color: ProfilePalette.darkText,
               ),
