@@ -163,7 +163,7 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
           );
         },
       ),
-      bottomNavigationBar: const AppBottomNavBar(),
+      bottomNavigationBar: const AppBottomNavBar(selectedIndex: 0),
     );
   }
 }
