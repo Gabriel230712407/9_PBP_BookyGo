@@ -4,7 +4,13 @@ import '../../../core/theme/app_colors.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/hotel_model.dart';
 import '../services/hotel_service.dart';
+import '../../whistlist/services/whistlist_service.dart'; // sesuaikan path jika berbeda
 import 'hotel_detail.dart';
+import '../../../core/auth/services/auth_storage.dart';
+
+// Sesuaikan import ini dengan cara kamu menyimpan token:
+// import 'package:shared_preferences/shared_preferences.dart';
+// atau import provider/riverpod kamu
 
 class HotelListPage extends StatefulWidget {
   final String destination;
@@ -31,6 +37,11 @@ class _HotelListPageState extends State<HotelListPage> {
   late final TextEditingController _searchController;
   String _hotelNameQuery = '';
 
+  // ── Wishlist state ──────────────────────────────────────
+  Set<int> _wishlistedIds = {};
+  String _token = '';
+  // ────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +51,7 @@ class _HotelListPageState extends State<HotelListPage> {
       rooms: widget.roomCount,
       guests: widget.guestCount,
     );
+    _loadToken(); // load token lalu fetch wishlist
   }
 
   @override
@@ -47,6 +59,79 @@ class _HotelListPageState extends State<HotelListPage> {
     _searchController.dispose();
     super.dispose();
   }
+
+  // ── Token & wishlist loader ──────────────────────────────
+
+  Future<void> _loadToken() async {
+    final session = await AuthStorage.getSession();
+    if (session != null) {
+      _token = session.token;
+    }
+    await _loadWishlists();
+  }
+
+  Future<void> _loadWishlists() async {
+    if (_token.isEmpty) return;
+    try {
+      final ids = await WishlistService().getWishlistedHotelIds(_token);
+      if (mounted) setState(() => _wishlistedIds = ids);
+    } catch (_) {
+      // Gagal load wishlist tidak perlu crash
+    }
+  }
+
+  Future<void> _toggleWishlist(int hotelId) async {
+    // Optimistic update — UI langsung berubah dulu
+    setState(() {
+      if (_wishlistedIds.contains(hotelId)) {
+        _wishlistedIds.remove(hotelId);
+      } else {
+        _wishlistedIds.add(hotelId);
+      }
+    });
+
+    try {
+      final isAdded = await WishlistService().toggleWishlist(_token, hotelId);
+      // Sinkronisasi hasil dari server
+      if (mounted) {
+        setState(() {
+          if (isAdded) {
+            _wishlistedIds.add(hotelId);
+          } else {
+            _wishlistedIds.remove(hotelId);
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isAdded ? '❤️ Ditambahkan ke wishlist' : 'Dihapus dari wishlist',
+            ),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      // Revert kalau gagal
+      if (mounted) {
+        setState(() {
+          if (_wishlistedIds.contains(hotelId)) {
+            _wishlistedIds.remove(hotelId);
+          } else {
+            _wishlistedIds.add(hotelId);
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal update wishlist, coba lagi'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  // ── Helpers ─────────────────────────────────────────────
 
   String _formatDate(DateTime date) {
     const months = [
@@ -63,11 +148,14 @@ class _HotelListPageState extends State<HotelListPage> {
       'Nov',
       'Dec',
     ];
-
     return '${date.day} ${months[date.month - 1]}';
   }
 
+  // ── Hotel card ──────────────────────────────────────────
+
   Widget _buildHotelCard(HotelModel hotel) {
+    final bool isWishlisted = _wishlistedIds.contains(hotel.id);
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -118,29 +206,53 @@ class _HotelListPageState extends State<HotelListPage> {
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xffDCE4FF)),
-                        ),
-                        child: const Icon(
-                          Icons.favorite_border,
-                          color: Color(0xff5E7CEB),
-                          size: 20,
+                      // ── Heart / Wishlist button ──────────────
+                      GestureDetector(
+                        onTap: () => _toggleWishlist(hotel.id),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isWishlisted
+                                  ? Colors.red.shade200
+                                  : const Color(0xffDCE4FF),
+                            ),
+                            color: isWishlisted
+                                ? Colors.red.shade50
+                                : Colors.transparent,
+                          ),
+                          child: Icon(
+                            isWishlisted
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: isWishlisted
+                                ? Colors.red
+                                : const Color(0xff5E7CEB),
+                            size: 20,
+                          ),
                         ),
                       ),
+                      // ─────────────────────────────────────────
                     ],
                   ),
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, size: 13, color: Colors.grey),
+                      const Icon(
+                        Icons.location_on,
+                        size: 13,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           hotel.location,
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ],
@@ -152,11 +264,18 @@ class _HotelListPageState extends State<HotelListPage> {
                       const Icon(Icons.star, size: 14, color: Colors.amber),
                       const Icon(Icons.star, size: 14, color: Colors.amber),
                       const Icon(Icons.star, size: 14, color: Colors.amber),
-                      const Icon(Icons.star_half, size: 14, color: Colors.amber),
+                      const Icon(
+                        Icons.star_half,
+                        size: 14,
+                        color: Colors.amber,
+                      ),
                       const SizedBox(width: 5),
                       Text(
                         '${hotel.rating} (${hotel.review})',
-                        style: const TextStyle(fontSize: 11, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -179,12 +298,15 @@ class _HotelListPageState extends State<HotelListPage> {
     );
   }
 
+  // ── Build ────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffF6F8FF),
       body: Column(
         children: [
+          // Header biru
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
@@ -219,7 +341,9 @@ class _HotelListPageState extends State<HotelListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.destination.isEmpty ? 'All Hotels' : widget.destination,
+                            widget.destination.isEmpty
+                                ? 'All Hotels'
+                                : widget.destination,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 17,
@@ -229,7 +353,8 @@ class _HotelListPageState extends State<HotelListPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${_formatDate(widget.checkInDate)} - ${_formatDate(widget.checkOutDate)}  |  ${widget.roomCount} room  |  ${widget.guestCount} guests',
+                            '${_formatDate(widget.checkInDate)} - ${_formatDate(widget.checkOutDate)}'
+                            '  |  ${widget.roomCount} room  |  ${widget.guestCount} guests',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -243,6 +368,7 @@ class _HotelListPageState extends State<HotelListPage> {
                   ],
                 ),
                 const SizedBox(height: 18),
+                // Search bar
                 Container(
                   height: 56,
                   padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -282,12 +408,12 @@ class _HotelListPageState extends State<HotelListPage> {
                             height: 1.2,
                           ),
                           cursorColor: const Color(0xff5E7CEB),
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                            contentPadding: EdgeInsets.symmetric(vertical: 16),
                             hintText: 'Search hotel name',
-                            hintStyle: const TextStyle(
+                            hintStyle: TextStyle(
                               color: Color(0xffB0A9A3),
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
@@ -302,9 +428,7 @@ class _HotelListPageState extends State<HotelListPage> {
                           borderRadius: BorderRadius.circular(20),
                           onTap: () {
                             _searchController.clear();
-                            setState(() {
-                              _hotelNameQuery = '';
-                            });
+                            setState(() => _hotelNameQuery = '');
                           },
                           child: const Padding(
                             padding: EdgeInsets.all(4),
@@ -323,6 +447,8 @@ class _HotelListPageState extends State<HotelListPage> {
               ],
             ),
           ),
+
+          // Hotel list
           Expanded(
             child: FutureBuilder<List<HotelModel>>(
               future: _futureHotels,
@@ -379,6 +505,8 @@ class _HotelListPageState extends State<HotelListPage> {
   }
 }
 
+// ── Image Carousel ───────────────────────────────────────────
+
 class _HotelImageCarousel extends StatefulWidget {
   final List<String> images;
 
@@ -424,7 +552,11 @@ class _HotelImageCarouselState extends State<_HotelImageCarousel> {
                   errorBuilder: (_, __, ___) {
                     return Container(
                       color: const Color(0xffD7DCEB),
-                      child: const Icon(Icons.hotel, size: 50, color: Colors.white),
+                      child: const Icon(
+                        Icons.hotel,
+                        size: 50,
+                        color: Colors.white,
+                      ),
                     );
                   },
                 );
@@ -436,7 +568,10 @@ class _HotelImageCarouselState extends State<_HotelImageCarousel> {
               right: 10,
               bottom: 10,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.45),
                   borderRadius: BorderRadius.circular(20),

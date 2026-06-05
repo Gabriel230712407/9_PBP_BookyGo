@@ -44,6 +44,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/pemesanans/{pemesanan}', [PemesananController::class, 'update']);
     Route::patch('/pemesanans/{pemesanan}', [PemesananController::class, 'update']);
     Route::delete('/pemesanans/{pemesanan}', [PemesananController::class, 'destroy']);
+
+    Route::get('/my-wishlists', [WishlistController::class, 'myWishlists']);
+    Route::post('/wishlists/toggle', [WishlistController::class, 'toggle']);
 });
 
 Route::get('/hotels', [HotelController::class, 'index']);

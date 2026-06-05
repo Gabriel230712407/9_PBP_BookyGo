@@ -130,4 +130,47 @@ class WishlistController extends Controller
             'message' => 'Wishlist berhasil dihapus'
         ]);
     }
+
+    // Ambil wishlist milik user yang login
+    public function myWishlists(Request $request)
+{
+    $wishlists = Wishlist::with(['hotel.fotoHotels'])
+        ->where('user_id', $request->user()->id)
+        ->get();
+
+    return response()->json([
+        'status' => true,
+        'data' => $wishlists
+    ]);
+}
+    // Toggle: kalau belum ada → tambah, kalau sudah ada → hapus
+    public function toggle(Request $request)
+    {
+        $request->validate(['hotel_id' => 'required|exists:hotels,id']);
+
+        $existing = Wishlist::where('user_id', $request->user()->id)
+            ->where('hotel_id', $request->hotel_id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+            return response()->json([
+                'status' => true,
+                'action' => 'removed',
+                'message' => 'Dihapus dari wishlist'
+            ]);
+        }
+
+        $wishlist = Wishlist::create([
+            'user_id'  => $request->user()->id,
+            'hotel_id' => $request->hotel_id,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'action' => 'added',
+            'message' => 'Ditambahkan ke wishlist',
+            'data' => $wishlist
+        ], 201);
+    }
 }
