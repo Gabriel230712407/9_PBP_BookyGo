@@ -76,7 +76,7 @@ class RoomPage extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNavBar(),
+      bottomNavigationBar: const AppBottomNavBar(selectedIndex: 0),
     );
   }
 }
