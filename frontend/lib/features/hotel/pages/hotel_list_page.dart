@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_image.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../navigation/utils/main_nav_launcher.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/hotel_model.dart';
 import '../services/hotel_service.dart';
@@ -310,7 +312,7 @@ class _HotelListPageState extends State<HotelListPage> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-            color: const Color(0xff6688F0),
+            color: AppColors.primaryEnd,
             child: Column(
               children: [
                 const SizedBox(height: 12),
@@ -411,7 +413,9 @@ class _HotelListPageState extends State<HotelListPage> {
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
-                            contentPadding: EdgeInsets.symmetric(vertical: 16),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
                             hintText: 'Search hotel name',
                             hintStyle: TextStyle(
                               color: Color(0xffB0A9A3),
@@ -500,7 +504,10 @@ class _HotelListPageState extends State<HotelListPage> {
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNavBar(),
+      bottomNavigationBar: AppBottomNavBar(
+        selectedIndex: 0,
+        onTap: (index) => openMainNavTab(context, index),
+      ),
     );
   }
 }
@@ -545,8 +552,8 @@ class _HotelImageCarouselState extends State<_HotelImageCarousel> {
                 setState(() => _currentPage = index);
               },
               itemBuilder: (context, index) {
-                return Image.asset(
-                  widget.images[index],
+                return AppImage(
+                  imagePath: widget.images[index],
                   width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) {

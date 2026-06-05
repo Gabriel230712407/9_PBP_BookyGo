@@ -21,21 +21,24 @@ class PaymentMethodPage extends StatefulWidget {
 }
 
 class _PaymentMethodPageState extends State<PaymentMethodPage> {
+  static const _paymentSessionDuration = Duration(minutes: 15);
+
   final BookingService _bookingService = BookingService();
   late BookingModel _booking;
   late String _selectedMethod;
   late final DateTime _deadline;
   Timer? _timer;
-  Duration _remaining = const Duration(minutes: 8, seconds: 40);
+  Duration _remaining = _paymentSessionDuration;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _booking = widget.initialBooking;
-    _selectedMethod = _booking.paymentMethod.isNotEmpty ? _booking.paymentMethod : '';
+    _selectedMethod =
+        _booking.paymentMethod.isNotEmpty ? _booking.paymentMethod : '';
     _deadline = (_booking.createdAt ?? DateTime.now()).add(
-      const Duration(minutes: 8, seconds: 40),
+      _paymentSessionDuration,
     );
     _updateCountdown();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -83,7 +86,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
     try {
       final backendPaymentMethod = _toBackendPaymentMethod(_selectedMethod);
-      final backendStatus = _selectedMethod == 'bri_va' ? 'pending' : 'confirmed';
+      final backendStatus = _selectedMethod == 'bri_va'
+          ? 'pending'
+          : 'confirmed';
 
       final updatedBooking = await _bookingService.updateBooking(
         bookingId: _booking.id,
@@ -94,14 +99,14 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       if (!mounted) return;
 
       if (_selectedMethod == 'bri_va') {
-        await Navigator.push(
+        await Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => VirtualAccountPage(booking: updatedBooking),
           ),
         );
       } else {
-        await Navigator.push(
+        await Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => PaymentSuccessPage(booking: updatedBooking),
@@ -195,93 +200,88 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bgVeryLight,
+      backgroundColor: const Color(0xFFF2F6FF),
+      appBar: AppBar(
+        elevation: 0,
+        titleSpacing: 0,
+        backgroundColor: AppColors.primaryEnd,
+        surfaceTintColor: AppColors.primaryEnd,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Continue Payment',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Order ID : ${_booking.bookingCode}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFFDFE7FF),
+              ),
+            ),
+          ],
+        ),
+      ),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            size: 24,
-                            color: AppColors.darkBlue,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              const Text(
-                                'Continue Payment',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textDark,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Order ID : ${_booking.bookingCode}',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Color(0xFF9AA3C7),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _InfoCard(
+                    _SectionCard(
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              const Text(
-                                'Complete Before',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textDark,
+                              const Expanded(
+                                child: Text(
+                                  'Complete Before',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textDark,
+                                  ),
                                 ),
                               ),
-                              const Spacer(),
                               _TimerBadge(remaining: _remaining),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          _BookingSummaryTile(booking: _booking),
+                          const SizedBox(height: 16),
+                          _BookingSummaryCard(booking: _booking),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _InfoCard(
+                    const SizedBox(height: 30),
+                    _SectionCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
                             'Payment Method',
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
                               color: AppColors.textDark,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          _PaymentMethodOption(
-                            icon: Icons.credit_card,
+                          const SizedBox(height: 18),
+                          _PaymentMethodTile(
+                            icon: Icons.credit_card_rounded,
                             title: 'Use Credit/DebitCard',
                             value: 'card',
                             groupValue: _selectedMethod,
@@ -289,9 +289,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                               setState(() => _selectedMethod = value);
                             },
                           ),
-                          const SizedBox(height: 10),
-                          _PaymentMethodOption(
-                            icon: Icons.account_balance,
+                          const SizedBox(height: 18),
+                          _PaymentMethodTile(
+                            useBriBadge: true,
                             title: 'BRI Virtual Account',
                             value: 'bri_va',
                             groupValue: _selectedMethod,
@@ -299,9 +299,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                               setState(() => _selectedMethod = value);
                             },
                           ),
-                          const SizedBox(height: 10),
-                          _PaymentMethodOption(
-                            icon: Icons.qr_code_2,
+                          const SizedBox(height: 18),
+                          _PaymentMethodTile(
+                            icon: Icons.qr_code_2_rounded,
                             title: 'QRIS',
                             value: 'qris',
                             groupValue: _selectedMethod,
@@ -316,70 +316,14 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                 ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFE6EBFA))),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Text(
-                          _booking.formattedTotalPrice,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textDark,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: AppColors.textDark,
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    width: 160,
-                    height: 46,
-                    child: ElevatedButton(
-                      onPressed:
-                          _selectedMethod.isEmpty ||
-                                  _isSubmitting ||
-                                  _remaining == Duration.zero
-                              ? null
-                              : _payNow,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryEnd,
-                        disabledBackgroundColor: const Color(0xFFD3D7E3),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Pay Now',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
+            _PaymentBottomBar(
+              totalPrice: _booking.formattedTotalPrice,
+              isEnabled:
+                  _selectedMethod.isNotEmpty &&
+                  !_isSubmitting &&
+                  _remaining != Duration.zero,
+              isSubmitting: _isSubmitting,
+              onPressed: _payNow,
             ),
           ],
         ),
@@ -388,8 +332,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.child});
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.child});
 
   final Widget child;
 
@@ -397,45 +341,54 @@ class _InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFDDE4F2)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFD8DEED)),
       ),
       child: child,
     );
   }
 }
 
-class _BookingSummaryTile extends StatelessWidget {
-  const _BookingSummaryTile({required this.booking});
+class _BookingSummaryCard extends StatelessWidget {
+  const _BookingSummaryCard({required this.booking});
 
   final BookingModel booking;
+
+  String get _nightLabel {
+    final nights = booking.payableNightCount;
+    return '$nights night${nights > 1 ? 's' : ''}';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F5FC),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE0E5F4)),
+        color: const Color(0xFFF1F4FB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDCE2F0)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              booking.imagePath,
-              width: 24,
-              height: 24,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const Icon(Icons.image_outlined),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3D8),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.apartment_rounded,
+              size: 22,
+              color: Color(0xFFD69B17),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,38 +396,38 @@ class _BookingSummaryTile extends StatelessWidget {
                 Text(
                   booking.hotelName,
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.textDark,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 12,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
                         booking.roomCountLabel,
                         style: const TextStyle(
-                          fontSize: 9,
+                          fontSize: 11,
                           color: AppColors.textDark,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '${booking.formattedShortDateRange} • ${booking.stayLabel}',
+                        '${BookingFormatters.dayMonthYear(booking.checkInDate)}  |  $_nightLabel',
                         style: const TextStyle(
-                          fontSize: 9,
-                          color: Color(0xFF8D97BA),
+                          fontSize: 12,
+                          color: Color(0xFF727C9B),
                         ),
                       ),
                     ),
@@ -497,56 +450,82 @@ class _TimerBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hours = remaining.inHours.toString().padLeft(2, '0');
-    final minutes = remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final minutes = remaining.inMinutes
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
+    final seconds = remaining.inSeconds
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
 
     return Row(
       children: [
-        _SingleBadge(label: hours),
+        _TimerChip(label: hours),
         const SizedBox(width: 4),
-        _SingleBadge(label: minutes),
+        _TimerSeparator(),
         const SizedBox(width: 4),
-        _SingleBadge(label: seconds),
+        _TimerChip(label: minutes),
+        const SizedBox(width: 4),
+        _TimerSeparator(),
+        const SizedBox(width: 4),
+        _TimerChip(label: seconds),
       ],
     );
   }
 }
 
-class _SingleBadge extends StatelessWidget {
-  const _SingleBadge({required this.label});
+class _TimerChip extends StatelessWidget {
+  const _TimerChip({required this.label});
 
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE96F70),
-        borderRadius: BorderRadius.circular(5),
+        color: const Color(0xFFC46E61),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         label,
         style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
           color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
         ),
       ),
     );
   }
 }
 
-class _PaymentMethodOption extends StatelessWidget {
-  const _PaymentMethodOption({
-    required this.icon,
+class _TimerSeparator extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      ':',
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
+        color: Color(0xFFC46E61),
+      ),
+    );
+  }
+}
+
+class _PaymentMethodTile extends StatelessWidget {
+  const _PaymentMethodTile({
+    this.icon,
+    this.useBriBadge = false,
     required this.title,
     required this.value,
     required this.groupValue,
     required this.onChanged,
   });
 
-  final IconData icon;
+  final IconData? icon;
+  final bool useBriBadge;
   final String title;
   final String value;
   final String groupValue;
@@ -558,59 +537,165 @@ class _PaymentMethodOption extends StatelessWidget {
 
     return InkWell(
       onTap: () => onChanged(value),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F5FC),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFE0E5F4)),
+          color: const Color(0xFFF1F4FB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFD6DCEB)),
         ),
         child: Row(
           children: [
             Container(
-              width: 28,
-              height: 28,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, size: 15, color: AppColors.primaryEnd),
+              alignment: Alignment.center,
+              child: useBriBadge
+                  ? const Text(
+                      'BRI',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryEnd,
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      size: 30,
+                      color: AppColors.primaryEnd,
+                    ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textDark,
                 ),
               ),
             ),
             Container(
-              width: 22,
-              height: 22,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected
-                      ? AppColors.primaryEnd
-                      : const Color(0xFFB7BECD),
-                  width: 1.8,
+                      ? const Color(0xFFB5B5B5)
+                      : const Color(0xFFB5B5B5),
+                  width: 2,
                 ),
               ),
               child: isSelected
                   ? Center(
                       child: Container(
-                        width: 12,
-                        height: 12,
+                        width: 18,
+                        height: 18,
                         decoration: const BoxDecoration(
-                          color: AppColors.primaryEnd,
                           shape: BoxShape.circle,
+                          color: AppColors.primaryEnd,
                         ),
                       ),
                     )
                   : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentBottomBar extends StatelessWidget {
+  const _PaymentBottomBar({
+    required this.totalPrice,
+    required this.isEnabled,
+    required this.isSubmitting,
+    required this.onPressed,
+  });
+
+  final String totalPrice;
+  final bool isEnabled;
+  final bool isSubmitting;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Color(0xFFE3E8F4)),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      totalPrice,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.textDark,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 196,
+              height: 60,
+              child: ElevatedButton(
+                onPressed: isEnabled ? onPressed : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryEnd,
+                  disabledBackgroundColor: const Color(0xFFBDBDBD),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 4,
+                  shadowColor: Colors.black.withValues(alpha: 0.16),
+                ),
+                child: isSubmitting
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Payment',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
             ),
           ],
         ),

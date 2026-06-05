@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../hotel/models/hotel_model.dart';
 import '../../mybook/pages/booking_form_page.dart';
+import '../../navigation/utils/main_nav_launcher.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/room_model.dart';
 
@@ -46,7 +48,9 @@ class RoomPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rooms = hotel.rooms.where((room) => room.capacity >= guestCount).toList();
+    final rooms = hotel.rooms
+        .where((room) => room.capacity >= guestCount)
+        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xffF5F7FF),
@@ -76,7 +80,10 @@ class RoomPage extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNavBar(),
+      bottomNavigationBar: AppBottomNavBar(
+        selectedIndex: 0,
+        onTap: (index) => openMainNavTab(context, index),
+      ),
     );
   }
 }
@@ -85,10 +92,7 @@ class _RoomHeader extends StatelessWidget {
   final String hotelName;
   final String subtitle;
 
-  const _RoomHeader({
-    required this.hotelName,
-    required this.subtitle,
-  });
+  const _RoomHeader({required this.hotelName, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +100,7 @@ class _RoomHeader extends StatelessWidget {
       height: 80,
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 30, 14, 8),
-      color: const Color(0xff6688F0),
+      color: AppColors.primaryEnd,
       child: Row(
         children: [
           InkWell(
@@ -188,14 +192,19 @@ class _RoomCard extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  room.smokingPolicy == 'smoking' ? Icons.smoking_rooms : Icons.smoke_free,
+                  room.smokingPolicy == 'smoking'
+                      ? Icons.smoking_rooms
+                      : Icons.smoke_free,
                   size: 18,
                   color: const Color(0xff26346B),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   room.smokingLabel,
-                  style: const TextStyle(color: Color(0xff26346B), fontSize: 14),
+                  style: const TextStyle(
+                    color: Color(0xff26346B),
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -209,14 +218,18 @@ class _RoomCard extends StatelessWidget {
               children: [
                 const Icon(Icons.person, size: 18, color: Colors.grey),
                 const SizedBox(width: 6),
-                Text('${room.capacity} adults', style: const TextStyle(color: Colors.grey)),
+                Text(
+                  '${room.capacity} adults',
+                  style: const TextStyle(color: Colors.grey),
+                ),
               ],
             ),
             const Divider(height: 24),
             FutureBuilder<ReviewResponse>(
               future: ReviewService().getReviews(kamarId: room.id),
               builder: (context, snapshot) {
-                final totalReview = snapshot.data?.summary.totalReview ?? room.reviewCount;
+                final totalReview =
+                    snapshot.data?.summary.totalReview ?? room.reviewCount;
 
                 return GestureDetector(
                   onTap: () {
@@ -357,7 +370,11 @@ class _RoomImageCarouselState extends State<_RoomImageCarousel> {
                   errorBuilder: (_, __, ___) {
                     return Container(
                       color: const Color(0xffD7DCEB),
-                      child: const Icon(Icons.home, size: 50, color: Colors.white),
+                      child: const Icon(
+                        Icons.home,
+                        size: 50,
+                        color: Colors.white,
+                      ),
                     );
                   },
                 );
@@ -369,7 +386,10 @@ class _RoomImageCarouselState extends State<_RoomImageCarousel> {
               right: 10,
               bottom: 10,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.45),
                   borderRadius: BorderRadius.circular(20),
@@ -389,4 +409,3 @@ class _RoomImageCarouselState extends State<_RoomImageCarousel> {
     );
   }
 }
-

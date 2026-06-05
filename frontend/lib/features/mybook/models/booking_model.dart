@@ -102,7 +102,7 @@ class BookingModel {
       createdAt: _tryParseDate(json['created_at']),
 
       addons: (json['addons'] as List<dynamic>? ?? [])
-          .map((e) => Addon.fromJson(e))
+          .map((e) => Addon.fromJson(e, selected: true))
           .toList(),
 
       hasReview: _toBool(json['has_review'] ?? json['ulasan'] != null),
@@ -115,8 +115,17 @@ class BookingModel {
 
   int get totalNightCount => checkOutDate.difference(checkInDate).inDays;
 
+  int get payableNightCount => totalNightCount <= 0 ? 1 : totalNightCount;
+
+  double get addonsTotal =>
+      addons.fold(0.0, (sum, addon) => sum + addon.price);
+
+  double get staySubtotal => totalPrice * payableNightCount;
+
+  double get grandTotal => staySubtotal + addonsTotal;
+
   DateTime get paymentDeadline =>
-      (createdAt ?? DateTime.now()).add(const Duration(minutes: 8, seconds: 40));
+      (createdAt ?? DateTime.now()).add(const Duration(minutes: 15));
 
   bool get isPaid => status == 'confirmed' || status == 'completed';
 
@@ -150,7 +159,7 @@ class BookingModel {
   String get imagePath =>
       roomImage ?? hotelImage ?? 'assets/images/onboarding_bag.png';
 
-  String get formattedTotalPrice => BookingFormatters.currency(totalPrice);
+  String get formattedTotalPrice => BookingFormatters.currency(grandTotal);
 
   String get formattedDateRange =>
       '${BookingFormatters.dayMonthYear(checkInDate)} - ${BookingFormatters.dayMonthYear(checkOutDate)}';
@@ -158,7 +167,8 @@ class BookingModel {
   String get formattedShortDateRange =>
       '${BookingFormatters.dayMonth(checkInDate)} - ${BookingFormatters.dayMonthYear(checkOutDate)}';
 
-  String get stayLabel => '$totalNightCount Night${totalNightCount > 1 ? 's' : ''}';
+  String get stayLabel =>
+      '$payableNightCount Night${payableNightCount > 1 ? 's' : ''}';
 
   String get roomCountLabel => '1 Room';
 
@@ -283,12 +293,15 @@ class Addon {
 
   Addon({required this.id, required this.name, required this.price, this.selected = false});
 
-  factory Addon.fromJson(Map<String, dynamic> json) {
+  factory Addon.fromJson(
+    Map<String, dynamic> json, {
+    bool selected = false,
+  }) {
     return Addon(
       id: _toInt(json['id']),
       name: (json['nama'] ?? '').toString(),
-      price: _toDouble(json['harga'] ?? 60000),
-      selected: false,
+      price: _toDouble(json['harga']),
+      selected: selected,
     );
   }
 }

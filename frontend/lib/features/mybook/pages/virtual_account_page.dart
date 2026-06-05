@@ -20,17 +20,19 @@ class VirtualAccountPage extends StatefulWidget {
 }
 
 class _VirtualAccountPageState extends State<VirtualAccountPage> {
+  static const _paymentSessionDuration = Duration(minutes: 15);
+
   final BookingService _bookingService = BookingService();
   late final DateTime _deadline;
   Timer? _timer;
-  Duration _remaining = const Duration(minutes: 8, seconds: 40);
+  Duration _remaining = _paymentSessionDuration;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     _deadline = (widget.booking.createdAt ?? DateTime.now()).add(
-      const Duration(minutes: 8, seconds: 40),
+      _paymentSessionDuration,
     );
     _updateCountdown();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {

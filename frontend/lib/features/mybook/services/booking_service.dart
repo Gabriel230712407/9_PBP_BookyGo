@@ -25,15 +25,11 @@ class BookingService {
     return data.map(BookingModel.fromJson).toList();
   }
 
-  Future<BookingModel> fetchBookingById(int bookingId) async {
-    final session = await AuthService.currentSession();
-    if (session == null) {
-      throw const BookingException('Please sign in first.');
-    }
-
-    final response = await _get('/pemesanans/$bookingId', token: session.token);
+  Future<List<Addon>> fetchAddons() async {
+    final response = await _getPublic('/addons');
     final decoded = _decodeJson(response.body);
-    return BookingModel.fromJson(decoded['data'] as Map<String, dynamic>);
+    final data = List<Map<String, dynamic>>.from(decoded['data'] ?? const []);
+    return data.map(Addon.fromJson).toList();
   }
 
   Future<BookingModel> createBooking({
@@ -43,25 +39,32 @@ class BookingService {
     required String contactName,
     required String contactEmail,
     required String contactPhone,
+    List<int> addonIds = const [],
   }) async {
     final session = await AuthService.currentSession();
     if (session == null) {
       throw const BookingException('Please sign in first to continue booking.');
     }
 
+    final body = <String, String>{
+      'kamar_id': '$roomId',
+      'tgl_checkin': _toApiDate(checkInDate),
+      'tgl_checkout': _toApiDate(checkOutDate),
+      'status_pesan': 'pending',
+      'nama': contactName,
+      'email': contactEmail,
+      'no_telp': contactPhone,
+    };
+
+    for (var index = 0; index < addonIds.length; index++) {
+      body['addon_ids[$index]'] = '${addonIds[index]}';
+    }
+
     final response = await _send(
       'POST',
       '/pemesanans',
       token: session.token,
-      body: {
-        'kamar_id': '$roomId',
-        'tgl_checkin': _toApiDate(checkInDate),
-        'tgl_checkout': _toApiDate(checkOutDate),
-        'status_pesan': 'pending',
-        'nama': contactName,
-        'email': contactEmail,
-        'no_telp': contactPhone,
-      },
+      body: body,
     );
 
     final decoded = _decodeJson(response.body);
@@ -120,6 +123,30 @@ class BookingService {
         headers: {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
+        },
+      ).timeout(_requestTimeout);
+
+      _throwIfFailed(response);
+      return response;
+    } on BookingException {
+      rethrow;
+    } on SocketException {
+      throw const BookingException(
+        'Cannot reach the server. Make sure Laravel is running and reachable from this device.',
+      );
+    } on FormatException {
+      throw const BookingException('The server returned unreadable booking data.');
+    } on TimeoutException {
+      throw const BookingException('The booking request timed out. Please try again.');
+    }
+  }
+
+  Future<http.Response> _getPublic(String path) async {
+    try {
+      final response = await http.get(
+        _uri(path),
+        headers: {
+          'Accept': 'application/json',
         },
       ).timeout(_requestTimeout);
 
