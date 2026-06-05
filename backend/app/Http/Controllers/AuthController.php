@@ -11,6 +11,7 @@ use App\Models\Pemesanan;
 use App\Models\Wishlist;
 use App\Models\Ulasan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
 {
@@ -155,4 +156,30 @@ class AuthController extends Controller
             'message' => 'Account berhasil dihapus',
         ]);
     }
+
+    public function updateFoto(Request $request)
+{
+    $request->validate([
+        'foto' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
+
+    $user = $request->user();
+
+    // Hapus foto lama kalau ada
+    if ($user->foto && Storage::disk('public')->exists($user->foto)) {
+        Storage::disk('public')->delete($user->foto);
+    }
+
+    $path = $request->file('foto')->store('profile_photos', 'public');
+    $user->foto = $path;
+    $user->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Foto profil berhasil diperbarui',
+        'data' => [
+            'foto_url' => asset('storage/' . $path),
+        ],
+    ]);
+}
 }

@@ -28,7 +28,6 @@ class ProfileOtherSection extends StatelessWidget {
           iconColor: ProfilePalette.black,
           onTap: onLogoutTap,
         ),
-        const SizedBox(height: 54),
       ],
     );
   }

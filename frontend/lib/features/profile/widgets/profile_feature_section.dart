@@ -32,7 +32,6 @@ class ProfileFeatureSection extends StatelessWidget {
           title: 'Wishlist',
           subtitle: '$wishlistCount Wishlist',
         ),
-        const SizedBox(height: 18),
       ],
     );
   }
