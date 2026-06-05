@@ -207,7 +207,7 @@ class _WishlistPageState extends State<WishlistPage> {
             child: Stack(
               children: [
                 imageUrl.isNotEmpty
-                    ? Image.network(
+                    ? Image.asset(
                         imageUrl,
                         height: 160,
                         width: double.infinity,
