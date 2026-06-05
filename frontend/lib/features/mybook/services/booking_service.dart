@@ -25,6 +25,17 @@ class BookingService {
     return data.map(BookingModel.fromJson).toList();
   }
 
+  Future<BookingModel> fetchBookingById(int bookingId) async {
+    final session = await AuthService.currentSession();
+    if (session == null) {
+      throw const BookingException('Please sign in first.');
+    }
+
+    final response = await _get('/pemesanans/$bookingId', token: session.token);
+    final decoded = _decodeJson(response.body);
+    return BookingModel.fromJson(decoded['data'] as Map<String, dynamic>);
+  }
+
   Future<List<Addon>> fetchAddons() async {
     final response = await _getPublic('/addons');
     final decoded = _decodeJson(response.body);
