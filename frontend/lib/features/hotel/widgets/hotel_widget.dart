@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/widgets/app_image.dart';
 import '../models/hotel_model.dart';
 
 class HotelCard extends StatelessWidget {
@@ -32,17 +34,21 @@ class HotelCard extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(14),
               ),
-              // child: Image.asset(
-              //   hotel.image,
-              //   height: 165,
-              //   width: double.infinity,
-              //   fit: BoxFit.cover,
-              // ),
               child: Container(
                 height: 165,
                 width: double.infinity,
                 color: Colors.grey[300],
-                child: const Icon(Icons.hotel, size: 50, color: Colors.white),
+                child: hotel.image != null && hotel.image!.isNotEmpty
+                    ? AppImage(
+                        imagePath: hotel.image!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.hotel,
+                          size: 50,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.hotel, size: 50, color: Colors.white),
               ),
             ),
 

@@ -11,11 +11,7 @@ class AppBottomNavBar extends StatelessWidget {
   final int? selectedIndex;
   final ValueChanged<int>? onTap;
 
-  const AppBottomNavBar({
-    super.key,
-    this.selectedIndex,
-    this.onTap,
-  });
+  const AppBottomNavBar({super.key, this.selectedIndex, this.onTap});
 
   static const List<IconData> _icons = [
     Icons.home_rounded,
@@ -39,8 +35,8 @@ class AppBottomNavBar extends StatelessWidget {
             final double indicatorLeft = selectedIndex == null
                 ? 0
                 : _horizontalPadding +
-                    (itemWidth * selectedIndex!) +
-                    ((itemWidth - _indicatorWidth) / 2);
+                      (itemWidth * selectedIndex!) +
+                      ((itemWidth - _indicatorWidth) / 2);
 
             return Stack(
               clipBehavior: Clip.none,
@@ -95,14 +91,26 @@ class AppBottomNavBar extends StatelessWidget {
                           onTap: onTap == null ? null : () => onTap!(index),
                           borderRadius: BorderRadius.circular(20),
                           child: Center(
-                            child: Icon(
-                              _icons[index],
-                              size: 28,
-                              color: isPassive
-                                  ? AppColors.white
-                                  : AppColors.white.withValues(
-                                      alpha: isSelected ? 1 : 0.84,
-                                    ),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              curve: Curves.easeOut,
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.white.withValues(alpha: 0)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Icon(
+                                _icons[index],
+                                size: 28,
+                                color: isPassive
+                                    ? AppColors.white
+                                    : AppColors.white.withValues(
+                                        alpha: isSelected ? 1 : 0.84,
+                                      ),
+                              ),
                             ),
                           ),
                         ),

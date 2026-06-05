@@ -2,21 +2,24 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../../core/constants/api_config.dart';
+import '../../../core/utils/image_path_resolver.dart';
 import '../models/hotel_model.dart';
 
 class HotelService {
   Future<List<HotelModel>> fetchHotels() async {
     final json = await _getJson('${ApiConfig.baseUrl}/hotels');
     final List data = json['data'] ?? [];
-
-    return data
+    final hotels = data
         .map((item) => HotelModel.fromJson(item as Map<String, dynamic>))
         .toList();
+
+    return Future.wait(hotels.map(_resolveHotelImages));
   }
 
   Future<HotelModel> fetchHotelDetail(int id) async {
     final json = await _getJson('${ApiConfig.baseUrl}/hotels/$id');
-    return HotelModel.fromJson(json['data'] as Map<String, dynamic>);
+    final hotel = HotelModel.fromJson(json['data'] as Map<String, dynamic>);
+    return _resolveHotelImages(hotel);
   }
 
   Future<List<HotelModel>> searchHotels({
@@ -59,5 +62,14 @@ class HotelService {
     } finally {
       client.close(force: true);
     }
+  }
+
+  Future<HotelModel> _resolveHotelImages(HotelModel hotel) async {
+    final validImages = await ImagePathResolver.filterExistingPaths(hotel.images);
+
+    return hotel.copyWith(
+      image: validImages.isNotEmpty ? validImages.first : null,
+      images: validImages,
+    );
   }
 }

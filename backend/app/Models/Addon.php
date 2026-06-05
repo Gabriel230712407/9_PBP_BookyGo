@@ -8,6 +8,7 @@ class Addon extends Model
 {
     protected $fillable = [
         'nama',
+        'harga',
     ];
 
     public function pemesanans()

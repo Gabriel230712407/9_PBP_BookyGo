@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/app_image.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../navigation/utils/main_nav_launcher.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/hotel_model.dart';
 import '../services/hotel_service.dart';
@@ -135,12 +137,19 @@ class _HotelListPageState extends State<HotelListPage> {
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, size: 13, color: Colors.grey),
+                      const Icon(
+                        Icons.location_on,
+                        size: 13,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 3),
                       Expanded(
                         child: Text(
                           hotel.location,
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ],
@@ -152,11 +161,18 @@ class _HotelListPageState extends State<HotelListPage> {
                       const Icon(Icons.star, size: 14, color: Colors.amber),
                       const Icon(Icons.star, size: 14, color: Colors.amber),
                       const Icon(Icons.star, size: 14, color: Colors.amber),
-                      const Icon(Icons.star_half, size: 14, color: Colors.amber),
+                      const Icon(
+                        Icons.star_half,
+                        size: 14,
+                        color: Colors.amber,
+                      ),
                       const SizedBox(width: 5),
                       Text(
                         '${hotel.rating} (${hotel.review})',
-                        style: const TextStyle(fontSize: 11, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -188,7 +204,7 @@ class _HotelListPageState extends State<HotelListPage> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-            color: const Color(0xff6688F0),
+            color: AppColors.primaryEnd,
             child: Column(
               children: [
                 const SizedBox(height: 12),
@@ -219,7 +235,9 @@ class _HotelListPageState extends State<HotelListPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.destination.isEmpty ? 'All Hotels' : widget.destination,
+                            widget.destination.isEmpty
+                                ? 'All Hotels'
+                                : widget.destination,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 17,
@@ -285,7 +303,9 @@ class _HotelListPageState extends State<HotelListPage> {
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
                             hintText: 'Search hotel name',
                             hintStyle: const TextStyle(
                               color: Color(0xffB0A9A3),
@@ -374,7 +394,10 @@ class _HotelListPageState extends State<HotelListPage> {
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNavBar(selectedIndex: 0),
+      bottomNavigationBar: AppBottomNavBar(
+        selectedIndex: 0,
+        onTap: (index) => openMainNavTab(context, index),
+      ),
     );
   }
 }
@@ -417,14 +440,18 @@ class _HotelImageCarouselState extends State<_HotelImageCarousel> {
                 setState(() => _currentPage = index);
               },
               itemBuilder: (context, index) {
-                return Image.asset(
-                  widget.images[index],
+                return AppImage(
+                  imagePath: widget.images[index],
                   width: double.infinity,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) {
                     return Container(
                       color: const Color(0xffD7DCEB),
-                      child: const Icon(Icons.hotel, size: 50, color: Colors.white),
+                      child: const Icon(
+                        Icons.hotel,
+                        size: 50,
+                        color: Colors.white,
+                      ),
                     );
                   },
                 );
@@ -436,7 +463,10 @@ class _HotelImageCarouselState extends State<_HotelImageCarousel> {
               right: 10,
               bottom: 10,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.45),
                   borderRadius: BorderRadius.circular(20),

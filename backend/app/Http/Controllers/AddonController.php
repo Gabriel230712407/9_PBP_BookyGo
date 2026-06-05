@@ -40,10 +40,12 @@ class AddonController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
+            'harga' => 'required|numeric|min:0',
         ]);
 
         $addon = Addon::create([
             'nama' => $request->nama,
+            'harga' => $request->harga,
         ]);
 
         return response()->json([
@@ -66,10 +68,12 @@ class AddonController extends Controller
 
         $request->validate([
             'nama' => 'required|string|max:255',
+            'harga' => 'required|numeric|min:0',
         ]);
 
         $addon->update([
             'nama' => $request->nama,
+            'harga' => $request->harga,
         ]);
 
         return response()->json([

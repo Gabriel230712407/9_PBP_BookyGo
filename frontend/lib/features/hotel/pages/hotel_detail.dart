@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/auth/services/auth_service.dart';
+import '../../../core/widgets/app_image.dart';
+import '../../navigation/utils/main_nav_launcher.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../../room/pages/room_page.dart';
 import '../models/hotel_model.dart';
@@ -48,16 +50,23 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
     if (mounted) {
       setState(() => _currentUserId = userId);
     }
-    return ReviewService().getReviews(
-      hotelId: widget.hotelId,
-      userId: userId,
-    );
+    return ReviewService().getReviews(hotelId: widget.hotelId, userId: userId);
   }
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
@@ -123,7 +132,8 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                               _ReviewSection(
                                 hotel: hotel,
                                 reviewResponse: reviewResponse,
-                                isLoading: reviewSnapshot.connectionState ==
+                                isLoading:
+                                    reviewSnapshot.connectionState ==
                                     ConnectionState.waiting,
                               ),
                             ],
@@ -163,7 +173,10 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
           );
         },
       ),
-      bottomNavigationBar: const AppBottomNavBar(selectedIndex: 0),
+      bottomNavigationBar: AppBottomNavBar(
+        selectedIndex: 0,
+        onTap: (index) => openMainNavTab(context, index),
+      ),
     );
   }
 }
@@ -192,19 +205,22 @@ class _HeaderGallery extends StatelessWidget {
             Row(
               children: List.generate(3, (index) {
                 final imageIndex = index + 1;
-                final image =
-                    imageIndex < images.length ? images[imageIndex] : null;
+                final image = imageIndex < images.length
+                    ? images[imageIndex]
+                    : null;
                 return Expanded(
                   child: Padding(
-                    padding:
-                        EdgeInsets.only(top: 2, right: index == 2 ? 0 : 2),
+                    padding: EdgeInsets.only(top: 2, right: index == 2 ? 0 : 2),
                     child: _HeaderGridImage(
                       image: image,
                       height: 85,
                       borderRadius: BorderRadius.zero,
                       onTap: image != null
-                          ? () =>
-                              _openInfiniteGallery(context, images, imageIndex)
+                          ? () => _openInfiniteGallery(
+                              context,
+                              images,
+                              imageIndex,
+                            )
                           : null,
                     ),
                   ),
@@ -231,7 +247,10 @@ class _HeaderGallery extends StatelessWidget {
   }
 
   void _openInfiniteGallery(
-      BuildContext context, List<String> images, int initialIndex) {
+    BuildContext context,
+    List<String> images,
+    int initialIndex,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -264,8 +283,8 @@ class _HeaderGridImage extends StatelessWidget {
         width: double.infinity,
         color: const Color(0xffD7DCEB),
         child: image != null && image!.isNotEmpty
-            ? Image.asset(
-                image!,
+            ? AppImage(
+                imagePath: image!,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
                     const Icon(Icons.image, size: 44, color: Colors.white),
@@ -328,8 +347,8 @@ class _InfiniteImageViewerState extends State<_InfiniteImageViewer> {
                 minScale: 1,
                 maxScale: 4,
                 child: Center(
-                  child: Image.asset(
-                    image,
+                  child: AppImage(
+                    imagePath: image,
                     fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => const Icon(
                       Icons.broken_image,
@@ -359,8 +378,10 @@ class _InfiniteImageViewerState extends State<_InfiniteImageViewer> {
             right: 0,
             child: Center(
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(22),
@@ -415,7 +436,7 @@ class _HotelTitle extends StatelessWidget {
                 '${averageRating.toStringAsFixed(1)}/5',
                 style: const TextStyle(
                   fontSize: 20,
-                  color: Color(0xff5E7CEB),
+                  color: AppColors.primaryEnd,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -442,10 +463,11 @@ class _HotelTitle extends StatelessWidget {
     );
   }
 }
+
 class _ReviewSection extends StatelessWidget {
   final HotelModel hotel;
   final ReviewResponse? reviewResponse;
-  final bool isLoading; 
+  final bool isLoading;
 
   const _ReviewSection({
     required this.hotel,
@@ -651,8 +673,10 @@ class _FacilitySection extends StatelessWidget {
             crossAxisSpacing: 10,
             childAspectRatio: 5.9,
             children: hotel.facilityList
-                .map((facility) =>
-                    _FacilityItem(icon: _mapIcon(facility), text: facility))
+                .map(
+                  (facility) =>
+                      _FacilityItem(icon: _mapIcon(facility), text: facility),
+                )
                 .toList(),
           ),
         ],
@@ -720,7 +744,11 @@ class _LocationSection extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             hotel.address,
-            style: const TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              height: 1.4,
+            ),
           ),
         ],
       ),
@@ -796,7 +824,10 @@ class _PolicySection extends StatelessWidget {
           const SizedBox(height: 28),
           const Text(
             'Children',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xff26346B)),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xff26346B),
+            ),
           ),
           const SizedBox(height: 10),
           const Text(
@@ -836,12 +867,14 @@ class _PolicyText extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(date,
-              style:
-                  const TextStyle(fontSize: 11, color: Color(0xff26346B))),
-          Text(time,
-              style:
-                  const TextStyle(fontSize: 11, color: Color(0xff26346B))),
+          Text(
+            date,
+            style: const TextStyle(fontSize: 11, color: Color(0xff26346B)),
+          ),
+          Text(
+            time,
+            style: const TextStyle(fontSize: 11, color: Color(0xff26346B)),
+          ),
         ],
       ),
     );
@@ -918,7 +951,10 @@ class _BottomBookingBar extends StatelessWidget {
               onPressed: onTap,
               child: const Text(
                 'View rooms',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

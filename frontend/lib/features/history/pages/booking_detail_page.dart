@@ -21,9 +21,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     _hasReview = widget.booking.hasReview;
   }
 
-  double get subtotal => widget.booking.totalPrice;
+  double get subtotal => widget.booking.staySubtotal;
   double get tax => subtotal * 0.1;
-  double get serviceFee => widget.booking.addons.fold(0.0, (sum, a) => sum + (a.selected ? a.price : 0.0));
+  double get serviceFee => widget.booking.addonsTotal;
   double get totalPaid => subtotal + tax + serviceFee;
 
   @override

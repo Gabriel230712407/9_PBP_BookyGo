@@ -37,6 +37,30 @@ class HotelModel {
     required this.reviews,
   });
 
+  HotelModel copyWith({
+    String? image,
+    List<String>? images,
+  }) {
+    return HotelModel(
+      id: id,
+      name: name,
+      location: location,
+      rating: rating,
+      review: review,
+      image: image ?? this.image,
+      facilities: facilities,
+      description: description,
+      city: city,
+      address: address,
+      rawRating: rawRating,
+      reviewCount: reviewCount,
+      images: images ?? this.images,
+      facilityList: facilityList,
+      rooms: rooms,
+      reviews: reviews,
+    );
+  }
+
   factory HotelModel.fromJson(Map<String, dynamic> json) {
     final fotoHotels = List<Map<String, dynamic>>.from(json['foto_hotels'] ?? []);
     fotoHotels.sort(
