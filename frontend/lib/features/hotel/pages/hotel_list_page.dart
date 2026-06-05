@@ -500,7 +500,7 @@ class _HotelListPageState extends State<HotelListPage> {
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNavBar(selectedIndex: 0),
+      bottomNavigationBar: const AppBottomNavBar(),
     );
   }
 }
