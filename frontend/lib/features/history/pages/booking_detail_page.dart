@@ -427,7 +427,7 @@ class BookingActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isExpired = booking.isExpired;
 
-    // Kalau mau pakai tanggal asli nanti:
+    // Kalau mau pakai tanggal asli nanti pakenya inii:
     // final isAfterCheckout = DateTime.now().isAfter(booking.checkOutDate);
 
     final isAfterCheckout = true; // sementara untuk data dummy
