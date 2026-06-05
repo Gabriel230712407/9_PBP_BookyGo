@@ -10,10 +10,10 @@ import 'package:frontend/features/notifications/pages/notification_page.dart';
 import 'package:frontend/features/profile/providers/reminder_provider.dart';
 import 'package:frontend/features/hotel/models/hotel_model.dart';
 import 'package:frontend/features/hotel/services/hotel_service.dart';
-// import 'package:frontend/features/hotel/pages/hotel_list_page.dart';
 import 'package:frontend/features/hotel/pages/hotel_detail.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/features/mybook/services/booking_service.dart';
+import 'package:frontend/features/home/widgets/promo_banner_section.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -218,7 +218,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: AppColors.bgVeryLight,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: const EdgeInsets.only(bottom: 24),
         child: Column(
           children: [
             Stack(
@@ -318,7 +318,12 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 12),
+            Padding(
+              padding: EdgeInsets.only(left: 20),
+              child: const PromoBannerSection(),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
