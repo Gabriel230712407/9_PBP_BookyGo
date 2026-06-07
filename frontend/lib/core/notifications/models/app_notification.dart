@@ -20,16 +20,28 @@ class AppNotification {
   final Map<String, dynamic>? data;
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic>? parsedData;
+    final rawData = json['data'];
+    if (rawData is Map) {
+      parsedData = Map<String, dynamic>.from(rawData);
+    } else if (rawData is String && rawData.isNotEmpty) {
+      try {
+        parsedData = Map<String, dynamic>.from(
+          jsonDecode(rawData) as Map,
+        );
+      } catch (_) {
+        parsedData = null;
+      }
+    }
+
     return AppNotification(
-      id: json['id'] as String,
+      id: json['id'].toString(),
       title: json['title'] as String,
       message: json['message'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: DateTime.parse(json['created_at'] as String),
       type: json['type'] as String,
-      isRead: (json['isRead'] as bool?) ?? false,
-      data: json['data'] != null  // ← tambah ini
-          ? Map<String, dynamic>.from(json['data'] as Map)
-          : null,
+      isRead: (json['is_read'] as bool?) ?? false,
+      data: parsedData,
     );
   }
 

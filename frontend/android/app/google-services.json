@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "118781248213",
+    "project_id": "pbp-bookygo-e278e",
+    "storage_bucket": "pbp-bookygo-e278e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:118781248213:android:fc44da9ed8f5992c36985c",
+        "android_client_info": {
+          "package_name": "com.bookygo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4vDeihUfKPGJOcBCSmIQaVh3iPkU-w_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

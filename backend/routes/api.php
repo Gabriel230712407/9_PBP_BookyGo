@@ -49,6 +49,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/wishlists/toggle', [WishlistController::class, 'toggle']);
 
     Route::post('/profile/foto', [AuthController::class, 'updateFoto']);
+    Route::post('/fcm-token', [AuthController::class, 'saveFcmToken']);
+
+    Route::get('/notifications',                    [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count',       [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/generate-review',   [NotificationController::class, 'generateReviewNotifications']);
+    Route::post('/notifications/mark-all-read',     [NotificationController::class, 'markAllAsRead']);
+    Route::post('/notifications/seed-welcome',      [NotificationController::class, 'seedWelcomeNotifications']);
+    Route::post('/notifications/log-login',         [NotificationController::class, 'logLoginActivity']);
+    Route::post('/notifications/log-profile-update',[NotificationController::class, 'logProfileUpdate']);
+    Route::post('/notifications/log-location',      [NotificationController::class, 'logLocationPreference']);
+    Route::post('/notifications/{id}/read',         [NotificationController::class, 'markAsRead']);  // ← {id} di bawah
+    Route::delete('/notifications/{id}',            [NotificationController::class, 'destroy']);
 });
 
 Route::get('/hotels', [HotelController::class, 'index']);
@@ -79,11 +91,3 @@ Route::apiResource('fasilitas', FasilitasController::class)->except(['index']);
 Route::apiResource('addons', AddonController::class)->except(['index']);
 Route::apiResource('foto-hotels', FotoHotelController::class)->except(['index', 'show']);
 Route::apiResource('foto-kamars', FotoKamarController::class)->except(['index', 'show']);
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
-    Route::post('/notifications/generate-review', [NotificationController::class, 'generateReviewNotifications']);
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-});

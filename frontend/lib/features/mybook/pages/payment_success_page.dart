@@ -1,17 +1,44 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/auth/services/auth_service.dart';
+import '../../../core/notifications/services/notification_service.dart'; // ✅ tambah import
 import '../../../core/theme/app_colors.dart';
 import '../../navigation/pages/main_nav_page.dart';
 import '../models/booking_model.dart';
 
-class PaymentSuccessPage extends StatelessWidget {
+class PaymentSuccessPage extends StatefulWidget {
   const PaymentSuccessPage({
     super.key,
     required this.booking,
   });
 
   final BookingModel booking;
+
+  @override
+  State<PaymentSuccessPage> createState() => _PaymentSuccessPageState();
+}
+
+class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
+
+  @override
+  void initState() {
+    super.initState();
+    _sendReviewNotification();
+  }
+  Future<void> _sendReviewNotification() async {
+    try {
+      final session = await AuthService.currentSession();
+      if (session == null) return;
+
+      await NotificationService.maybeGenerateReviewNotification(
+        session,
+        pemesananId: widget.booking.id.toString(),
+        hotelNama: widget.booking.hotelName,
+        kodeBooking: widget.booking.bookingCode,
+        tglCheckout: widget.booking.checkOutDate,
+      );
+    } catch (_) {}
+  }
 
   Future<void> _openMyBooking(BuildContext context) async {
     final session = await AuthService.currentSession();
@@ -97,7 +124,7 @@ class PaymentSuccessPage extends StatelessWidget {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: Image.asset(
-                            booking.imagePath,
+                            widget.booking.imagePath,
                             width: 24,
                             height: 24,
                             fit: BoxFit.cover,
@@ -112,7 +139,7 @@ class PaymentSuccessPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                booking.hotelName,
+                                widget.booking.hotelName,
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
@@ -121,7 +148,7 @@ class PaymentSuccessPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                'BOOKING ID : ${booking.bookingCode}',
+                                'BOOKING ID : ${widget.booking.bookingCode}',
                                 style: const TextStyle(
                                   fontSize: 10,
                                   color: Color(0xFF98A2C4),
@@ -138,13 +165,13 @@ class PaymentSuccessPage extends StatelessWidget {
                     _SummaryRow(
                       icon: Icons.calendar_month_outlined,
                       label: 'Stay Dates',
-                      value: booking.formattedDateRange,
+                      value: widget.booking.formattedDateRange,
                     ),
                     const SizedBox(height: 10),
                     _SummaryRow(
                       icon: Icons.home_outlined,
                       label: 'Accommodation',
-                      value: '1 Rooms • ${booking.stayLabel}',
+                      value: '1 Rooms • ${widget.booking.stayLabel}',
                     ),
                   ],
                 ),
@@ -178,6 +205,7 @@ class PaymentSuccessPage extends StatelessWidget {
   }
 }
 
+// _SummaryRow tidak diubah sama sekali
 class _SummaryRow extends StatelessWidget {
   const _SummaryRow({
     required this.icon,
