@@ -1,4 +1,4 @@
-package com.example.frontend
+package com.bookygo.app
 
 import io.flutter.embedding.android.FlutterActivity
 

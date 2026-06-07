@@ -32,7 +32,6 @@ class _NotificationPageState extends State<NotificationPage> {
   Future<void> _load() async {
     final items = await NotificationService.getNotifications(widget.session);
     if (!mounted) return;
-
     setState(() {
       _items = items;
       _isLoading = false;
@@ -53,48 +52,111 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _handleNotifTap(AppNotification item) async {
-  await NotificationService.markAsRead(widget.session, item.id);
+    // Mark as read dulu
+    await NotificationService.markAsRead(widget.session, item.id);
+    if (!mounted) return;
 
-  if (!mounted) return;
+    // Update UI langsung (biru dot hilang)
+    setState(() {
+      _items = _items.map((n) {
+        if (n.id == item.id) {
+          return AppNotification(
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            message: n.message,
+            isRead: true,
+            data: n.data,
+            createdAt: n.createdAt,
+          );
+        }
+        return n;
+      }).toList();
+    });
 
-  if (item.type == 'review' && item.data != null) {
-    final pemesananId = item.data!['pemesanan_id'] as String?;
-    if (pemesananId == null) return;
+    // ── Handler tipe review ───────────────────────────────────────────────────
+    if (item.type == 'review' && item.data != null) {
+      final rawId = item.data!['pemesanan_id'];
+      if (rawId == null) return;
+      final pemesananId = rawId.toString();
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
-    try {
-      final booking = await BookingService().fetchBookingById(int.parse(pemesananId));
       if (!mounted) return;
-      Navigator.pop(context);
-
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ReviewFormPage(booking: booking),
-        ),
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
       );
 
-      if (result == true) {
-        await NotificationService.deleteNotification(widget.session, item.id);
+      try {
+        final booking = await BookingService().fetchBookingById(
+          int.parse(pemesananId),
+        );
         if (!mounted) return;
-        Navigator.popUntil(context, (route) => route.isFirst);
-      } else {
-        await _load();
+        Navigator.pop(context); // tutup loading
+
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ReviewFormPage(booking: booking),
+          ),
+        );
+
+        // Kalau review berhasil → hapus notif ini
+        if (result == true) {
+          await NotificationService.deleteNotification(widget.session, item.id);
+          if (!mounted) return;
+          setState(() {
+            _items = _items.where((n) => n.id != item.id).toList();
+          });
+        } else {
+          await _load();
+        }
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load booking: $e')),
+        );
       }
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to load booking data')),
-      );
+      return;
     }
+
+    // ── Handler tipe booking (confirmed) ─────────────────────────────────────
+    if (item.type == 'booking' && item.data != null) {
+      final rawId = item.data!['pemesanan_id'];
+      if (rawId == null) return;
+      final pemesananId = rawId.toString();
+
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        await BookingService().fetchBookingById(int.parse(pemesananId));
+        if (!mounted) return;
+        Navigator.pop(context);
+
+        // Tampilkan snackbar info booking code
+        final kode = item.data!['kode_booking'] ?? '';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Booking $kode confirmed ✅'),
+            backgroundColor: AppColors.primaryEnd,
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.pop(context);
+      }
+      return;
+    }
+
+    // ── Notif lain: tidak perlu navigasi ─────────────────────────────────────
+    // Sudah mark as read di atas, tidak perlu refresh
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +199,8 @@ class _NotificationPageState extends State<NotificationPage> {
                         child: const Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.delete_outline_rounded, color: Colors.white, size: 24),
+                            Icon(Icons.delete_outline_rounded,
+                                color: Colors.white, size: 24),
                             SizedBox(height: 4),
                             Text(
                               'Delete',
@@ -162,9 +225,7 @@ class _NotificationPageState extends State<NotificationPage> {
 }
 
 class _NotificationCard extends StatelessWidget {
-  const _NotificationCard({
-    required this.item,
-  });
+  const _NotificationCard({required this.item});
 
   final AppNotification item;
 
@@ -233,13 +294,37 @@ class _NotificationCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  _formatTime(item.createdAt),
-                  style: const TextStyle(
-                    color: AppColors.mutedBlue,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      _formatTime(item.createdAt),
+                      style: const TextStyle(
+                        color: AppColors.mutedBlue,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    // Tampilkan hint "Tap to review" untuk notif review
+                    if (item.type == 'review') ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryEnd.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Tap to review →',
+                          style: TextStyle(
+                            color: AppColors.primaryEnd,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -259,8 +344,10 @@ class _NotificationCard extends StatelessWidget {
         return Icons.hotel_rounded;
       case 'activity':
         return Icons.bolt_rounded;
-      case 'review':                         
+      case 'review':
         return Icons.rate_review_outlined;
+      case 'booking':
+        return Icons.check_circle_outline_rounded;
       default:
         return Icons.notifications_rounded;
     }
