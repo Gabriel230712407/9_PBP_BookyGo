@@ -43,7 +43,7 @@ class FcmHelper
                     ],
                     'data' => array_map('strval', $data),
                     'android' => [
-                        'priority' => 'high',  // <-- lowercase, di level android langsung
+                        'priority' => 'high',
                         'notification' => [
                             'channel_id' => 'bookygo_high_importance',
                         ],

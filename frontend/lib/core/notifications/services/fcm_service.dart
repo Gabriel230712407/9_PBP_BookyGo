@@ -6,8 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:frontend/core/constants/api_config.dart';
 import 'package:frontend/core/auth/services/auth_storage.dart';
 
-// ── Top-level variables ────────────────────────────────────────────────────────
-
 final FlutterLocalNotificationsPlugin _localNotifications =
     FlutterLocalNotificationsPlugin();
 
@@ -15,14 +13,10 @@ const String _channelId   = 'bookygo_high_importance';
 const String _channelName = 'BookyGo Notifications';
 const String _channelDesc = 'Booking updates and reminders from BookyGo';
 
-// ── Background handler (harus top-level) ──────────────────────────────────────
-
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await _showLocalNotification(message);
 }
-
-// ── Show local notification (harus top-level) ─────────────────────────────────
 
 Future<void> _showLocalNotification(RemoteMessage message) async {
   final notification = message.notification;
@@ -46,16 +40,11 @@ Future<void> _showLocalNotification(RemoteMessage message) async {
   );
 }
 
-// ── FcmService class ───────────────────────────────────────────────────────────
-
 class FcmService {
   FcmService._();
 
   static Future<void> init() async {
-    // 1. Background handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    // 2. Init local notifications
     await _localNotifications.initialize(
       const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
@@ -73,10 +62,8 @@ class FcmService {
       sound: true,
     );
 
-    // 4. Foreground handler
     FirebaseMessaging.onMessage.listen(_showLocalNotification);
 
-    // 5. Simpan FCM token ke backend
     final token = await messaging.getToken();
     if (token != null) {
       debugPrint('📱 FCM Token: $token');
@@ -84,8 +71,6 @@ class FcmService {
     } else {
       debugPrint('❌ FCM Token NULL');
     }
-
-    // 6. Refresh token handler
     messaging.onTokenRefresh.listen(_saveFcmToken);
   }
 

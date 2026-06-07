@@ -13,8 +13,6 @@ class NotificationService {
     'Authorization': 'Bearer ${session.token}',
   };
 
-  // ─── CORE ──────────────────────────────────────────────────────────────────
-
   static Future<List<AppNotification>> getNotifications(
     AuthSession session,
   ) async {
@@ -78,12 +76,8 @@ class NotificationService {
     } catch (_) {}
   }
 
-  // ─── ENABLED STATE ─────────────────────────────────────────────────────────
-
   static Future<bool> isEnabled(AuthSession session) async => true;
   static Future<void> setEnabled(AuthSession session, bool enabled) async {}
-
-  // ─── SEED / WELCOME ────────────────────────────────────────────────────────
 
   static Future<void> seedAfterNotificationEnabled(AuthSession session) async {
     try {
@@ -93,8 +87,6 @@ class NotificationService {
       );
     } catch (_) {}
   }
-
-  // ─── ACTIVITY LOGGING ──────────────────────────────────────────────────────
 
   static Future<void> maybeLogLoginActivity(AuthSession session) async {
     try {
@@ -123,9 +115,6 @@ class NotificationService {
     } catch (_) {}
   }
 
-  // ─── REVIEW NOTIFICATIONS ──────────────────────────────────────────────────
-  // FIX: kirim pemesanan_id ke backend supaya backend bisa cek duplikat
-
   static Future<void> maybeGenerateReviewNotification(
     AuthSession session, {
     required String pemesananId,
@@ -145,5 +134,29 @@ class NotificationService {
         }),
       );
     } catch (_) {}
+  }
+
+  static Future<void> createReviewNotification(
+    AuthSession session,
+    String pemesananId,
+    String kodeBooking,
+    String hotelNama,
+  ) async {
+    try {
+      await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/notifications'), 
+        headers: _headers(session),                    
+        body: jsonEncode({
+          'type': 'review',
+          'title': 'How was your stay?',
+          'message': "You've checked out from $hotelNama. Share your experience!",
+          'data': {
+            'pemesanan_id': pemesananId,
+            'kode_booking': kodeBooking,
+            'hotel_nama': hotelNama,
+          },
+        }),
+      );
+    } catch (_) {} 
   }
 }

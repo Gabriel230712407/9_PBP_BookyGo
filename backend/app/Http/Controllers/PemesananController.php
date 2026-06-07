@@ -94,11 +94,9 @@ class PemesananController extends Controller
             $pemesanan->addons()->sync($syncData);
         }
 
-        // ── Reload relasi untuk ambil nama hotel ──────────────────────────────
         $pemesanan->load(['kamar.hotel', 'addons']);
         $hotelNama = $pemesanan->kamar->hotel->nama ?? 'hotel';
 
-        // ── Simpan notif booking ke DB + kirim push FCM ───────────────────────
         Notification::create([
             'user_id' => $user->id,
             'type'    => 'booking',
@@ -124,7 +122,6 @@ class PemesananController extends Controller
                 ]
             );
         }
-
         return response()->json([
             'status'  => true,
             'message' => 'Pemesanan berhasil dibuat',
@@ -176,17 +173,16 @@ class PemesananController extends Controller
             $pemesanan->addons()->sync($syncData);
         }
 
-        // ── Kirim push FCM kalau status berubah jadi confirmed ─────────────────
         $pemesanan->load(['kamar.hotel', 'user']);
         $hotelNama  = $pemesanan->kamar->hotel->nama ?? 'hotel';
         $bookingUser = $pemesanan->user;
 
-        if ($oldStatus !== 'confirmed' && $pemesanan->status_pesan === 'confirmed') {
+        if ($oldStatus !== 'completed' && $pemesanan->status_pesan === 'completed') {
             Notification::create([
                 'user_id' => $pemesanan->user_id,
-                'type'    => 'booking',
-                'title'   => 'Booking Confirmed!',
-                'message' => "Your booking at {$hotelNama} is confirmed. Code: {$pemesanan->kode_booking}.",
+                'type'    => 'review_reminder',
+                'title'   => 'How was your stay?',
+                'message' => "You've checked out from {$hotelNama}. Share your experience!",
                 'is_read' => false,
                 'data'    => [
                     'pemesanan_id' => (string) $pemesanan->id,
@@ -198,10 +194,10 @@ class PemesananController extends Controller
             if ($bookingUser?->fcm_token) {
                 FcmHelper::sendNotification(
                     $bookingUser->fcm_token,
-                    'Booking Confirmed! 🎉',
-                    "Your booking at {$hotelNama} is confirmed. Code: {$pemesanan->kode_booking}",
+                    'How was your stay? ⭐',
+                    "You've checked out from {$hotelNama}. Leave a review!",
                     [
-                        'type'         => 'booking',
+                        'type'         => 'review_reminder',
                         'pemesanan_id' => (string) $pemesanan->id,
                     ]
                 );

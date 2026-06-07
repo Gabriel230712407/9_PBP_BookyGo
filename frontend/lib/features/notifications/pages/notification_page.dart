@@ -52,11 +52,9 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _handleNotifTap(AppNotification item) async {
-    // Mark as read dulu
     await NotificationService.markAsRead(widget.session, item.id);
     if (!mounted) return;
 
-    // Update UI langsung (biru dot hilang)
     setState(() {
       _items = _items.map((n) {
         if (n.id == item.id) {
@@ -73,8 +71,6 @@ class _NotificationPageState extends State<NotificationPage> {
         return n;
       }).toList();
     });
-
-    // ── Handler tipe review ───────────────────────────────────────────────────
     if (item.type == 'review' && item.data != null) {
       final rawId = item.data!['pemesanan_id'];
       if (rawId == null) return;
@@ -101,15 +97,18 @@ class _NotificationPageState extends State<NotificationPage> {
           ),
         );
 
-        // Kalau review berhasil → hapus notif ini
         if (result == true) {
-          await NotificationService.deleteNotification(widget.session, item.id);
-          if (!mounted) return;
-          setState(() {
-            _items = _items.where((n) => n.id != item.id).toList();
-          });
-        } else {
-          await _load();
+            await NotificationService.deleteNotification(widget.session, item.id);
+            if (!mounted) return;
+            setState(() {
+                _items = _items.where((n) => n.id != item.id).toList();
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Review submitted! Thank you 🙏'),
+                    backgroundColor: Color(0xFF1C9A5E),
+                ),
+            );
         }
       } catch (e) {
         if (!mounted) return;
@@ -121,7 +120,6 @@ class _NotificationPageState extends State<NotificationPage> {
       return;
     }
 
-    // ── Handler tipe booking (confirmed) ─────────────────────────────────────
     if (item.type == 'booking' && item.data != null) {
       final rawId = item.data!['pemesanan_id'];
       if (rawId == null) return;
@@ -153,9 +151,6 @@ class _NotificationPageState extends State<NotificationPage> {
       }
       return;
     }
-
-    // ── Notif lain: tidak perlu navigasi ─────────────────────────────────────
-    // Sudah mark as read di atas, tidak perlu refresh
   }
 
   @override

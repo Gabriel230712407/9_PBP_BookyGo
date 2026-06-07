@@ -10,14 +10,13 @@ use Carbon\Carbon;
 
 class NotificationController extends Controller
 {
-    // ─── Helper: simpan notif ke DB + kirim push FCM ──────────────────────────
     private function createAndPush(
         int $userId,
-        ?string $fcmToken,      // ← fix: ?string bukan string = null
+        ?string $fcmToken,    
         string $type,
         string $title,
         string $message,
-        ?array $data = null     // ← fix: ?array bukan array = null
+        ?array $data = null    
     ): void {
         Notification::create([
             'user_id' => $userId,
@@ -38,19 +37,19 @@ class NotificationController extends Controller
         }
     }
 
-    // ─── Generate review notifications ────────────────────────────────────────
     public function generateReviewNotifications(Request $request)
     {
         $user = $request->user();
 
         $bookings = Pemesanan::with(['kamar.hotel', 'ulasan'])
             ->where('user_id', $user->id)
-            ->where('tgl_checkout', '<=', Carbon::now())
             ->where('status_pesan', 'confirmed')
+            // ->where('tgl_checkout', '<=', Carbon::now()) // ← comment dulu untuk testing
             ->get();
 
         foreach ($bookings as $booking) {
             if ($booking->ulasan) continue;
+            if ($booking->review_notified) continue;
 
             $exists = Notification::where('user_id', $user->id)
                 ->where('type', 'review')
@@ -75,12 +74,13 @@ class NotificationController extends Controller
                     'kode_booking' => $booking->kode_booking,
                 ]
             );
+
+            $booking->update(['review_notified' => true]);
         }
 
         return response()->json(['status' => true]);
     }
 
-    // ─── Index ─────────────────────────────────────────────────────────────────
     public function index(Request $request)
     {
         $notifications = Notification::where('user_id', $request->user()->id)
@@ -93,7 +93,6 @@ class NotificationController extends Controller
         ]);
     }
 
-    // ─── Mark all as read ──────────────────────────────────────────────────────
     public function markAllAsRead(Request $request)
     {
         Notification::where('user_id', $request->user()->id)
@@ -103,7 +102,6 @@ class NotificationController extends Controller
         return response()->json(['status' => true]);
     }
 
-    // ─── Mark one as read ──────────────────────────────────────────────────────
     public function markAsRead(Request $request, $id)
     {
         $notif = Notification::where('id', $id)
@@ -115,7 +113,6 @@ class NotificationController extends Controller
         return response()->json(['status' => true]);
     }
 
-    // ─── Unread count ──────────────────────────────────────────────────────────
     public function unreadCount(Request $request)
     {
         $count = Notification::where('user_id', $request->user()->id)
@@ -125,7 +122,6 @@ class NotificationController extends Controller
         return response()->json(['status' => true, 'count' => $count]);
     }
 
-    // ─── Destroy ───────────────────────────────────────────────────────────────
     public function destroy(Request $request, $id)
     {
         $notif = Notification::where('id', $id)
@@ -137,7 +133,6 @@ class NotificationController extends Controller
         return response()->json(['status' => true]);
     }
 
-    // ─── Log login ─────────────────────────────────────────────────────────────
     public function logLoginActivity(Request $request)
     {
         $user = $request->user();
@@ -151,7 +146,6 @@ class NotificationController extends Controller
         return response()->json(['status' => true]);
     }
 
-    // ─── Log profile update ────────────────────────────────────────────────────
     public function logProfileUpdate(Request $request)
     {
         $user = $request->user();
@@ -165,7 +159,6 @@ class NotificationController extends Controller
         return response()->json(['status' => true]);
     }
 
-    // ─── Log location preference ───────────────────────────────────────────────
     public function logLocationPreference(Request $request)
     {
         $user = $request->user();
@@ -179,7 +172,6 @@ class NotificationController extends Controller
         return response()->json(['status' => true]);
     }
 
-    // ─── Seed welcome notifications ────────────────────────────────────────────
     public function seedWelcomeNotifications(Request $request)
     {
         $user   = $request->user();

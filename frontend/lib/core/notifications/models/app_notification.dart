@@ -20,7 +20,6 @@ class AppNotification {
   final Map<String, dynamic>? data;
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
-  // Handle data field yang bisa berupa String (lama) atau Map (baru)
     Map<String, dynamic>? parsedData;
     final rawData = json['data'];
     if (rawData is Map) {
