@@ -13,6 +13,8 @@ dependencies:
   shared_preferences: ^2.5.3
   provider: ^6.0.5
   image_picker: ^0.8.7+5
+  url_launcher: ^6.3.1
+  qr_flutter: ^4.1.0
 
   # Firebase
   firebase_core: ^3.13.1
@@ -33,6 +35,8 @@ flutter:
     - assets/images/splash-load.gif
     - assets/images/vector_permission.png
     - assets/images/vector_success.png
+
+    - assets/images/maps.jpeg
     
     - assets/images/hotels/bali/abr/
     - assets/images/hotels/bali/lcr/
