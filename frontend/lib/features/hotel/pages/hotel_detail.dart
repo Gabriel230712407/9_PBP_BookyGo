@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/auth/services/auth_service.dart';
@@ -712,6 +713,14 @@ class _FacilityItem extends StatelessWidget {
   }
 }
 
+Future<void> _openMaps() async {
+  final Uri url = Uri.parse('https://maps.app.goo.gl/UJeXkhgvPW5qgFkVA');
+
+  if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+    throw Exception('Tidak bisa membuka Google Maps');
+  }
+}
+
 class _LocationSection extends StatelessWidget {
   final HotelModel hotel;
 
@@ -732,23 +741,22 @@ class _LocationSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              height: 120,
-              width: double.infinity,
-              color: Colors.grey[300],
-              child: const Icon(Icons.map, size: 50, color: Colors.white),
+          GestureDetector(
+            onTap: _openMaps,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.asset(
+                'assets/images/maps.jpeg',
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           const SizedBox(height: 10),
-          Text(
-            hotel.address,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-              height: 1.4,
-            ),
+          const Text(
+            'Jl. Babarsari No.43, Janti, Caturtunggal, Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta 55281',
+            style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.4),
           ),
         ],
       ),
