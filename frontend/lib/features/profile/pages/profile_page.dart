@@ -118,7 +118,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   );
                 },
               )
-            : Column(
+            : SingleChildScrollView(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -137,6 +138,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ],
               ),
+            ),
       ),
     );
   }
