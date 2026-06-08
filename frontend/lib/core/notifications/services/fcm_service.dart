@@ -54,7 +54,6 @@ class FcmService {
       },
     );
 
-    // 3. Request permission
     final messaging = FirebaseMessaging.instance;
     await messaging.requestPermission(
       alert: true,
