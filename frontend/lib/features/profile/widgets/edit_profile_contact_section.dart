@@ -21,42 +21,42 @@ class EditProfileContactSection extends StatelessWidget {
     return Container(
       color: ProfilePalette.white,
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(26, 20, 26, 34),
+      padding: const EdgeInsets.fromLTRB(26, 16, 26, 20), // ← dikurangi
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Phone number and Email',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
+              fontSize: 16,                // ← dikurangi dari 18
+              fontWeight: FontWeight.w700, // ← dikurangi dari w800
               color: ProfilePalette.darkText,
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 14),     // ← dikurangi dari 22
           const Text(
             'Phone number',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
+              fontSize: 14,                // ← dikurangi dari 16
+              fontWeight: FontWeight.w600, // ← dikurangi dari w800
               color: ProfilePalette.darkText,
             ),
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: 8),      // ← dikurangi dari 26
           EditProfileChangeTile(
             value: phoneNumber,
             onChangeTap: onPhoneChangeTap,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),     // ← dikurangi dari 18
           const Text(
             'Email',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
+              fontSize: 14,                // ← dikurangi dari 16
+              fontWeight: FontWeight.w600, // ← dikurangi dari w800
               color: ProfilePalette.darkText,
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 8),      // ← dikurangi dari 28
           EditProfileChangeTile(
             value: email,
             onChangeTap: onEmailChangeTap,

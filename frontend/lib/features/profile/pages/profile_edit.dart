@@ -57,7 +57,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     final name = _readDynamicValue(() => user.name) ?? 'BookyGo User';
     final email = _readDynamicValue(() => user.email) ?? '-';
-
     final gender = _readDynamicValue(() => user.gender) ?? 'Male';
 
     final phone = _readDynamicValue(() => user.phoneNumber) ??
@@ -79,13 +78,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   String? _readDynamicValue(Object? Function() getter) {
     try {
       final value = getter();
-
       if (value == null) return null;
-
       final text = value.toString().trim();
-
       if (text.isEmpty || text == 'null') return null;
-
       return text;
     } catch (_) {
       return null;
@@ -94,11 +89,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   String _normalizeGender(String value) {
     final lower = value.toLowerCase();
-
     if (lower == 'wanita' || lower == 'female' || lower == 'perempuan') {
       return 'Female';
     }
-
     return 'Male';
   }
 
@@ -108,7 +101,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   void _handleBack() {
     FocusManager.instance.primaryFocus?.unfocus();
-
     if (mounted) {
       ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
       Navigator.of(context).pop(true);
@@ -166,7 +158,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
       final updatedName = _readDynamicValue(() => user.name) ?? currentName;
       final updatedEmail = _readDynamicValue(() => user.email) ?? currentEmail;
-      final updatedGender = _readDynamicValue(() => user.gender) ?? currentGender;
+      final updatedGender =
+          _readDynamicValue(() => user.gender) ?? currentGender;
 
       final updatedPhone = _readDynamicValue(() => user.phoneNumber) ??
           _readDynamicValue(() => user.noTelp) ??
@@ -183,11 +176,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       _showMessage('Profile berhasil diperbarui.');
     } catch (e) {
       if (!mounted) return;
-
       _showMessage(e.toString());
     } finally {
       if (!mounted) return;
-
       setState(() {
         _isSaving = false;
       });
@@ -218,9 +209,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             autofocus: true,
             keyboardType: keyboardType,
             textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              labelText: label,
-            ),
+            decoration: InputDecoration(labelText: label),
             onChanged: (value) {
               input = value;
             },
@@ -250,11 +239,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     );
 
     if (!mounted) return null;
-
     FocusManager.instance.primaryFocus?.unfocus();
-
     await Future.delayed(const Duration(milliseconds: 250));
-
     if (!mounted) return null;
 
     return result?.trim();
@@ -267,9 +253,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       initialValue: _nameController.text,
       keyboardType: TextInputType.name,
     );
-
     if (result == null || result.isEmpty) return;
-
     await _saveProfile(name: result);
   }
 
@@ -280,9 +264,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       initialValue: _emailController.text,
       keyboardType: TextInputType.emailAddress,
     );
-
     if (result == null || result.isEmpty) return;
-
     await _saveProfile(email: result);
   }
 
@@ -293,9 +275,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       initialValue: _phoneController.text,
       keyboardType: TextInputType.phone,
     );
-
     if (result == null || result.isEmpty) return;
-
     await _saveProfile(phoneNumber: result);
   }
 
@@ -313,9 +293,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(false);
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -323,9 +301,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () {
-                Navigator.of(dialogContext).pop(true);
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(true),
               child: const Text('Delete'),
             ),
           ],
@@ -334,7 +310,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     );
 
     if (confirmed != true) return;
-
     await _deleteAccount();
   }
 
@@ -347,23 +322,17 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     try {
       await AuthService.deleteAccount();
-
       if (!mounted) return;
-
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (_) => const WelcomePage(),
-        ),
+        MaterialPageRoute(builder: (_) => const WelcomePage()),
         (route) => false,
       );
     } catch (e) {
       if (!mounted) return;
-
       _showMessage(e.toString());
     } finally {
       if (!mounted) return;
-
       setState(() {
         _isSaving = false;
       });
@@ -372,13 +341,10 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
       final messenger = ScaffoldMessenger.maybeOf(context);
       if (messenger == null) return;
-
       messenger.clearSnackBars();
       messenger.showSnackBar(
         SnackBar(
@@ -410,9 +376,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
                     keyboardDismissBehavior:
                         ScrollViewKeyboardDismissBehavior.onDrag,
@@ -425,11 +389,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                           onNameEditTap: _openNameChangeDialog,
                           onGenderChanged: (value) async {
                             if (value == null) return;
-
                             setState(() {
                               _gender = value;
                             });
-
                             await _saveProfile(gender: value);
                           },
                         ),
@@ -443,13 +405,13 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                           onEmailChangeTap: _openEmailChangeDialog,
                         ),
 
-                        const SizedBox(height: 118),
+                        const SizedBox(height: 24), // ← dikurangi dari 118
 
                         EditProfileDeleteAccount(
                           onTap: _openDeleteAccountInfo,
                         ),
 
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 32), // ← dikurangi dari 80
                       ],
                     ),
                   ),
