@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/auth/services/auth_storage.dart';
+import '../../../core/widgets/app_image.dart';
 import '../services/whistlist_service.dart';
 import '../widgets/wishlist_empty_state.dart';
 import '../widgets/wishlist_header.dart';
@@ -61,7 +62,6 @@ class _WishlistPageState extends State<WishlistPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Ikon koper biru (sesuai desain)
             Container(
               width: 72,
               height: 72,
@@ -146,7 +146,6 @@ class _WishlistPageState extends State<WishlistPage> {
   }
 
   Future<void> _removeWishlist(int hotelId) async {
-    // Optimistic remove
     setState(() {
       _wishlists.removeWhere((w) => w['hotel_id'] == hotelId);
     });
@@ -154,7 +153,6 @@ class _WishlistPageState extends State<WishlistPage> {
     try {
       await WishlistService().toggleWishlist(_token, hotelId);
     } catch (_) {
-      // Revert kalau gagal
       await _loadWishlists();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -171,7 +169,25 @@ class _WishlistPageState extends State<WishlistPage> {
     try {
       final fotos = item['hotel']?['foto_hotels'] as List?;
       if (fotos != null && fotos.isNotEmpty) {
-        return fotos.first['path'] ?? '';
+        // Urutkan by urutan
+        final sorted = List.from(fotos)
+          ..sort((a, b) => (a['urutan'] ?? 0).compareTo(b['urutan'] ?? 0));
+
+        // Skip _group.png / _Group.png, ambil foto pertama yang ada
+        for (final foto in sorted) {
+          final path = (foto['path'] ?? '') as String;
+          if (path.isNotEmpty &&
+              !path.contains('_group') &&
+              !path.contains('_Group')) {
+            return path;
+          }
+        }
+
+        // Fallback: ambil apapun yang ada pathnya
+        for (final foto in sorted) {
+          final path = (foto['path'] ?? '') as String;
+          if (path.isNotEmpty) return path;
+        }
       }
     } catch (_) {}
     return '';
@@ -200,22 +216,19 @@ class _WishlistPageState extends State<WishlistPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gambar hotel
           ClipRRect(
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(14)),
             child: Stack(
               children: [
                 imageUrl.isNotEmpty
-                    ? Image.asset(
-                        imageUrl,
-                        height: 160,
+                    ? AppImage(
+                        imagePath: imageUrl,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => _imagePlaceholder(),
                       )
                     : _imagePlaceholder(),
-                // Tombol hapus (hati merah di pojok)
                 Positioned(
                   top: 10,
                   right: 10,
@@ -244,7 +257,6 @@ class _WishlistPageState extends State<WishlistPage> {
               ],
             ),
           ),
-          // Info hotel
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
             child: Column(
@@ -277,14 +289,13 @@ class _WishlistPageState extends State<WishlistPage> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.location_on,
-                        size: 13, color: Colors.grey),
+                    const Icon(Icons.location_on, size: 13, color: Colors.grey),
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(
                         location,
-                        style: const TextStyle(
-                            fontSize: 11, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                     ),
                   ],
@@ -357,7 +368,8 @@ class _WishlistPageState extends State<WishlistPage> {
                     : RefreshIndicator(
                         onRefresh: _loadWishlists,
                         child: ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+                          padding:
+                              const EdgeInsets.fromLTRB(16, 16, 16, 90),
                           itemCount: _wishlists.length,
                           itemBuilder: (context, index) {
                             return _buildWishlistCard(_wishlists[index]);
