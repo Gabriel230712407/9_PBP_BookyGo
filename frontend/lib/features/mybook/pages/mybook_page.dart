@@ -64,7 +64,7 @@ class _MyBookPageState extends State<MyBookPage> {
     for (final booking in bookings) {
       if (!booking.isPaid) continue;
       if (DateTime.now().isBefore(booking.checkOutDate)) continue;
-      if (booking.hasReview) continue; 
+      if (booking.hasReview) continue;
 
       await NotificationService.maybeGenerateReviewNotification(
         session,
@@ -116,29 +116,35 @@ class _MyBookPageState extends State<MyBookPage> {
 
                 return RefreshIndicator(
                   onRefresh: _refresh,
-                  child: SingleChildScrollView(
+                  child: CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.only(bottom: 120),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
-                      child: Column(
-                        children: [
-                          if (activeBookings.isEmpty)
-                            _EmptyBookingState(
-                              isCompact: isCompact,
-                              onBookNowTap: widget.onBookNowTap,
-                            )
-                          else
-                            _ActiveBookingState(
-                              bookings: activeBookings,
-                              onBookingUpdated: _refresh,
-                            ),
-                          SizedBox(height: isCompact ? 28 : 40),
-                          const MyBookRecommendationSection(),
-                          const SizedBox(height: 24),
-                        ],
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            if (activeBookings.isEmpty)
+                              _EmptyBookingState(
+                                isCompact: isCompact,
+                                onBookNowTap: widget.onBookNowTap,
+                              )
+                            else
+                              _ActiveBookingState(
+                                bookings: activeBookings,
+                                onBookingUpdated: _refresh,
+                              ),
+                            SizedBox(height: isCompact ? 28 : 40),
+                            const MyBookRecommendationSection(),
+                            const SizedBox(height: 24),
+                          ]),
+                        ),
                       ),
-                    ),
+                      // Ini bikin recommendation section mengisi sisa layar
+                      const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: SizedBox(),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -194,7 +200,6 @@ class _EmptyBookingState extends StatelessWidget {
                 textAlign: TextAlign.center,
               );
             }
-
             return const SizedBox.shrink();
           },
         ),

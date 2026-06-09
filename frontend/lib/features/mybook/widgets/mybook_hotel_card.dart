@@ -35,7 +35,7 @@ class MyBookHotelCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.max,
+        mainAxisSize: MainAxisSize.min,
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.vertical(
@@ -71,39 +71,38 @@ class MyBookHotelCard extends StatelessWidget {
                     },
                   ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: width < 180 ? 15 : 16,
-                      fontWeight: FontWeight.w800,
-                      color: darkBlue,
-                      height: 1.2,
-                    ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: width < 180 ? 15 : 16,
+                    fontWeight: FontWeight.w800,
+                    color: darkBlue,
+                    height: 1.2,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    location,
-                    style: TextStyle(
-                      fontSize: width < 180 ? 12 : 13,
-                      color: textGrey,
-                    ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  location,
+                  style: TextStyle(
+                    fontSize: width < 180 ? 12 : 13,
+                    color: textGrey,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    ratingText,
-                    style: TextStyle(
-                      fontSize: width < 180 ? 12 : 13,
-                      color: textGrey,
-                    ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  ratingText,
+                  style: TextStyle(
+                    fontSize: width < 180 ? 12 : 13,
+                    color: textGrey,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
