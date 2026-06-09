@@ -147,37 +147,38 @@ class _MyBookRecommendationSectionState
                 );
               }
 
-              return SizedBox(
-                height: isCompact ? 248 : 265,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: hotels.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final hotel = hotels[index];
-                    final ratingText = '${hotel.rating} (${hotel.review})';
-
-                    return GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => HotelDetailPage(
-                            hotelId: hotel.id,
-                            checkInDate: _defaultCheckIn,
-                            checkOutDate: _defaultCheckOut,
-                            roomCount: 1,
-                            guestCount: 1,
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (int index = 0; index < hotels.length; index++) ...[
+                        if (index > 0) const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => HotelDetailPage(
+                                hotelId: hotels[index].id,
+                                checkInDate: _defaultCheckIn,
+                                checkOutDate: _defaultCheckOut,
+                                roomCount: 1,
+                                guestCount: 1,
+                              ),
+                            ),
+                          ),
+                          child: MyBookHotelCard(
+                            imageUrl: hotels[index].image ?? '',
+                            title: hotels[index].name,
+                            location: hotels[index].address,
+                            ratingText:
+                                '${hotels[index].rating} (${hotels[index].review})',
                           ),
                         ),
-                      ),
-                      child: MyBookHotelCard(
-                        imageUrl: hotel.image ?? '',
-                        title: hotel.name,
-                        location: hotel.address,
-                        ratingText: ratingText,
-                      ),
-                    );
-                  },
+                      ],
+                    ],
+                  ),
                 ),
               );
             },
