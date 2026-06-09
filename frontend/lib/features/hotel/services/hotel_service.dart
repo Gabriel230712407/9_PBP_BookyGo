@@ -31,7 +31,8 @@ class HotelService {
     final keyword = destination.trim().toLowerCase();
 
     return hotels.where((hotel) {
-      final matchDestination = keyword.isEmpty ||
+      final matchDestination =
+          keyword.isEmpty ||
           hotel.name.toLowerCase().contains(keyword) ||
           hotel.city.toLowerCase().contains(keyword) ||
           hotel.address.toLowerCase().contains(keyword);
@@ -65,7 +66,9 @@ class HotelService {
   }
 
   Future<HotelModel> _resolveHotelImages(HotelModel hotel) async {
-    final validImages = await ImagePathResolver.filterExistingPaths(hotel.images);
+    final validImages = await ImagePathResolver.filterExistingPaths(
+      hotel.images,
+    );
 
     return hotel.copyWith(
       image: validImages.isNotEmpty ? validImages.first : null,

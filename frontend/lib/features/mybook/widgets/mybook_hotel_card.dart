@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/app_image.dart';
 
 class MyBookHotelCard extends StatelessWidget {
   final String imageUrl;
@@ -39,24 +40,35 @@ class MyBookHotelCard extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(18),
             ),
-            child: Image.network(
-              imageUrl,
-              width: double.infinity,
-              height: imageHeight,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: double.infinity,
-                  height: imageHeight,
-                  color: const Color(0xFFE9EEFF),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.image_not_supported_outlined,
-                    color: Colors.grey,
+            child: imageUrl.isEmpty
+                ? Container(
+                    width: double.infinity,
+                    height: imageHeight,
+                    color: const Color(0xFFE9EEFF),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Colors.grey,
+                    ),
+                  )
+                : AppImage(
+                    imagePath: imageUrl,
+                    width: double.infinity,
+                    height: imageHeight,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: double.infinity,
+                        height: imageHeight,
+                        color: const Color(0xFFE9EEFF),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.image_not_supported_outlined,
+                          color: Colors.grey,
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),

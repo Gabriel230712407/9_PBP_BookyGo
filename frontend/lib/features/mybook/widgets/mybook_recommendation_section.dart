@@ -1,8 +1,50 @@
 import 'package:flutter/material.dart';
+import '../../../features/hotel/services/hotel_service.dart';
+import '../../../features/hotel/models/hotel_model.dart';
+import '../../../features/hotel/pages/hotel_detail.dart';
 import 'mybook_hotel_card.dart';
 
-class MyBookRecommendationSection extends StatelessWidget {
+class MyBookRecommendationSection extends StatefulWidget {
   const MyBookRecommendationSection({super.key});
+
+  @override
+  State<MyBookRecommendationSection> createState() =>
+      _MyBookRecommendationSectionState();
+}
+
+class _MyBookRecommendationSectionState
+    extends State<MyBookRecommendationSection> {
+  final HotelService _hotelService = HotelService();
+
+  static const _cities = ['Jakarta', 'Yogyakarta', 'Bali', 'Bandung'];
+  String _selectedCity = 'Jakarta';
+  late Future<List<HotelModel>> _futureHotels;
+  late final DateTime _defaultCheckIn;
+  late final DateTime _defaultCheckOut;
+
+  @override
+  void initState() {
+    super.initState();
+    _defaultCheckIn = DateTime.now();
+    _defaultCheckOut = DateTime.now().add(const Duration(days: 1));
+    _futureHotels = _fetchForCity(_selectedCity);
+  }
+
+  Future<List<HotelModel>> _fetchForCity(String city) {
+    return _hotelService.searchHotels(
+      destination: city,
+      rooms: 1,
+      guests: 1,
+    );
+  }
+
+  void _selectCity(String city) {
+    if (city == _selectedCity) return;
+    setState(() {
+      _selectedCity = city;
+      _futureHotels = _fetchForCity(city);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,43 +88,99 @@ class MyBookRecommendationSection extends StatelessWidget {
             ),
           ),
           SizedBox(height: isCompact ? 12 : 14),
-          const SingleChildScrollView(
+          SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: [
-                _CityChip(label: 'Jakarta', isSelected: true),
-                SizedBox(width: 8),
-                _CityChip(label: 'Yogyakarta'),
-                SizedBox(width: 8),
-                _CityChip(label: 'Bali'),
-                SizedBox(width: 8),
-                _CityChip(label: 'Bandung'),
-              ],
+              children: _cities.map((city) {
+                final isFirst = city == _cities.first;
+                return Padding(
+                  padding: EdgeInsets.only(left: isFirst ? 0 : 8),
+                  child: _CityChip(
+                    label: city,
+                    isSelected: city == _selectedCity,
+                    onTap: () => _selectCity(city),
+                  ),
+                );
+              }).toList(),
             ),
           ),
           SizedBox(height: isCompact ? 14 : 18),
-          SizedBox(
-            height: isCompact ? 248 : 265,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: const [
-                MyBookHotelCard(
-                  imageUrl:
-                      'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1200&auto=format&fit=crop',
-                  title: 'Skyline Central\nHotel',
-                  location: 'Sudirman, Central Jakarta',
-                  ratingText: '4,5/5 (4 reviews)',
+          FutureBuilder<List<HotelModel>>(
+            future: _futureHotels,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SizedBox(
+                  height: isCompact ? 248 : 265,
+                  child: const Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return SizedBox(
+                  height: isCompact ? 248 : 265,
+                  child: Center(
+                    child: Text(
+                      'Failed to load hotels',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              final hotels = snapshot.data ?? [];
+
+              if (hotels.isEmpty) {
+                return SizedBox(
+                  height: isCompact ? 248 : 265,
+                  child: Center(
+                    child: Text(
+                      'No hotels found in $_selectedCity',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return SizedBox(
+                height: isCompact ? 248 : 265,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: hotels.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final hotel = hotels[index];
+                    final ratingText = '${hotel.rating} (${hotel.review})';
+
+                    return GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => HotelDetailPage(
+                            hotelId: hotel.id,
+                            checkInDate: _defaultCheckIn,
+                            checkOutDate: _defaultCheckOut,
+                            roomCount: 1,
+                            guestCount: 1,
+                          ),
+                        ),
+                      ),
+                      child: MyBookHotelCard(
+                        imageUrl: hotel.image ?? '',
+                        title: hotel.name,
+                        location: hotel.address,
+                        ratingText: ratingText,
+                      ),
+                    );
+                  },
                 ),
-                SizedBox(width: 12),
-                MyBookHotelCard(
-                  imageUrl:
-                      'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=1200&auto=format&fit=crop',
-                  title: 'Metra Grand Hotel',
-                  location: 'Kuningan, South Jakarta',
-                  ratingText: '4,6/5 (4 reviews)',
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),
@@ -93,30 +191,38 @@ class MyBookRecommendationSection extends StatelessWidget {
 class _CityChip extends StatelessWidget {
   final String label;
   final bool isSelected;
+  final VoidCallback onTap;
 
-  const _CityChip({required this.label, this.isSelected = false});
+  const _CityChip({
+    required this.label,
+    required this.onTap,
+    this.isSelected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF5B74E8);
     const borderColor = Color(0xFF8A96B8);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: isSelected ? primaryColor : borderColor,
-          width: 1.4,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: isSelected ? primaryColor : borderColor,
+            width: 1.4,
+          ),
         ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: isSelected ? primaryColor : const Color(0xFF4D597A),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? primaryColor : const Color(0xFF4D597A),
+          ),
         ),
       ),
     );
