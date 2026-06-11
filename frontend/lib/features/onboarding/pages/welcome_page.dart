@@ -1,11 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/features/auth/pages/email_auth_page.dart';
+import 'package:frontend/core/auth/services/auth_service.dart';
+import 'package:frontend/features/navigation/pages/main_nav_page.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../widgets/benefit_item.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
+
+  @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  bool _isLoading = false;
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final session = await AuthService.signInWithGoogle();
+      if (!mounted) return;
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MainNavPage(
+            isGuest: false,
+            userEmail: session.user.email,
+            userName: session.user.name,
+          ),
+        ),
+        (route) => false,
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,13 +166,7 @@ class WelcomePage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Google sign-in is not enabled yet.'),
-                            ),
-                          );
-                        },
+                        onPressed: _isLoading ? null : _handleGoogleSignIn,
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Row(

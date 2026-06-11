@@ -18,6 +18,7 @@ class User extends Authenticatable
         'password',
         'foto',
         'fcm_token',
+        'google_uid',
     ];
 
     protected $hidden = [
