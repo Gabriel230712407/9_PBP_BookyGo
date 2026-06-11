@@ -17,7 +17,11 @@ class FcmHelper
             json_decode(file_get_contents($credentialsPath), true)
         );
 
-        $token = $credentials->fetchAuthToken();
+        $httpHandler = \Google\Auth\HttpHandler\HttpHandlerFactory::build(
+            new \GuzzleHttp\Client(['verify' => false])
+        );
+
+        $token = $credentials->fetchAuthToken($httpHandler);
         return $token['access_token'];
     }
 
@@ -30,8 +34,9 @@ class FcmHelper
         try {
             $projectId = 'pbp-bookygo-e278e';
             $accessToken = self::getAccessToken();
-
-            $response = Http::withHeaders([
+            
+            $response = Http::withoutVerifying() // ← tambah ini
+            ->withHeaders([
                 'Authorization' => 'Bearer ' . $accessToken,
                 'Content-Type'  => 'application/json',
             ])->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [

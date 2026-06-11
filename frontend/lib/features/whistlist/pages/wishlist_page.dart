@@ -197,7 +197,13 @@ class _WishlistPageState extends State<WishlistPage> {
     final hotel = item['hotel'] as Map<String, dynamic>? ?? {};
     final name = hotel['nama'] ?? 'Hotel';
     final location = hotel['kota'] ?? '';
-    final rating = hotel['total_rating']?.toString() ?? '0.0';
+    final rawRating = double.tryParse(hotel['total_rating']?.toString() ?? '') ?? 0.0;
+
+    final truncatedRating = (rawRating * 10).truncate() / 10;
+
+    final rating = truncatedRating % 1 == 0
+        ? truncatedRating.toInt().toString()
+        : truncatedRating.toStringAsFixed(1);
     final imageUrl = _getImageUrl(item);
 
     return Container(
