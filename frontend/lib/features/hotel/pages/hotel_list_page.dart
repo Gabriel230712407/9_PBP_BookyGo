@@ -6,13 +6,9 @@ import '../../navigation/utils/main_nav_launcher.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/hotel_model.dart';
 import '../services/hotel_service.dart';
-import '../../whistlist/services/whistlist_service.dart'; // sesuaikan path jika berbeda
+import '../../whistlist/services/whistlist_service.dart';
 import 'hotel_detail.dart';
 import '../../../core/auth/services/auth_storage.dart';
-
-// Sesuaikan import ini dengan cara kamu menyimpan token:
-// import 'package:shared_preferences/shared_preferences.dart';
-// atau import provider/riverpod kamu
 
 class HotelListPage extends StatefulWidget {
   final String destination;
