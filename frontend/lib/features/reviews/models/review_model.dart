@@ -97,7 +97,13 @@ class ReviewModel {
       komentar: (json['komentar'] ?? '').toString(),
       photos: _parsePhotos(json['photos']),
       userName: (user['name'] ?? user['nama'] ?? 'User').toString(),
-      userPhoto: user['foto']?.toString(),
+      userPhoto: _buildImageUrl(
+        user['foto'] ??
+            user['photo_url'] ??
+            user['avatar'] ??
+            user['picture'] ??
+            json['user_foto'],
+      ),
       roomName: (kamar['nama'] ?? '').toString(),
       hotelName: (hotel['nama'] ?? '').toString(),
       createdAt: _tryParseDate(json['created_at']),
@@ -219,4 +225,28 @@ List<String> _parsePhotos(dynamic value) {
   }
 
   return [];
+}
+
+String? _buildImageUrl(dynamic value) {
+  if (value == null) return null;
+
+  final path = value.toString().trim().replaceAll(r'\/', '/');
+
+  if (path.isEmpty || path == 'null') return null;
+
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  final base = ApiConfig.baseUrl.replaceAll('/api', '');
+
+  if (path.startsWith('/storage/')) {
+    return '$base$path';
+  }
+
+  if (path.startsWith('storage/')) {
+    return '$base/$path';
+  }
+
+  return '$base/storage/$path';
 }
