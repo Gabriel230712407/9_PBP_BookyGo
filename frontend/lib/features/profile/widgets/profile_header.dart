@@ -25,8 +25,8 @@ class ProfileHeader extends StatefulWidget {
 }
 
 class _ProfileHeaderState extends State<ProfileHeader> {
-  String? _localImagePath;  // foto yang baru dipilih (belum/sudah upload)
-  String? _serverFotoUrl;   // URL foto dari server/database
+  String? _localImagePath; 
+  String? _serverFotoUrl;  
   String _token = '';
   bool _isUploading = false;
   final _picker = ImagePicker();
@@ -48,7 +48,6 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     ]);
   }
 
-  // Load path foto lokal (dari SharedPreferences)
   Future<void> _loadLocalImage() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_localPathKey);
@@ -57,11 +56,10 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     }
   }
 
-  // Fetch foto dari server (/me endpoint)
   Future<void> _fetchServerFoto() async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/me'), // sesuaikan nama ApiConfig
+        Uri.parse('${ApiConfig.baseUrl}/me'),
         headers: {
           'Authorization': 'Bearer $_token',
           'Accept': 'application/json',
@@ -71,14 +69,22 @@ class _ProfileHeaderState extends State<ProfileHeader> {
         final data = jsonDecode(response.body)['data'];
         final foto = data['foto'];
         if (foto != null && foto.toString().isNotEmpty && mounted) {
-          final base = ApiConfig.baseUrl.replaceAll('/api', '');
-          setState(() => _serverFotoUrl = '$base/storage/$foto');
+          
+          // Cek apakah foto sudah URL penuh (dari Google) atau path lokal
+          final String fotoUrl;
+          if (foto.toString().startsWith('http')) {
+            fotoUrl = foto.toString(); // URL Google, pakai langsung
+          } else {
+            final base = ApiConfig.baseUrl.replaceAll('/api', '');
+            fotoUrl = '$base/storage/$foto'; // path lokal, tambah base URL
+          }
+          
+          setState(() => _serverFotoUrl = fotoUrl);
         }
       }
     } catch (_) {}
   }
 
-  // Upload foto ke server
   Future<void> _uploadFoto(String filePath) async {
     if (_token.isEmpty) return;
     setState(() => _isUploading = true);

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../navigation/widgets/app_bottom_nav_bar.dart';
+// import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../models/review_model.dart';
 import '../services/review_service.dart';
 import '../../../core/auth/services/auth_service.dart';
@@ -167,7 +167,7 @@ class _ReviewListPageState extends State<ReviewListPage> {
                       ),
                   ],
                 ),
-      bottomNavigationBar: const AppBottomNavBar(),
+      // bottomNavigationBar: const AppBottomNavBar(),
     );
   }
 }
@@ -494,23 +494,36 @@ class _AvatarImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (url == null || url!.isEmpty) {
-      return const CircleAvatar(
-        radius: 18,
-        backgroundColor: Color(0xFFDCE4F5),
-        child: Icon(
-          Icons.person,
-          color: Colors.white,
-          size: 21,
-        ),
-      );
+    final imageUrl = url?.trim();
+
+    if (imageUrl == null || imageUrl.isEmpty || imageUrl == 'null') {
+      return _fallbackAvatar();
     }
 
-    return CircleAvatar(
+    return ClipOval(
+      child: Image.network(
+        imageUrl,
+        width: 36,
+        height: 36,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _fallbackAvatar(),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return _fallbackAvatar();
+        },
+      ),
+    );
+  }
+
+  Widget _fallbackAvatar() {
+    return const CircleAvatar(
       radius: 18,
-      backgroundColor: const Color(0xFFDCE4F5),
-      backgroundImage: NetworkImage(url!),
-      onBackgroundImageError: (_, __) {},
+      backgroundColor: Color(0xFFDCE4F5),
+      child: Icon(
+        Icons.person,
+        color: Colors.white,
+        size: 21,
+      ),
     );
   }
 }

@@ -57,6 +57,19 @@ class _EmailAuthPageState extends State<EmailAuthPage>
     super.dispose();
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      final session = await AuthService.signInWithGoogle();
+      if (!mounted) return;
+      _goToHome(session);
+    } on AuthException catch (error) {
+      _showMessage(error.message);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _handleLogin() async {
     _clearLoginErrors();
     if (!_loginFormKey.currentState!.validate()) {
@@ -339,6 +352,13 @@ class _EmailAuthPageState extends State<EmailAuthPage>
                   _PrimaryButton(
                     text: _isLoading ? 'Loading...' : 'Login',
                     onPressed: _isLoading ? null : _handleLogin,
+                  ),
+
+                  const SizedBox(height: 16),
+                  const _DividerOr(),
+                  const SizedBox(height: 16),
+                  _GoogleButton(
+                    onPressed: _isLoading ? null : _handleGoogleSignIn,
                   ),
                 ],
               ),
@@ -701,6 +721,66 @@ class _PrimaryButton extends StatelessWidget {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DividerOr extends StatelessWidget {
+  const _DividerOr();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: const [
+        Expanded(child: Divider(color: AppColors.blueLight)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'or',
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(child: Divider(color: AppColors.blueLight)),
+      ],
+    );
+  }
+}
+
+class _GoogleButton extends StatelessWidget {
+  const _GoogleButton({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Image.asset(
+          'assets/images/Google_G_Logo.png',
+          height: 24,
+          width: 24,
+        ),
+        label: const Text(
+          'Continue with Google',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.darkBlue,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.blueLight),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
       ),

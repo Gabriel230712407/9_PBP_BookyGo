@@ -9,6 +9,8 @@ import 'package:frontend/core/constants/api_config.dart';
 import 'package:frontend/core/notifications/services/notification_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   AuthService._();
@@ -16,6 +18,8 @@ class AuthService {
   static const _requestTimeout = Duration(seconds: 15);
 
   static Uri _uri(String path) => Uri.parse('${ApiConfig.baseUrl}$path');
+  static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  static final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   static Future<AuthSession> login({
     required String email,
@@ -71,6 +75,41 @@ class AuthService {
     final session = _parseAuthResponse(response);
     await AuthStorage.saveSession(session);
     return session;
+  }
+
+  static Future<AuthSession> signInWithGoogle() async {
+    try {
+      await _googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw const AuthException('Google Sign-In canceled.');
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final response = await _post(
+        '/auth/google',
+        body: {
+          'id_token': googleAuth.idToken ?? '',
+        },
+      );
+
+      final session = _parseAuthResponse(response);
+      await AuthStorage.saveSession(session);
+      await NotificationService.maybeLogLoginActivity(session);
+
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        await _saveFcmTokenToServer(session.token, fcmToken);
+      }
+
+      return session;
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      throw AuthException('Google Sign-In failed: ${e.toString()}');
+    }
   }
 
   static Future<AuthSession?> restoreSession() async {
@@ -130,7 +169,6 @@ class AuthService {
             )
             .timeout(_requestTimeout);
       } catch (_) {
-        // Local logout still proceeds even if the backend request fails.
       }
     }
 

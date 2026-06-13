@@ -12,7 +12,20 @@
           "package_name": "com.bookygo.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "118781248213-jh87ll3qt1n9ivohlubaerjp2d654n98.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bookygo.app",
+            "certificate_hash": "1716e5ff893151afc1518cfc999ceb94f56cb6d6"
+          }
+        },
+        {
+          "client_id": "118781248213-135lj8sf21id9j0mh85vqq8tir8mm0j6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD4vDeihUfKPGJOcBCSmIQaVh3iPkU-w_E"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "118781248213-135lj8sf21id9j0mh85vqq8tir8mm0j6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

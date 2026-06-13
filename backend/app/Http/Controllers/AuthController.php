@@ -13,6 +13,9 @@ use App\Models\Ulasan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
+// use Kreait\Laravel\Firebase\Facades\Firebase;
+use Illuminate\Support\Facades\Http;
+
 class AuthController extends Controller
 {
     public function register(Request $request)
@@ -192,5 +195,58 @@ class AuthController extends Controller
         ]);
 
         return response()->json(['status' => true]);
+    }
+
+    public function googleLogin(Request $request)
+    {
+        $request->validate([
+            'id_token' => 'required|string',
+        ]);
+
+        $response = Http::withoutVerifying()->get('https://oauth2.googleapis.com/tokeninfo', [
+            'id_token' => $request->id_token,
+        ]);
+
+        if ($response->failed() || !$response->json('email')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Token Google tidak valid.',
+            ], 401);
+        }
+
+        $googleData = $response->json();
+        $email = $googleData['email'];
+        $name = $googleData['name'] ?? 'User';
+        $photo = $googleData['picture'] ?? null;
+        $uid = $googleData['sub'];
+
+        $user = User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name' => $name,
+                'password' => Hash::make(str()->random(32)),
+                'foto' => $photo,
+                'google_uid' => $uid,
+            ]
+        );
+
+        if (!$user->wasRecentlyCreated) {
+            $user->update([
+                'google_uid' => $uid,
+                'foto' => $user->foto ?? $photo,
+            ]);
+        }
+
+        $token = $user->createToken('bookygo-token')->plainTextToken;
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Login dengan Google berhasil',
+            'data' => [
+                'user' => $user->fresh(),
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ],
+        ]);
     }
 }
