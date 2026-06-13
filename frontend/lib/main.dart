@@ -6,6 +6,8 @@ import 'package:frontend/features/onboarding/pages/splash_page.dart';
 import 'package:frontend/features/profile/providers/reminder_provider.dart';
 import 'package:provider/provider.dart';
 
+final navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -25,6 +27,7 @@ class MainApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
         title: 'BookyGo',
         theme: ThemeData(

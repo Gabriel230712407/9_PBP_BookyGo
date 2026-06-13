@@ -5,6 +5,9 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/core/constants/api_config.dart';
 import 'package:frontend/core/auth/services/auth_storage.dart';
+import 'package:frontend/main.dart';
+import 'package:frontend/features/mybook/services/booking_service.dart';
+import 'package:frontend/features/reviews/pages/review_form.dart';
 
 final FlutterLocalNotificationsPlugin _localNotifications =
     FlutterLocalNotificationsPlugin();
@@ -51,6 +54,7 @@ class FcmService {
       ),
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         debugPrint('🔔 Notif tapped: ${response.payload}');
+        _handleNotificationData(response.payload);
       },
     );
 
@@ -63,6 +67,17 @@ class FcmService {
 
     FirebaseMessaging.onMessage.listen(_showLocalNotification);
 
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      debugPrint('🔔 Notif opened app: ${message.data}');
+      _navigateFromData(message.data);
+    });
+
+    final initialMessage = await messaging.getInitialMessage();
+    if (initialMessage != null) {
+      debugPrint('🔔 App opened from terminated: ${initialMessage.data}');
+      _navigateFromData(initialMessage.data);
+    }
+
     final token = await messaging.getToken();
     if (token != null) {
       debugPrint('📱 FCM Token: $token');
@@ -71,6 +86,47 @@ class FcmService {
       debugPrint('❌ FCM Token NULL');
     }
     messaging.onTokenRefresh.listen(_saveFcmToken);
+  }
+
+  static void _handleNotificationData(String? payload) {
+    if (payload == null) return;
+    try {
+      final data = jsonDecode(payload) as Map<String, dynamic>;
+      _navigateFromData(data);
+    } catch (e) {
+      debugPrint('❌ Error parsing payload: $e');
+    }
+  }
+
+  static Future<void> _navigateFromData(Map<String, dynamic> data) async {
+    debugPrint('🧭 _navigateFromData called with: $data');
+    
+    final type = data['type'];
+    final pemesananId = data['pemesanan_id'];
+    
+    debugPrint('🧭 type: $type, pemesananId: $pemesananId');
+    debugPrint('🧭 navigatorKey.currentState: ${navigatorKey.currentState}');
+
+    if (type == 'review' && pemesananId != null) {
+      debugPrint('🧭 Condition matched, fetching booking...');
+      try {
+        final booking = await BookingService().fetchBookingById(
+          int.parse(pemesananId.toString()),
+        );
+        debugPrint('🧭 Booking fetched: ${booking.id}');
+
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (_) => ReviewFormPage(booking: booking),
+          ),
+        );
+        debugPrint('🧭 Navigation pushed');
+      } catch (e) {
+        debugPrint('❌ Failed to load booking for review: $e');
+      }
+    } else {
+      debugPrint('🧭 Condition NOT matched - type or pemesananId mismatch');
+    }
   }
 
   static Future<void> _saveFcmToken(String token) async {
