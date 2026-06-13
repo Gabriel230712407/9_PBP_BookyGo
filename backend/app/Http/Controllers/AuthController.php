@@ -12,8 +12,6 @@ use App\Models\Wishlist;
 use App\Models\Ulasan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
-// use Kreait\Laravel\Firebase\Facades\Firebase;
 use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
