@@ -27,6 +27,12 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"
 
 flutter:
   uses-material-design: true
@@ -86,3 +92,5 @@ flutter:
     - assets/images/kamars/jogja/mbs/ss/
     - assets/images/kamars/jogja/tsh/jhs/
     - assets/images/kamars/jogja/tsh/scr/
+
+    - assets/images/app_icon.png 

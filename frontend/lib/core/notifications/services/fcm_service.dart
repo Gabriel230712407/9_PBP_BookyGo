@@ -36,7 +36,7 @@ Future<void> _showLocalNotification(RemoteMessage message) async {
         channelDescription: _channelDesc,
         importance: Importance.high,
         priority: Priority.high,
-        icon: '@mipmap/ic_launcher',
+        icon: '@drawable/ic_notification',
       ),
     ),
     payload: jsonEncode(message.data),
@@ -50,7 +50,7 @@ class FcmService {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     await _localNotifications.initialize(
       const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        android: AndroidInitializationSettings('@drawable/ic_notification'),
       ),
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         debugPrint('🔔 Notif tapped: ${response.payload}');
