@@ -7,15 +7,22 @@ Future<void> openMainNavTab(BuildContext context, int index) async {
   final session = await AuthService.currentSession();
   if (!context.mounted) return;
 
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(
-      builder: (_) => MainNavPage(
-        initialIndex: index,
-        isGuest: session == null,
-        userEmail: session?.user.email,
-        userName: session?.user.name,
+  ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
+  FocusManager.instance.primaryFocus?.unfocus();
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!context.mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => MainNavPage(
+          initialIndex: index,
+          isGuest: session == null,
+          userEmail: session?.user.email,
+          userName: session?.user.name,
+        ),
       ),
-    ),
-    (route) => false,
-  );
+      (route) => false,
+    );
+  });
 }
