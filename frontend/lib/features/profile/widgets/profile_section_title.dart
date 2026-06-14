@@ -14,11 +14,11 @@ class ProfileSectionTitle extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: ProfilePalette.white,
-      padding: const EdgeInsets.fromLTRB(32, 18, 32, 12),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
       child: Text(
         title,
         style: const TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w700,
           color: ProfilePalette.darkText,
         ),

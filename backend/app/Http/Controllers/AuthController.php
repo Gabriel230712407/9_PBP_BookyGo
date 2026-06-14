@@ -12,8 +12,6 @@ use App\Models\Wishlist;
 use App\Models\Ulasan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-
-// use Kreait\Laravel\Firebase\Facades\Firebase;
 use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
@@ -106,7 +104,7 @@ class AuthController extends Controller
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
             'gender' => 'sometimes|required|in:Pria,Wanita',
-            'no_telp' => 'sometimes|required|string|max:255',
+            'no_telp' => 'sometimes|nullable|string|max:255',
             'foto' => 'nullable|string|max:2048',
         ]);
 
@@ -123,7 +121,7 @@ class AuthController extends Controller
         }
 
         if ($request->has('no_telp')) {
-            $user->no_telp = $validated['no_telp'];
+            $user->no_telp = $request->filled('no_telp') ? $validated['no_telp'] : null;
         }
 
         if ($request->has('foto')) {

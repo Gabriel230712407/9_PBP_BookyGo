@@ -119,26 +119,27 @@ class _ProfilePageState extends State<ProfilePage> {
                 },
               )
             : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ProfileHeader(
-                    userName: widget.userName ?? 'User',
-                    onEditTap: _goToEditProfile,
-                  ),
-                  const ProfileSectionDivider(),
-                  const ProfileSectionTitle(title: 'Account Features'),
-                  _buildProfileStatsSection(),
-                  const ProfileSectionDivider(),
-                  const ProfileReminderSection(),
-                  const ProfileSectionDivider(),
-                  ProfileOtherSection(
-                    onLogoutTap: _handleLogout,
-                  ),
-                ],
+                padding: const EdgeInsets.only(bottom: 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ProfileHeader(
+                      userName: widget.userName ?? 'User',
+                      onEditTap: _goToEditProfile,
+                    ),
+                    const ProfileSectionDivider(),
+                    const ProfileSectionTitle(title: 'Account Features'),
+                    _buildProfileStatsSection(),
+                    const ProfileSectionDivider(),
+                    const ProfileReminderSection(),
+                    const ProfileSectionDivider(),
+                    ProfileOtherSection(
+                      onLogoutTap: _handleLogout,
+                    ),
+                  ],
+                ),
               ),
-            ),
       ),
     );
   }

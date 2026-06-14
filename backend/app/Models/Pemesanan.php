@@ -11,6 +11,8 @@ class Pemesanan extends Model
         'kamar_id',
         'tgl_checkin',
         'tgl_checkout',
+        'room_count',
+        'guest_count',
         'status_pesan',
         'metode_bayar',
         'kode_booking',

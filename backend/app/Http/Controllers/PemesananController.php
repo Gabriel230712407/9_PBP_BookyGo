@@ -61,6 +61,8 @@ class PemesananController extends Controller
             'kamar_id'     => 'required|exists:kamars,id',
             'tgl_checkin'  => 'required|date',
             'tgl_checkout' => 'required|date|after:tgl_checkin',
+            'room_count'   => 'nullable|integer|min:1',
+            'guest_count'  => 'nullable|integer|min:1',
             'status_pesan' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:255',
             'kode_booking' => 'nullable|string|max:255|unique:pemesanans,kode_booking',
@@ -78,6 +80,8 @@ class PemesananController extends Controller
             'kamar_id'     => $request->kamar_id,
             'tgl_checkin'  => $request->tgl_checkin,
             'tgl_checkout' => $request->tgl_checkout,
+            'room_count'   => $request->room_count ?? 1,
+            'guest_count'  => $request->guest_count ?? 1,
             'status_pesan' => $request->status_pesan ?? 'pending',
             'metode_bayar' => $request->metode_bayar,
             'kode_booking' => $request->kode_booking ?? 'BK-' . strtoupper(Str::random(8)),
@@ -146,6 +150,8 @@ class PemesananController extends Controller
             'kamar_id'     => 'sometimes|required|exists:kamars,id',
             'tgl_checkin'  => 'sometimes|required|date',
             'tgl_checkout' => 'sometimes|required|date|after:tgl_checkin',
+            'room_count'   => 'nullable|integer|min:1',
+            'guest_count'  => 'nullable|integer|min:1',
             'status_pesan' => 'nullable|string|max:255',
             'metode_bayar' => 'nullable|string|max:255',
             'kode_booking' => 'nullable|string|max:255|unique:pemesanans,kode_booking,' . $pemesanan->id,
@@ -159,7 +165,7 @@ class PemesananController extends Controller
         $oldStatus = $pemesanan->status_pesan;
 
         $pemesanan->update($request->only([
-            'kamar_id', 'tgl_checkin', 'tgl_checkout',
+            'kamar_id', 'tgl_checkin', 'tgl_checkout', 'room_count', 'guest_count',
             'status_pesan', 'metode_bayar', 'kode_booking',
             'nama', 'email', 'no_telp',
         ]));

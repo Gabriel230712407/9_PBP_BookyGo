@@ -108,7 +108,9 @@ class _BookingFormPageState extends State<BookingFormPage> {
     );
   }
 
-  double get _grandTotal => _roomSubtotal + _addonsTotal;
+  double get _tax => _roomSubtotal * BookingModel.taxRate;
+
+  double get _grandTotal => _roomSubtotal + _tax + _addonsTotal;
 
   List<int> get _selectedAddonIds {
     return _addons
@@ -137,6 +139,8 @@ class _BookingFormPageState extends State<BookingFormPage> {
         roomId: widget.room.id,
         checkInDate: widget.checkInDate,
         checkOutDate: widget.checkOutDate,
+        roomCount: widget.roomCount,
+        guestCount: widget.guestCount,
         contactName: '${_selectedTitle.trim()} ${_nameController.text.trim()}',
         contactEmail: _emailController.text.trim(),
         contactPhone: _phoneController.text.trim(),

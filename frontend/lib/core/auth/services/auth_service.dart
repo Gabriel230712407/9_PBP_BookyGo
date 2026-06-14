@@ -217,7 +217,7 @@ class AuthService {
     String? name,
     String? email,
     required String gender,
-    required String phoneNumber,
+    String? phoneNumber,
     String? photo,
   }) async {
     final session = await AuthStorage.getSession();
@@ -232,7 +232,7 @@ class AuthService {
       if (name != null) 'name': name,
       if (email != null) 'email': email,
       'gender': gender,
-      'no_telp': phoneNumber,
+      if (phoneNumber != null) 'no_telp': phoneNumber,
       if (photo != null) 'foto': photo,
     };
 

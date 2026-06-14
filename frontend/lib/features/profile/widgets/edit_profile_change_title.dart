@@ -15,6 +15,8 @@ class EditProfileChangeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayValue = value.trim().isEmpty ? '-' : value;
+
     return Container(
       height: 66,
       width: double.infinity,
@@ -27,7 +29,7 @@ class EditProfileChangeTile extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              value,
+              displayValue,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(

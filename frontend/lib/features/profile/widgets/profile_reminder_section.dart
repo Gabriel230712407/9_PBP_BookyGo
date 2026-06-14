@@ -12,29 +12,29 @@ class ProfileReminderSection extends StatelessWidget {
 
     return Container(
       color: ProfilePalette.white,
-      padding: const EdgeInsets.fromLTRB(32, 12, 32, 12),
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Reminder',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
               color: ProfilePalette.darkText,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           const Text(
-            'Get reminders for payment, check-in, price\ndrops on wishlist, and more',
+            'Get reminders for payment, check-in, price drops on wishlist, and more',
             style: TextStyle(
-              fontSize: 13,
-              height: 1.35,
+              fontSize: 12,
+              height: 1.3,
               fontWeight: FontWeight.w400,
               color: ProfilePalette.mutedText,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _ReminderSwitchRow(
             title: 'Email',
             value: reminder.emailEnabled,
@@ -70,14 +70,14 @@ class _ReminderSwitchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 46,
+      height: 40,
       child: Row(
         children: [
           Expanded(
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: ProfilePalette.darkText,
               ),

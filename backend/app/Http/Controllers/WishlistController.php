@@ -136,6 +136,7 @@ class WishlistController extends Controller
 {
     $wishlists = Wishlist::with(['hotel.fotoHotels'])
         ->where('user_id', $request->user()->id)
+        ->latest()
         ->get();
 
     return response()->json([

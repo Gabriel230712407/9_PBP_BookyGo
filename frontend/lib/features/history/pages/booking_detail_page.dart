@@ -22,9 +22,9 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   }
 
   double get subtotal => widget.booking.staySubtotal;
-  double get tax => subtotal * 0.1;
-  double get serviceFee => widget.booking.addonsTotal;
-  double get totalPaid => subtotal + tax + serviceFee;
+  double get tax => widget.booking.taxAmount;
+  double get addonsTotal => widget.booking.addonsTotal;
+  double get totalPaid => widget.booking.grandTotal;
 
   @override
   Widget build(BuildContext context) {
@@ -204,7 +204,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                     Expanded(
                       child: _SmallInfoCard(
                         title: 'GUESTS',
-                        subtitle: '2 Adults',
+                        subtitle: widget.booking.guestCountLabel,
                         icon: Icons.person,
                         backgroundColor: const Color(0xFFE6F0FF),
                       ),
@@ -236,7 +236,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
                       label: 'Subtotal',
                       value: BookingFormatters.currency(subtotal)),
                   _PaymentRow(label: 'Tax (10%)', value: BookingFormatters.currency(tax)),
-                  _PaymentRow(label: 'Service Fee', value: BookingFormatters.currency(serviceFee)),
+                  _PaymentRow(label: 'Add-ons', value: BookingFormatters.currency(addonsTotal)),
                   const Divider(),
                   _PaymentRow(
                     label: 'TOTAL PAID',

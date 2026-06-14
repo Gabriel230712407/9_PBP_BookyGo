@@ -29,7 +29,7 @@ class EditProfileAccountInfoSection extends StatelessWidget {
             'Account Owner Info',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: ProfilePalette.darkText,
             ),
           ),

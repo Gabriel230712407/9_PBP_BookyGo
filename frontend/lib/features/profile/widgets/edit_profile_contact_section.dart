@@ -28,35 +28,35 @@ class EditProfileContactSection extends StatelessWidget {
           const Text(
             'Phone number and Email',
             style: TextStyle(
-              fontSize: 16,                // ← dikurangi dari 18
-              fontWeight: FontWeight.w700, // ← dikurangi dari w800
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
               color: ProfilePalette.darkText,
             ),
           ),
-          const SizedBox(height: 14),     // ← dikurangi dari 22
+          const SizedBox(height: 14),
           const Text(
             'Phone number',
             style: TextStyle(
-              fontSize: 14,                // ← dikurangi dari 16
-              fontWeight: FontWeight.w600, // ← dikurangi dari w800
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
               color: ProfilePalette.darkText,
             ),
           ),
-          const SizedBox(height: 8),      // ← dikurangi dari 26
+          const SizedBox(height: 8),
           EditProfileChangeTile(
             value: phoneNumber,
             onChangeTap: onPhoneChangeTap,
           ),
-          const SizedBox(height: 14),     // ← dikurangi dari 18
+          const SizedBox(height: 14),
           const Text(
             'Email',
             style: TextStyle(
-              fontSize: 14,                // ← dikurangi dari 16
-              fontWeight: FontWeight.w600, // ← dikurangi dari w800
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
               color: ProfilePalette.darkText,
             ),
           ),
-          const SizedBox(height: 8),      // ← dikurangi dari 28
+          const SizedBox(height: 8),
           EditProfileChangeTile(
             value: email,
             onChangeTap: onEmailChangeTap,

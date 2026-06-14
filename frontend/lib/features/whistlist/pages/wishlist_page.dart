@@ -34,20 +34,39 @@ class _WishlistPageState extends State<WishlistPage> {
 
   Future<void> _loadWishlists() async {
     if (_token.isEmpty) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
       return;
     }
     try {
       final data = await WishlistService().getMyWishlists(_token);
       if (mounted) {
         setState(() {
-          _wishlists = data;
+          _wishlists = _sortWishlistsByNewest(data);
           _isLoading = false;
         });
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  List<Map<String, dynamic>> _sortWishlistsByNewest(
+    List<Map<String, dynamic>> data,
+  ) {
+    final sorted = List<Map<String, dynamic>>.from(data);
+
+    sorted.sort((a, b) {
+      final aDate = DateTime.tryParse((a['created_at'] ?? '').toString()) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+      final bDate = DateTime.tryParse((b['created_at'] ?? '').toString()) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+
+      return bDate.compareTo(aDate);
+    });
+
+    return sorted;
   }
 
   Future<void> _confirmRemove(Map<String, dynamic> item) async {
