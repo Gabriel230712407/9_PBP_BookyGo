@@ -25,8 +25,8 @@ class ProfileHeader extends StatefulWidget {
 }
 
 class _ProfileHeaderState extends State<ProfileHeader> {
-  String? _localImagePath; 
-  String? _serverFotoUrl;  
+  String? _localImagePath;
+  String? _serverFotoUrl;
   String _token = '';
   bool _isUploading = false;
   final _picker = ImagePicker();
@@ -268,7 +268,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
 
     return Container(
       color: ProfilePalette.white,
-      padding: const EdgeInsets.fromLTRB(32, 28, 32, 18),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 16),
       child: Row(
         children: [
           // Avatar + kamera icon
@@ -277,7 +277,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
             child: Stack(
               children: [
                 CircleAvatar(
-                  radius: 31,
+                  radius: 28,
                   backgroundColor: ProfilePalette.background,
                   backgroundImage: imageProvider,
                   child: imageProvider == null
@@ -308,14 +308,14 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                 Positioned(
                   right: 0, bottom: 0,
                   child: Container(
-                    width: 24, height: 24,
+                    width: 22, height: 22,
                     decoration: BoxDecoration(
                       color: ProfilePalette.white,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: ProfilePalette.background, width: 2),
                     ),
-                    child: const Icon(Icons.camera_alt, size: 14,
+                    child: const Icon(Icons.camera_alt, size: 13,
                         color: ProfilePalette.black),
                   ),
                 ),
@@ -336,7 +336,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     color: ProfilePalette.darkText,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 InkWell(
                   onTap: widget.onEditTap,
                   borderRadius: BorderRadius.circular(8),

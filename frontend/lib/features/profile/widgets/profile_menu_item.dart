@@ -24,18 +24,18 @@ class ProfileMenuItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(32, 10, 32, 10),
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
           child: Row(
             children: [
               SizedBox(
-                width: 34,
+                width: 30,
                 child: Icon(
                   icon,
-                  size: 27,
+                  size: 22,
                   color: iconColor,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -43,8 +43,8 @@ class ProfileMenuItem extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         color: ProfilePalette.darkText,
                       ),
                     ),
@@ -53,7 +53,7 @@ class ProfileMenuItem extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: ProfilePalette.mutedText,
                         ),
