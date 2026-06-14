@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:frontend/core/auth/models/auth_session.dart';
 import 'package:frontend/core/auth/services/auth_service.dart';
@@ -21,11 +23,13 @@ class HomePage extends StatefulWidget {
     this.isGuest = true,
     this.userEmail,
     this.userName,
+    this.refreshToken = 0,
   });
 
   final bool isGuest;
   final String? userEmail;
   final String? userName;
+  final int refreshToken;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -58,6 +62,16 @@ class _HomePageState extends State<HomePage> {
     _loadHotels(_selectedDestination);
   }
 
+  @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.refreshToken != widget.refreshToken) {
+      _hotelCache.remove(_selectedDestination);
+      _loadHotels(_selectedDestination);
+    }
+  }
+
   Future<void> _loadHotels(String destination) async {
     if (_hotelCache.containsKey(destination)) return;
     if (!mounted) return;
@@ -71,13 +85,7 @@ class _HomePageState extends State<HomePage> {
         guests: 1,
       );
 
-      final sorted = List<HotelModel>.from(all)
-        ..sort((a, b) {
-          final rA = double.tryParse(a.rating.toString()) ?? 0;
-          final rB = double.tryParse(b.rating.toString()) ?? 0;
-          return rB.compareTo(rA);
-        });
-      final top3 = sorted.take(3).toList();
+      final top3 = _popularHotelsForDestination(destination, all);
 
       if (!mounted) return;
       setState(() {
@@ -102,6 +110,33 @@ class _HomePageState extends State<HomePage> {
 
   List<HotelModel> get _currentHotels =>
       _hotelCache[_selectedDestination] ?? [];
+
+  List<HotelModel> _popularHotelsForDestination(
+    String destination,
+    List<HotelModel> hotels,
+  ) {
+    final candidates = List<HotelModel>.from(hotels);
+    final hasRatedHotel = candidates.any(
+      (hotel) => hotel.rawRating > 0 || hotel.reviewCount > 0,
+    );
+
+    if (!hasRatedHotel) {
+      candidates.shuffle(math.Random(destination.hashCode));
+      return candidates.take(3).toList();
+    }
+
+    candidates.sort((a, b) {
+      final ratingComparison = b.rawRating.compareTo(a.rawRating);
+      if (ratingComparison != 0) return ratingComparison;
+
+      final reviewComparison = b.reviewCount.compareTo(a.reviewCount);
+      if (reviewComparison != 0) return reviewComparison;
+
+      return a.name.compareTo(b.name);
+    });
+
+    return candidates.take(3).toList();
+  }
 
   Future<void> _loadNotificationState() async {
     if (widget.isGuest) return;
@@ -533,7 +568,7 @@ class _HotelCard extends StatelessWidget {
                           size: 13, color: Color(0xFFF6B545)),
                       const SizedBox(width: 2),
                       Text(
-                        double.tryParse(hotel.rating.toString())?.toStringAsFixed(1) ?? hotel.rating.toString(),
+                        hotel.rawRating.toStringAsFixed(1),
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,

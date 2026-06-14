@@ -25,6 +25,7 @@ class MainNavPage extends StatefulWidget {
 
 class _MainNavPageState extends State<MainNavPage> {
   late int _selectedIndex;
+  int _homeRefreshToken = 0;
 
   @override
   void initState() {
@@ -35,6 +36,9 @@ class _MainNavPageState extends State<MainNavPage> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      if (index == 0) {
+        _homeRefreshToken++;
+      }
     });
   }
 
@@ -45,6 +49,7 @@ class _MainNavPageState extends State<MainNavPage> {
         isGuest: widget.isGuest,
         userEmail: widget.userEmail,
         userName: widget.userName,
+        refreshToken: _homeRefreshToken,
       ),
       MyBookPage(
         onBookNowTap: () {
