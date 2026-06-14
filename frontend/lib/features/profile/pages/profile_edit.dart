@@ -62,7 +62,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     final phone = _readDynamicValue(() => user.phoneNumber) ??
         _readDynamicValue(() => user.noTelp) ??
         _readDynamicValue(() => user.no_telp) ??
-        '-';
+        '';
 
     if (!mounted) return;
 
@@ -130,11 +130,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
     if (!_isValidEmail(currentEmail)) {
       _showMessage('Format email tidak valid.');
-      return;
-    }
-
-    if (currentPhone.isEmpty || currentPhone == '-') {
-      _showMessage('Nomor telepon tidak boleh kosong.');
       return;
     }
 
