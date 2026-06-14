@@ -3,6 +3,8 @@ import 'dart:convert';
 import '../../room/models/room_model.dart';
 
 class BookingModel {
+  static const double taxRate = 0.1;
+
   BookingModel({
     required this.id,
     required this.userId,
@@ -14,6 +16,8 @@ class BookingModel {
     required this.contactPhone,
     required this.checkInDate,
     required this.checkOutDate,
+    required this.roomCount,
+    required this.guestCount,
     required this.status,
     required this.paymentMethod,
     required this.hotelName,
@@ -25,7 +29,7 @@ class BookingModel {
     required this.totalPrice,
     required this.createdAt,
     required this.addons,
-    this.hasReview = false,        
+    this.hasReview = false,
     this.reviewRating,
     this.reviewComment,
     this.reviewId,
@@ -42,6 +46,8 @@ class BookingModel {
   final String contactPhone;
   final DateTime checkInDate;
   final DateTime checkOutDate;
+  final int roomCount;
+  final int guestCount;
   final String status;
   final String paymentMethod;
   final String hotelName;
@@ -53,10 +59,10 @@ class BookingModel {
   final double totalPrice;
   final DateTime? createdAt;
   final List<Addon> addons;
-  bool hasReview;        
-  double? reviewRating;  
+  bool hasReview;
+  double? reviewRating;
   String? reviewComment;
-  int? reviewId;           
+  int? reviewId;
   List<String>? reviewPhotos;
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -90,13 +96,16 @@ class BookingModel {
       contactPhone: (json['no_telp'] ?? '').toString(),
       checkInDate: checkInDate,
       checkOutDate: checkOutDate,
+      roomCount: _positiveInt(json['room_count'], fallback: 1),
+      guestCount: _positiveInt(json['guest_count'], fallback: 1),
       status: (json['status_pesan'] ?? 'pending').toString(),
       paymentMethod: (json['metode_bayar'] ?? '').toString(),
       hotelName: (hotel['nama'] ?? '').toString(),
       hotelAddress: (hotel['alamat'] ?? '').toString(),
       roomName: (room['nama'] ?? '').toString(),
       roomSmokingLabel: RoomModel.fromJson(room).smokingLabel,
-      hotelImage: hotelPhotos.isNotEmpty ? hotelPhotos.first['path'] as String? : null,
+      hotelImage:
+          hotelPhotos.isNotEmpty ? hotelPhotos.first['path'] as String? : null,
       roomImage: roomPhotos.isNotEmpty ? roomPhotos.first['path'] as String? : null,
       totalPrice: rawPrice,
       createdAt: _tryParseDate(json['created_at']),
@@ -106,8 +115,10 @@ class BookingModel {
           .toList(),
 
       hasReview: _toBool(json['has_review'] ?? json['ulasan'] != null),
-      reviewRating: _tryDouble(json['review_rating'] ?? json['ulasan']?['rating']),
-      reviewComment: (json['review_comment'] ?? json['ulasan']?['komentar'])?.toString(),
+      reviewRating:
+          _tryDouble(json['review_rating'] ?? json['ulasan']?['rating']),
+      reviewComment:
+          (json['review_comment'] ?? json['ulasan']?['komentar'])?.toString(),
       reviewId: _tryInt(json['ulasan']?['id']),
       reviewPhotos: _parsePhotos(json['ulasan']?['photos']),
     );
@@ -120,9 +131,11 @@ class BookingModel {
   double get addonsTotal =>
       addons.fold(0.0, (sum, addon) => sum + addon.price);
 
-  double get staySubtotal => totalPrice * payableNightCount;
+  double get staySubtotal => totalPrice * payableNightCount * roomCount;
 
-  double get grandTotal => staySubtotal + addonsTotal;
+  double get taxAmount => staySubtotal * taxRate;
+
+  double get grandTotal => staySubtotal + taxAmount + addonsTotal;
 
   DateTime get paymentDeadline =>
       (createdAt ?? DateTime.now()).add(const Duration(minutes: 15));
@@ -131,7 +144,8 @@ class BookingModel {
 
   bool get isPaymentPending => status == 'pending';
 
-  bool get isExpired => isPaymentPending && DateTime.now().isAfter(paymentDeadline);
+  bool get isExpired =>
+      isPaymentPending && DateTime.now().isAfter(paymentDeadline);
 
   bool get isActive =>
       status != 'cancelled' &&
@@ -170,7 +184,9 @@ class BookingModel {
   String get stayLabel =>
       '$payableNightCount Night${payableNightCount > 1 ? 's' : ''}';
 
-  String get roomCountLabel => '1 Room';
+  String get roomCountLabel => '$roomCount Room${roomCount > 1 ? 's' : ''}';
+
+  String get guestCountLabel => '$guestCount Guest${guestCount > 1 ? 's' : ''}';
 
   String get paymentMethodLabel {
     switch (paymentMethod) {
@@ -244,6 +260,11 @@ int _toInt(dynamic value) {
   return int.tryParse('$value') ?? 0;
 }
 
+int _positiveInt(dynamic value, {required int fallback}) {
+  final parsed = _toInt(value);
+  return parsed > 0 ? parsed : fallback;
+}
+
 double _toDouble(dynamic value) {
   if (value is double) return value;
   if (value is num) return value.toDouble();
@@ -291,7 +312,12 @@ class Addon {
   final double price;
   bool selected;
 
-  Addon({required this.id, required this.name, required this.price, this.selected = false});
+  Addon({
+    required this.id,
+    required this.name,
+    required this.price,
+    this.selected = false,
+  });
 
   factory Addon.fromJson(
     Map<String, dynamic> json, {
@@ -305,6 +331,7 @@ class Addon {
     );
   }
 }
+
 List<String>? _parsePhotos(dynamic value) {
   if (value == null) return null;
 
