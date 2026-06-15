@@ -25,6 +25,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isEditMode = false; // ← BARU: kontrol mode edit
+  String? _lastSavedName;
 
   @override
   void initState() {
@@ -111,7 +112,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     FocusManager.instance.primaryFocus?.unfocus();
     if (mounted) {
       ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(_lastSavedName);
     }
   }
 
@@ -181,6 +182,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         _phoneController.text = updatedPhone;
         _gender = _normalizeGender(updatedGender);
         _isSaving = false;
+        _lastSavedName = currentName;
       });
 
       // ← BARU: tampilkan popup sukses lalu keluar edit mode
@@ -207,71 +209,80 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       barrierDismissible: false,
       builder: (ctx) {
         return Dialog(
+          backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 82),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
           ),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Ikon sukses
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: ProfilePalette.primaryBlue.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+          child: SizedBox(
+            width: 210,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 26, 18, 22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/vector_sihir.png',
+                    width: 82,
+                    height: 82,
+                    fit: BoxFit.contain,
                   ),
-                  child: const Icon(
-                    Icons.check_circle_rounded,
-                    color: ProfilePalette.primaryBlue,
-                    size: 52,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Successful!',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: ProfilePalette.darkText,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Profil kamu berhasil diperbarui.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: ProfilePalette.mutedText,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ProfilePalette.primaryBlue,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
+
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    'Successful!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                      color: ProfilePalette.primaryBlue,
                     ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 6),
+
+                  const Text(
+                    'Your profile is updated!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.2,
+                      fontWeight: FontWeight.w400,
+                      color: ProfilePalette.mutedText,
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  SizedBox(
+                    width: 122,
+                    height: 42,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 4,
+                        shadowColor:
+                            ProfilePalette.primaryBlue.withValues(alpha: 0.25),
+                        backgroundColor: ProfilePalette.primaryBlue,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                      ),
+                      child: const Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -472,14 +483,13 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                           selectedGender: _gender,
                           isEditMode: _isEditMode,
                           onNameEditTap: _enterEditMode,
-                          onGenderChanged: _isEditMode
-                              ? (value) {
-                                  if (value == null) return;
-                                  setState(() {
-                                    _gender = value;
-                                  });
-                                }
-                              : null, // disabled saat bukan edit mode
+                          onGenderChanged: (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _gender = value;
+                              _isEditMode = true;
+                            });
+                          },
                         ),
 
                         const ProfileSectionDivider(),
@@ -513,19 +523,20 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
 
   // ← BARU: widget tombol "Edit Profile"
   Widget _buildEditProfileButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    return Center(
       child: SizedBox(
-        width: double.infinity,
-        height: 48,
+        width: 122,
+        height: 44,
         child: ElevatedButton(
           onPressed: _isSaving ? null : () => _saveProfile(),
           style: ElevatedButton.styleFrom(
             backgroundColor: ProfilePalette.primaryBlue,
             foregroundColor: Colors.white,
-            elevation: 0,
+            elevation: 4,
+            shadowColor: ProfilePalette.primaryBlue.withValues(alpha: 0.25),
+            padding: EdgeInsets.zero,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(7),
             ),
           ),
           child: _isSaving

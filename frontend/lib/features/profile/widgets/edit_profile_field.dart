@@ -100,10 +100,10 @@ class EditProfileDropdownField extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         SizedBox(
-          height: 50,
+          height: 54,
           child: InputDecorator(
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.fromLTRB(14, 4, 12, 4),
+              contentPadding: const EdgeInsets.fromLTRB(14, 8, 12, 8),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(
@@ -136,13 +136,25 @@ class EditProfileDropdownField extends StatelessWidget {
                       : ProfilePalette.mutedText.withValues(alpha: 0.4),
                 ),
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   // teks lebih pudar saat disabled
                   color: isEnabled
                       ? ProfilePalette.darkText
                       : ProfilePalette.mutedText,
                 ),
+                selectedItemBuilder: (context) {
+                  return items.map((item) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        item,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList();
+                },
                 items: items.map((item) {
                   return DropdownMenuItem<String>(
                     value: item,

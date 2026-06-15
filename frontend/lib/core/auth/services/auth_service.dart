@@ -254,8 +254,17 @@ class AuthService {
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
 
-      final updatedUser =
+      final responseUser =
           AuthUser.fromJson(decoded['data'] as Map<String, dynamic>);
+      final updatedUser = AuthUser(
+        id: responseUser.id,
+        name: _firstNonEmpty(name, responseUser.name, session.user.name),
+        email: _firstNonEmpty(email, responseUser.email, session.user.email),
+        gender: _firstNonEmpty(gender, responseUser.gender, session.user.gender),
+        phoneNumber:
+            _firstNonEmpty(phoneNumber, responseUser.phoneNumber, session.user.phoneNumber),
+        photo: _firstNonEmpty(photo, responseUser.photo, session.user.photo),
+      );
 
       final updatedSession = AuthSession(
         token: session.token,
@@ -365,6 +374,20 @@ class AuthService {
     }
 
     return const AuthException('Something went wrong. Please try again.');
+  }
+
+  static String _firstNonEmpty(String? primary, String? fallback, String? last) {
+    final primaryText = primary?.trim();
+    if (primaryText != null && primaryText.isNotEmpty) {
+      return primaryText;
+    }
+
+    final fallbackText = fallback?.trim();
+    if (fallbackText != null && fallbackText.isNotEmpty) {
+      return fallbackText;
+    }
+
+    return last?.trim() ?? '';
   }
 }
 

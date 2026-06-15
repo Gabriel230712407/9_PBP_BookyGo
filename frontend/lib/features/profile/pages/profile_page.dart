@@ -34,20 +34,30 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   Future<ProfileStatsModel>? _profileStatsFuture;
+  String? _displayUserName;
 
   @override
   void initState() {
     super.initState();
+    _displayUserName = _nonEmptyName(widget.userName);
     if (!widget.isGuest) {
       _loadProfileStats();
+      _loadSessionName();
     }
   }
 
   @override
   void didUpdateWidget(covariant ProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.userName != widget.userName) {
+      final nextName = _nonEmptyName(widget.userName);
+      if (nextName != null) {
+        _displayUserName = nextName;
+      }
+    }
     if (oldWidget.isGuest != widget.isGuest && !widget.isGuest) {
       _loadProfileStats();
+      _loadSessionName();
     }
   }
 
@@ -55,8 +65,24 @@ class _ProfilePageState extends State<ProfilePage> {
     _profileStatsFuture = ProfileService.getProfileStats();
   }
 
+  String? _nonEmptyName(String? value) {
+    final text = value?.trim();
+    if (text == null || text.isEmpty || text == 'null') return null;
+    return text;
+  }
+
+  Future<void> _loadSessionName() async {
+    final session = await AuthService.currentSession();
+    if (!mounted) return;
+    final name = _nonEmptyName(session?.user.name);
+    if (name == null) return;
+    setState(() {
+      _displayUserName = name;
+    });
+  }
+
   Future<void> _goToEditProfile() async {
-    await Navigator.push(
+    final updatedName = await Navigator.push<String>(
       context,
       MaterialPageRoute(
         builder: (_) => const ProfileEditPage(),
@@ -64,6 +90,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
     if (!mounted || widget.isGuest) return;
     setState(() {
+      final name = _nonEmptyName(updatedName);
+      if (name != null) {
+        _displayUserName = name;
+      }
       _loadProfileStats();
     });
   }
@@ -125,7 +155,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ProfileHeader(
-                      userName: widget.userName ?? 'User',
+                      userName:
+                          _displayUserName ?? _nonEmptyName(widget.userName) ?? 'User',
                       onEditTap: _goToEditProfile,
                     ),
                     const ProfileSectionDivider(),
