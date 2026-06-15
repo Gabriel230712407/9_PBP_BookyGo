@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../models/booking_model.dart';
 import '../services/booking_service.dart';
-import 'payment_success_page.dart';
+import 'qris_page.dart';
 import 'virtual_account_page.dart';
 
 class PaymentMethodPage extends StatefulWidget {
@@ -47,10 +46,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
 
   void _updateCountdown() {
     final difference = _deadline.difference(DateTime.now());
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     setState(() {
       _remaining = difference.isNegative ? Duration.zero : difference;
     });
@@ -76,23 +72,32 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       return;
     }
 
-    final confirmed = await _showPaymentConfirmation();
-    if (confirmed != true) {
+    // ── QRIS: langsung ke halaman QR tanpa dialog ─────────────
+    if (_selectedMethod == 'qris') {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => QrisPage(
+            booking: _booking,
+            deadline: _deadline,
+          ),
+        ),
+      );
       return;
     }
+
+    // ── Metode lain: tampilkan dialog konfirmasi ───────────────
+    final confirmed = await _showPaymentConfirmation();
+    if (confirmed != true) return;
 
     setState(() => _isSubmitting = true);
 
     try {
       final backendPaymentMethod = _toBackendPaymentMethod(_selectedMethod);
-      final backendStatus = _selectedMethod == 'bri_va'
-          ? 'pending'
-          : 'confirmed';
-
       final updatedBooking = await _bookingService.updateBooking(
         bookingId: _booking.id,
         paymentMethod: backendPaymentMethod,
-        status: backendStatus,
+        status: _selectedMethod == 'bri_va' ? 'pending' : 'confirmed',
       );
 
       if (!mounted) return;
@@ -104,23 +109,13 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
             builder: (_) => VirtualAccountPage(booking: updatedBooking),
           ),
         );
-      } else {
-        await Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PaymentSuccessPage(booking: updatedBooking),
-          ),
-        );
       }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -154,11 +149,9 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
               color: AppColors.textDark,
             ),
           ),
-          content: Text(
-            _selectedMethod == 'bri_va'
-                ? 'Continue to BRI Virtual Account payment details?'
-                : 'Confirm this payment and continue to the success page?',
-            style: const TextStyle(fontSize: 13, color: Color(0xFF7E88AF)),
+          content: const Text(
+            'Continue to BRI Virtual Account payment details?',
+            style: TextStyle(fontSize: 13, color: Color(0xFF7E88AF)),
           ),
           actions: [
             TextButton(
@@ -278,9 +271,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                             title: 'Use Credit/DebitCard',
                             value: 'card',
                             groupValue: _selectedMethod,
-                            onChanged: (value) {
-                              setState(() => _selectedMethod = value);
-                            },
+                            onChanged: (v) =>
+                                setState(() => _selectedMethod = v),
                           ),
                           const SizedBox(height: 18),
                           _PaymentMethodTile(
@@ -288,11 +280,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                             title: 'BRI Virtual Account',
                             value: 'bri_va',
                             groupValue: _selectedMethod,
-                            virtualAccountNumber: '780 0113 4031 5469',
-                            totalPayment: _booking.formattedTotalPrice,
-                            onChanged: (value) {
-                              setState(() => _selectedMethod = value);
-                            },
+                            onChanged: (v) =>
+                                setState(() => _selectedMethod = v),
                           ),
                           const SizedBox(height: 18),
                           _PaymentMethodTile(
@@ -300,12 +289,8 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
                             title: 'QRIS',
                             value: 'qris',
                             groupValue: _selectedMethod,
-                            qrisData:
-                                'BOOKING:${_booking.bookingCode}|TOTAL:${_booking.formattedTotalPrice}',
-                            totalPayment: _booking.formattedTotalPrice,
-                            onChanged: (value) {
-                              setState(() => _selectedMethod = value);
-                            },
+                            onChanged: (v) =>
+                                setState(() => _selectedMethod = v),
                           ),
                         ],
                       ),
@@ -316,8 +301,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
             ),
             _PaymentBottomBar(
               totalPrice: _booking.formattedTotalPrice,
-              isEnabled:
-                  _selectedMethod.isNotEmpty &&
+              isEnabled: _selectedMethod.isNotEmpty &&
                   !_isSubmitting &&
                   _remaining != Duration.zero,
               isSubmitting: _isSubmitting,
@@ -330,9 +314,12 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   }
 }
 
+// ─────────────────────────────────────────────────────────
+// Widgets (tidak ada perubahan dari versi sebelumnya)
+// ─────────────────────────────────────────────────────────
+
 class _SectionCard extends StatelessWidget {
   const _SectionCard({required this.child});
-
   final Widget child;
 
   @override
@@ -352,7 +339,6 @@ class _SectionCard extends StatelessWidget {
 
 class _BookingSummaryCard extends StatelessWidget {
   const _BookingSummaryCard({required this.booking});
-
   final BookingModel booking;
 
   String get _nightLabel {
@@ -364,7 +350,7 @@ class _BookingSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF1F4FB),
         borderRadius: BorderRadius.circular(12),
@@ -442,20 +428,15 @@ class _BookingSummaryCard extends StatelessWidget {
 
 class _TimerBadge extends StatelessWidget {
   const _TimerBadge({required this.remaining});
-
   final Duration remaining;
 
   @override
   Widget build(BuildContext context) {
     final hours = remaining.inHours.toString().padLeft(2, '0');
-    final minutes = remaining.inMinutes
-        .remainder(60)
-        .toString()
-        .padLeft(2, '0');
-    final seconds = remaining.inSeconds
-        .remainder(60)
-        .toString()
-        .padLeft(2, '0');
+    final minutes =
+        remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds =
+        remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
 
     return Row(
       children: [
@@ -475,7 +456,6 @@ class _TimerBadge extends StatelessWidget {
 
 class _TimerChip extends StatelessWidget {
   const _TimerChip({required this.label});
-
   final String label;
 
   @override
@@ -512,6 +492,7 @@ class _TimerSeparator extends StatelessWidget {
   }
 }
 
+// ← DIUBAH: tidak ada lagi qrisData / virtualAccountNumber / inline expansion
 class _PaymentMethodTile extends StatelessWidget {
   const _PaymentMethodTile({
     this.icon,
@@ -519,9 +500,6 @@ class _PaymentMethodTile extends StatelessWidget {
     required this.title,
     required this.value,
     required this.groupValue,
-    this.virtualAccountNumber,
-    this.qrisData,
-    this.totalPayment,
     required this.onChanged,
   });
 
@@ -530,9 +508,6 @@ class _PaymentMethodTile extends StatelessWidget {
   final String title;
   final String value;
   final String groupValue;
-  final String? virtualAccountNumber;
-  final String? qrisData;
-  final String? totalPayment;
   final ValueChanged<String> onChanged;
 
   @override
@@ -546,216 +521,77 @@ class _PaymentMethodTile extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F4FB),
+          color: isSelected
+              ? const Color(0xFFEBF0FF)  // sedikit biru saat terpilih
+              : const Color(0xFFF1F4FB),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFD6DCEB)),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primaryEnd        // border biru saat terpilih
+                : const Color(0xFFD6DCEB),
+            width: isSelected ? 1.5 : 1,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: useBriBadge
-                      ? const Text(
-                          'BRI',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primaryEnd,
-                          ),
-                        )
-                      : Icon(icon, size: 30, color: AppColors.primaryEnd),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                ),
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFB5B5B5),
-                      width: 2,
-                    ),
-                  ),
-                  child: isSelected
-                      ? Center(
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.primaryEnd,
-                            ),
-                          ),
-                        )
-                      : null,
-                ),
-              ],
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: useBriBadge
+                  ? const Text(
+                      'BRI',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryEnd,
+                      ),
+                    )
+                  : Icon(icon, size: 30, color: AppColors.primaryEnd),
             ),
-
-            if (useBriBadge && isSelected) ...[
-              const SizedBox(height: 16),
-              _VirtualAccountInfoCard(
-                virtualAccountNumber: virtualAccountNumber ?? '-',
-                totalPayment: totalPayment ?? '-',
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
               ),
-            ],
-
-            if (value == 'qris' && isSelected) ...[
-              const SizedBox(height: 16),
-              _QrisInfoCard(
-                qrisData: qrisData ?? '-',
-                totalPayment: totalPayment ?? '-',
+            ),
+            // Radio button
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primaryEnd
+                      : const Color(0xFFB5B5B5),
+                  width: 2,
+                ),
               ),
-            ],
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primaryEnd,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _VirtualAccountInfoCard extends StatelessWidget {
-  const _VirtualAccountInfoCard({
-    required this.virtualAccountNumber,
-    required this.totalPayment,
-  });
-
-  final String virtualAccountNumber;
-  final String totalPayment;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F4FB),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFD6DCEB)),
-          ),
-          child: Text(
-            virtualAccountNumber,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        const Text(
-          'Total Payment',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textDark,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F4FB),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFD6DCEB)),
-          ),
-          child: Text(
-            totalPayment,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _QrisInfoCard extends StatelessWidget {
-  const _QrisInfoCard({required this.qrisData, required this.totalPayment});
-
-  final String qrisData;
-  final String totalPayment;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F4FB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFD6DCEB)),
-      ),
-      child: Column(
-        children: [
-          const Text(
-            'Scan QRIS to Pay',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: QrImageView(
-              data: qrisData,
-              version: QrVersions.auto,
-              size: 190,
-              gapless: false,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Total Payment',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            totalPayment,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textDark,
-            ),
-          ),
-        ],
       ),
     );
   }

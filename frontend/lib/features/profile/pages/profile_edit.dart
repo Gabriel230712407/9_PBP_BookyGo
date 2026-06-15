@@ -24,6 +24,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   String _gender = 'Male';
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isEditMode = false; // ← BARU: kontrol mode edit
 
   @override
   void initState() {
@@ -48,7 +49,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       setState(() {
         _isLoading = false;
       });
-
       _showMessage('Session tidak ditemukan. Silakan login ulang.');
       return;
     }
@@ -100,11 +100,26 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   }
 
   void _handleBack() {
+    // Jika sedang edit mode, keluar edit mode dulu (cancel)
+    if (_isEditMode) {
+      setState(() {
+        _isEditMode = false;
+      });
+      _loadProfileData(); // reset ke data semula
+      return;
+    }
     FocusManager.instance.primaryFocus?.unfocus();
     if (mounted) {
       ScaffoldMessenger.maybeOf(context)?.hideCurrentSnackBar();
       Navigator.of(context).pop(true);
     }
+  }
+
+  // ← BARU: masuk ke mode edit (dipanggil saat pencil di-tap)
+  void _enterEditMode() {
+    setState(() {
+      _isEditMode = true;
+    });
   }
 
   Future<void> _saveProfile({
@@ -155,7 +170,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       final updatedEmail = _readDynamicValue(() => user.email) ?? currentEmail;
       final updatedGender =
           _readDynamicValue(() => user.gender) ?? currentGender;
-
       final updatedPhone = _readDynamicValue(() => user.phoneNumber) ??
           _readDynamicValue(() => user.noTelp) ??
           _readDynamicValue(() => user.no_telp) ??
@@ -166,18 +180,103 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         _emailController.text = updatedEmail;
         _phoneController.text = updatedPhone;
         _gender = _normalizeGender(updatedGender);
+        _isSaving = false;
       });
 
-      _showMessage('Profile berhasil diperbarui.');
-    } catch (e) {
+      // ← BARU: tampilkan popup sukses lalu keluar edit mode
+      await _showSuccessDialog();
+
       if (!mounted) return;
-      _showMessage(e.toString());
-    } finally {
+      setState(() {
+        _isEditMode = false;
+      });
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
       });
+      _showMessage(e.toString());
     }
+  }
+
+  // ← BARU: popup sukses setelah simpan profil
+  Future<void> _showSuccessDialog() async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Ikon sukses
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: ProfilePalette.primaryBlue.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: ProfilePalette.primaryBlue,
+                    size: 52,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Successful!',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: ProfilePalette.darkText,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Profil kamu berhasil diperbarui.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: ProfilePalette.mutedText,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ProfilePalette.primaryBlue,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Continue',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   bool _isValidEmail(String email) {
@@ -239,17 +338,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     if (!mounted) return null;
 
     return result?.trim();
-  }
-
-  Future<void> _openNameChangeDialog() async {
-    final result = await _openTextChangeDialog(
-      title: 'Change Full Name',
-      label: 'Full name',
-      initialValue: _nameController.text,
-      keyboardType: TextInputType.name,
-    );
-    if (result == null || result.isEmpty) return;
-    await _saveProfile(name: result);
   }
 
   Future<void> _openEmailChangeDialog() async {
@@ -378,17 +466,20 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // ← kirim isEditMode & onEnterEditMode ke section
                         EditProfileAccountInfoSection(
                           nameController: _nameController,
                           selectedGender: _gender,
-                          onNameEditTap: _openNameChangeDialog,
-                          onGenderChanged: (value) async {
-                            if (value == null) return;
-                            setState(() {
-                              _gender = value;
-                            });
-                            await _saveProfile(gender: value);
-                          },
+                          isEditMode: _isEditMode,
+                          onNameEditTap: _enterEditMode,
+                          onGenderChanged: _isEditMode
+                              ? (value) {
+                                  if (value == null) return;
+                                  setState(() {
+                                    _gender = value;
+                                  });
+                                }
+                              : null, // disabled saat bukan edit mode
                         ),
 
                         const ProfileSectionDivider(),
@@ -400,18 +491,60 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                           onEmailChangeTap: _openEmailChangeDialog,
                         ),
 
-                        const SizedBox(height: 24), // ← dikurangi dari 118
+                        const SizedBox(height: 24),
 
-                        EditProfileDeleteAccount(
-                          onTap: _openDeleteAccountInfo,
-                        ),
+                        // ← BARU: tombol Edit Profile atau Delete Account
+                        if (_isEditMode)
+                          _buildEditProfileButton()
+                        else
+                          EditProfileDeleteAccount(
+                            onTap: _openDeleteAccountInfo,
+                          ),
 
-                        const SizedBox(height: 32), // ← dikurangi dari 80
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ← BARU: widget tombol "Edit Profile"
+  Widget _buildEditProfileButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SizedBox(
+        width: double.infinity,
+        height: 48,
+        child: ElevatedButton(
+          onPressed: _isSaving ? null : () => _saveProfile(),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ProfilePalette.primaryBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Text(
+                  'Edit Profile',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
       ),
     );
   }
