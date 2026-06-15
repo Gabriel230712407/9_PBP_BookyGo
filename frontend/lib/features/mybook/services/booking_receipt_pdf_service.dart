@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../models/booking_model.dart';
 
@@ -11,6 +12,7 @@ class BookingReceiptPdfService {
 
   static Future<Uint8List> build(BookingModel booking) async {
     final pdf = pw.Document();
+    final logo = await imageFromAssetBundle('assets/images/app_icon.png');
     final theme = pw.ThemeData.withFont(
       base: pw.Font.helvetica(),
       bold: pw.Font.helveticaBold(),
@@ -28,7 +30,7 @@ class BookingReceiptPdfService {
           ),
         ),
         build: (_) => [
-          _header(booking),
+          _header(booking, logo),
           pw.SizedBox(height: 20),
           _hotelInfo(booking),
           pw.SizedBox(height: 20),
@@ -93,7 +95,7 @@ class BookingReceiptPdfService {
     return booking.paymentMethodLabel;
   }
 
-  static pw.Widget _header(BookingModel booking) {
+  static pw.Widget _header(BookingModel booking, pw.ImageProvider logo) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -120,20 +122,30 @@ class BookingReceiptPdfService {
             ],
           ),
         ),
-        pw.Container(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: pw.BoxDecoration(
-            color: const PdfColor.fromInt(0xFFEAF8F0),
-            borderRadius: pw.BorderRadius.circular(14),
-          ),
-          child: pw.Text(
-            'PAID',
-            style: pw.TextStyle(
-              fontSize: 10,
-              fontWeight: pw.FontWeight.bold,
-              color: const PdfColor.fromInt(0xFF1C9A5E),
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.end,
+          children: [
+            pw.Image(logo, width: 38, height: 38),
+            pw.SizedBox(height: 8),
+            pw.Container(
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
+              decoration: pw.BoxDecoration(
+                color: const PdfColor.fromInt(0xFFEAF8F0),
+                borderRadius: pw.BorderRadius.circular(14),
+              ),
+              child: pw.Text(
+                'PAID',
+                style: pw.TextStyle(
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold,
+                  color: const PdfColor.fromInt(0xFF1C9A5E),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );

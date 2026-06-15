@@ -583,7 +583,7 @@ class _DetailRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Flexible(
+        Expanded(
           child: Text(
             value.isEmpty ? '-' : value,
             textAlign: TextAlign.right,
