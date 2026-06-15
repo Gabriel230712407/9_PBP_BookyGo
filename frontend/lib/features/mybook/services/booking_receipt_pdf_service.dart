@@ -63,6 +63,36 @@ class BookingReceiptPdfService {
     return 'bookygo-receipt-$code.pdf';
   }
 
+  static String receiptQrData(BookingModel booking) {
+    return jsonEncode({
+      'receipt': 'BookyGo Booking Receipt',
+      'booking_id': booking.bookingCode,
+      'hotel': booking.hotelName,
+      'room': booking.roomName,
+      'guest_name': booking.contactName,
+      'check_in': BookingFormatters.dayMonthYear(booking.checkInDate),
+      'check_out': BookingFormatters.dayMonthYear(booking.checkOutDate),
+      'duration': booking.stayLabel,
+      'guests': booking.guestCountLabel,
+      'rooms': booking.roomCountLabel,
+      'payment_method': paymentMethodName(booking),
+      'total_paid': booking.formattedTotalPrice,
+      'status': 'PAID',
+    });
+  }
+
+  static String paymentMethodName(BookingModel booking) {
+    if (booking.paymentMethod == 'ewallet') {
+      return 'QRIS';
+    }
+
+    if (booking.paymentMethod == 'transfer') {
+      return 'BRI Virtual Account';
+    }
+
+    return booking.paymentMethodLabel;
+  }
+
   static pw.Widget _header(BookingModel booking) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -258,7 +288,7 @@ class BookingReceiptPdfService {
                   ),
                 ),
                 pw.Text(
-                  _paymentMethodName(booking),
+                  paymentMethodName(booking),
                   style: pw.TextStyle(
                     fontSize: 12,
                     fontWeight: pw.FontWeight.bold,
@@ -294,7 +324,7 @@ class BookingReceiptPdfService {
       children: [
         pw.BarcodeWidget(
           barcode: pw.Barcode.qrCode(),
-          data: _receiptQrData(booking),
+          data: receiptQrData(booking),
           width: 92,
           height: 92,
         ),
@@ -425,35 +455,5 @@ class BookingReceiptPdfService {
         ],
       ),
     );
-  }
-
-  static String _receiptQrData(BookingModel booking) {
-    return jsonEncode({
-      'receipt': 'BookyGo Booking Receipt',
-      'booking_id': booking.bookingCode,
-      'hotel': booking.hotelName,
-      'room': booking.roomName,
-      'guest_name': booking.contactName,
-      'check_in': BookingFormatters.dayMonthYear(booking.checkInDate),
-      'check_out': BookingFormatters.dayMonthYear(booking.checkOutDate),
-      'duration': booking.stayLabel,
-      'guests': booking.guestCountLabel,
-      'rooms': booking.roomCountLabel,
-      'payment_method': _paymentMethodName(booking),
-      'total_paid': booking.formattedTotalPrice,
-      'status': 'PAID',
-    });
-  }
-
-  static String _paymentMethodName(BookingModel booking) {
-    if (booking.paymentMethod == 'ewallet') {
-      return 'QRIS';
-    }
-
-    if (booking.paymentMethod == 'transfer') {
-      return 'BRI Virtual Account';
-    }
-
-    return booking.paymentMethodLabel;
   }
 }

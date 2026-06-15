@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:printing/printing.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_image.dart';
 import '../models/booking_model.dart';
 import '../services/booking_receipt_pdf_service.dart';
+import 'booking_receipt_preview_page.dart';
 
 class BookingDetailPage extends StatefulWidget {
   const BookingDetailPage({super.key, required this.booking});
@@ -26,9 +26,17 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     try {
       final pdfBytes = await BookingReceiptPdfService.build(widget.booking);
 
-      await Printing.sharePdf(
-        bytes: pdfBytes,
-        filename: BookingReceiptPdfService.fileName(widget.booking),
+      if (!mounted) return;
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BookingReceiptPreviewPage(
+            booking: widget.booking,
+            pdfBytes: pdfBytes,
+            fileName: BookingReceiptPdfService.fileName(widget.booking),
+          ),
+        ),
       );
     } catch (error) {
       if (!mounted) return;
@@ -50,6 +58,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     return Scaffold(
       backgroundColor: AppColors.bgVeryLight,
       appBar: AppBar(
+        centerTitle: true,
         backgroundColor: AppColors.primaryEnd,
         surfaceTintColor: AppColors.primaryEnd,
         elevation: 0,
@@ -69,65 +78,90 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
       ),
       body: SafeArea(
         top: false,
-        child: Column(
+        child: Stack(
           children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-                child: Column(
-                  children: [
-                    _HotelCard(booking: booking),
-                    const SizedBox(height: 10),
-                    _StayInfoCard(booking: booking),
-                    const SizedBox(height: 10),
-                    _GuestInfoCard(booking: booking),
-                    const SizedBox(height: 10),
-                    _PaymentSummaryCard(booking: booking),
-                  ],
+            Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+                    child: Column(
+                      children: [
+                        _HotelCard(booking: booking),
+                        const SizedBox(height: 10),
+                        _StayInfoCard(booking: booking),
+                        const SizedBox(height: 10),
+                        _GuestInfoCard(booking: booking),
+                        const SizedBox(height: 10),
+                        _PaymentSummaryCard(booking: booking),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: _isGeneratingPdf ? null : _downloadPdf,
-                  icon: _isGeneratingPdf
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.download_rounded,
-                          size: 18,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: _isGeneratingPdf ? null : _downloadPdf,
+                      icon: const Icon(
+                        Icons.download_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Download PDF',
+                        style: TextStyle(
                           color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
                         ),
-                  label: Text(
-                    _isGeneratingPdf ? 'Preparing PDF...' : 'Download PDF',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryEnd,
+                        disabledBackgroundColor: AppColors.blueMedium,
+                        elevation: 3,
+                        shadowColor: Colors.black.withValues(alpha: 0.18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryEnd,
-                    disabledBackgroundColor: AppColors.blueMedium,
-                    elevation: 3,
-                    shadowColor: Colors.black.withValues(alpha: 0.18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                ),
+              ],
+            ),
+            if (_isGeneratingPdf)
+              Positioned.fill(
+                child: Container(
+                  color: const Color(0xFFE9EEF6).withValues(alpha: 0.78),
+                  child: const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 58,
+                          height: 58,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 6,
+                            color: Color(0xFF9A9A9A),
+                          ),
+                        ),
+                        SizedBox(height: 18),
+                        Text(
+                          'Preparing your PDF...',
+                          style: TextStyle(
+                            color: AppColors.textDark,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
