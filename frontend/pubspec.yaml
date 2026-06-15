@@ -15,6 +15,8 @@ dependencies:
   image_picker: ^0.8.7+5
   url_launcher: ^6.3.1
   qr_flutter: ^4.1.0
+  pdf: ^3.11.3
+  printing: ^5.14.2
   google_sign_in: ^6.2.1
   firebase_auth: ^5.5.3
 
@@ -43,6 +45,7 @@ flutter:
     - assets/images/splash-load.gif
     - assets/images/vector_permission.png
     - assets/images/vector_success.png
+    - assets/images/vector_sihir.png
 
     - assets/images/maps.jpeg
     
@@ -93,4 +96,4 @@ flutter:
     - assets/images/kamars/jogja/tsh/jhs/
     - assets/images/kamars/jogja/tsh/scr/
 
-    - assets/images/app_icon.png 
+    - assets/images/app_icon.png

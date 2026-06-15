@@ -72,18 +72,21 @@ class EditProfileDropdownField extends StatelessWidget {
   final String label;
   final String value;
   final List<String> items;
-  final ValueChanged<String?> onChanged;
+  final ValueChanged<String?>? onChanged; // ← nullable: null = disabled
 
   const EditProfileDropdownField({
     super.key,
     required this.label,
     required this.value,
     required this.items,
-    required this.onChanged,
+    this.onChanged, // ← opsional, null berarti dropdown dikunci
   });
 
   @override
   Widget build(BuildContext context) {
+    // disabled jika onChanged null
+    final bool isEnabled = onChanged != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -97,14 +100,17 @@ class EditProfileDropdownField extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         SizedBox(
-          height: 50,
+          height: 54,
           child: InputDecorator(
             decoration: InputDecoration(
-              contentPadding: const EdgeInsets.fromLTRB(14, 4, 12, 4),
+              contentPadding: const EdgeInsets.fromLTRB(14, 8, 12, 8),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(
-                  color: ProfilePalette.mutedText.withValues(alpha: 0.8),
+                  // warna border lebih pudar saat disabled
+                  color: isEnabled
+                      ? ProfilePalette.mutedText.withValues(alpha: 0.8)
+                      : ProfilePalette.mutedText.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -120,22 +126,41 @@ class EditProfileDropdownField extends StatelessWidget {
               child: DropdownButton<String>(
                 value: value,
                 isExpanded: true,
-                icon: const Icon(
+                // ← disabled saat onChanged null
+                onChanged: isEnabled ? onChanged : null,
+                icon: Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: ProfilePalette.black,
+                  // ikon lebih pudar saat disabled
+                  color: isEnabled
+                      ? ProfilePalette.black
+                      : ProfilePalette.mutedText.withValues(alpha: 0.4),
                 ),
-                style: const TextStyle(
-                  fontSize: 18,
+                style: TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: ProfilePalette.darkText,
+                  // teks lebih pudar saat disabled
+                  color: isEnabled
+                      ? ProfilePalette.darkText
+                      : ProfilePalette.mutedText,
                 ),
+                selectedItemBuilder: (context) {
+                  return items.map((item) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        item,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList();
+                },
                 items: items.map((item) {
                   return DropdownMenuItem<String>(
                     value: item,
                     child: Text(item),
                   );
                 }).toList(),
-                onChanged: onChanged,
               ),
             ),
           ),

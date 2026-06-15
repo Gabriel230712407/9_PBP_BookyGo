@@ -5,6 +5,7 @@ import '../../../core/auth/services/auth_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../history/pages/history_page.dart';
 import '../models/booking_model.dart';
+import 'booking_detail_page.dart';
 import 'payment_method_page.dart';
 import '../services/booking_service.dart';
 import '../widgets/mybook_action_button.dart';
@@ -260,6 +261,16 @@ class _ActiveBookingCard extends StatelessWidget {
   final Future<void> Function() onBookingUpdated;
 
   Future<void> _handleTap(BuildContext context) async {
+    if (booking.isPaid) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BookingDetailPage(booking: booking),
+        ),
+      );
+      return;
+    }
+
     if (!booking.canContinuePayment) {
       if (booking.isExpired) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -284,7 +295,7 @@ class _ActiveBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canTap = booking.canContinuePayment;
+    final canTap = booking.isPaid || booking.canContinuePayment;
 
     return Material(
       color: Colors.transparent,

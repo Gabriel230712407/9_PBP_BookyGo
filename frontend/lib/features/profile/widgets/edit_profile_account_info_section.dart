@@ -5,15 +5,17 @@ import 'profile_palette.dart';
 class EditProfileAccountInfoSection extends StatelessWidget {
   final TextEditingController nameController;
   final String selectedGender;
-  final VoidCallback onNameEditTap;
-  final ValueChanged<String?> onGenderChanged;
+  final bool isEditMode;
+  final VoidCallback? onNameEditTap;
+  final ValueChanged<String?>? onGenderChanged;
 
   const EditProfileAccountInfoSection({
     super.key,
     required this.nameController,
     required this.selectedGender,
-    required this.onNameEditTap,
-    required this.onGenderChanged,
+    this.isEditMode = false,
+    this.onNameEditTap,
+    this.onGenderChanged,
   });
 
   @override
@@ -26,7 +28,7 @@ class EditProfileAccountInfoSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Account Owner Info',
+            'Account User Info',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -37,9 +39,9 @@ class EditProfileAccountInfoSection extends StatelessWidget {
           EditProfileTextField(
             label: 'Full Name',
             controller: nameController,
-            readOnly: true,
-            suffixIcon: Icons.edit,
-            onSuffixTap: onNameEditTap,
+            readOnly: !isEditMode,
+            suffixIcon: isEditMode ? null : Icons.edit,
+            onSuffixTap: isEditMode ? null : onNameEditTap,
           ),
           const SizedBox(height: 28),
           EditProfileDropdownField(
