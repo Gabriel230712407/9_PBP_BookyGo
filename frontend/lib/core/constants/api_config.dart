@@ -1,6 +1,10 @@
+// ini dah Railway
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
+  static const String productionBaseUrl =
+      'https://9pbpbookygo-production.up.railway.app/api';
+
   static const _configuredBaseUrl = String.fromEnvironment(
     'BOOKYGO_API_BASE_URL',
     defaultValue: '',
@@ -9,6 +13,11 @@ class ApiConfig {
   static String get baseUrl {
     if (_configuredBaseUrl.isNotEmpty) {
       return _configuredBaseUrl;
+    }
+
+    // Kalau sudah build APK release, otomatis pakai Railway
+    if (kReleaseMode) {
+      return productionBaseUrl;
     }
 
     if (kIsWeb) {
