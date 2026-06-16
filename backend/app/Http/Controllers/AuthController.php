@@ -21,13 +21,17 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:6|confirmed',
+            'google_uid' => 'nullable|string|max:255',
+            'foto' => 'nullable|string|max:2048',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'google_uid' => $request->google_uid,
+            'foto' => $request->foto,
         ]);
 
         $token = $user->createToken('bookygo-token')->plainTextToken;
@@ -52,9 +56,15 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user) {
             throw ValidationException::withMessages([
-                'email' => ['Email atau password salah.'],
+                'email' => ['Email belum terdaftar. Silakan buat akun terlebih dahulu.'],
+            ]);
+        }
+
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Password yang kamu masukkan salah.'],
             ]);
         }
 
@@ -218,22 +228,28 @@ class AuthController extends Controller
         $photo = $googleData['picture'] ?? null;
         $uid = $googleData['sub'];
 
-        $user = User::firstOrCreate(
-            ['email' => $email],
-            [
-                'name' => $name,
-                'password' => Hash::make(str()->random(32)),
-                'foto' => $photo,
-                'google_uid' => $uid,
-            ]
-        );
+        $user = User::where('email', $email)->first();
 
-        if (!$user->wasRecentlyCreated) {
-            $user->update([
-                'google_uid' => $uid,
-                'foto' => $user->foto ?? $photo,
+        if (!$user) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Akun Google ini belum terdaftar.',
+                'data' => [
+                    'registered' => false,
+                    'profile' => [
+                        'name' => $name,
+                        'email' => $email,
+                        'photo' => $photo,
+                        'google_uid' => $uid,
+                    ],
+                ],
             ]);
         }
+
+        $user->update([
+            'google_uid' => $uid,
+            'foto' => $user->foto ?? $photo,
+        ]);
 
         $token = $user->createToken('bookygo-token')->plainTextToken;
 
@@ -241,6 +257,7 @@ class AuthController extends Controller
             'status' => true,
             'message' => 'Login dengan Google berhasil',
             'data' => [
+                'registered' => true,
                 'user' => $user->fresh(),
                 'token' => $token,
                 'token_type' => 'Bearer',

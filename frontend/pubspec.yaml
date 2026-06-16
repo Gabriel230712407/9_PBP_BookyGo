@@ -46,6 +46,9 @@ flutter:
     - assets/images/vector_permission.png
     - assets/images/vector_success.png
     - assets/images/vector_sihir.png
+    - assets/images/new-icon-digital.png
+    - assets/images/new-icon-room.png
+    - assets/images/new-icon-search.png
 
     - assets/images/maps.jpeg
     
@@ -96,4 +99,4 @@ flutter:
     - assets/images/kamars/jogja/tsh/jhs/
     - assets/images/kamars/jogja/tsh/scr/
 
-    - assets/images/app_icon.png
+    - assets/images/app_icon.png 

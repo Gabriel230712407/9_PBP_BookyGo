@@ -6,7 +6,14 @@ import 'package:frontend/features/auth/pages/notification_permission_page.dart';
 import 'package:frontend/features/navigation/pages/main_nav_page.dart';
 
 class EmailAuthPage extends StatefulWidget {
-  const EmailAuthPage({super.key});
+  const EmailAuthPage({
+    super.key,
+    this.initialTabIndex = 0,
+    this.googleProfile,
+  });
+
+  final int initialTabIndex;
+  final GoogleRegistrationProfile? googleProfile;
 
   @override
   State<EmailAuthPage> createState() => _EmailAuthPageState();
@@ -42,7 +49,12 @@ class _EmailAuthPageState extends State<EmailAuthPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialTabIndex.clamp(0, 1) as int,
+    );
+    _prefillGoogleProfile();
   }
 
   @override
@@ -60,9 +72,22 @@ class _EmailAuthPageState extends State<EmailAuthPage>
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      final session = await AuthService.signInWithGoogle();
+      final result = await AuthService.signInWithGoogle();
       if (!mounted) return;
-      _goToHome(session);
+
+      if (result.isRegistered) {
+        _goToHome(result.session!);
+        return;
+      }
+
+      final profile = result.profile!;
+      _registerNameController.text = profile.name;
+      _registerEmailController.text = profile.email;
+      _tabController.animateTo(1);
+      _showMessage(
+        result.message ??
+            'This Google account is not registered yet. Please complete registration first.',
+      );
     } on AuthException catch (error) {
       _showMessage(error.message);
     } finally {
@@ -99,33 +124,35 @@ class _EmailAuthPageState extends State<EmailAuthPage>
       return;
     }
 
+    final registerEmail = _registerEmailController.text.trim();
+    final registerPassword = _registerPasswordController.text;
+    final googleProfile = widget.googleProfile;
+
     setState(() => _isLoading = true);
     try {
       final session = await AuthService.register(
         name: _registerNameController.text.trim(),
-        email: _registerEmailController.text.trim(),
-        password: _registerPasswordController.text,
+        email: registerEmail,
+        password: registerPassword,
+        confirmPassword: _registerConfirmPasswordController.text,
+        googleUid: googleProfile?.googleUid,
+        photoUrl: googleProfile?.photoUrl,
       );
 
-      if (!mounted) return;
-
-      await _showRegisterSuccessAlert();
-      if (!mounted) return;
-
-      if (await AuthService.shouldShowPermissionFlow(session)) {
-        if (!mounted) return;
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) => NotificationPermissionPage(session: session),
-          ),
-          (route) => false,
+      await _completeRegisterSuccess(session);
+    } on AuthException catch (error) {
+      if (_isTimeoutError(error)) {
+        final recoveredSession = await _tryRecoverTimedOutRegister(
+          email: registerEmail,
+          password: registerPassword,
         );
-        return;
+
+        if (recoveredSession != null) {
+          await _completeRegisterSuccess(recoveredSession);
+          return;
+        }
       }
 
-      _goToHome(session);
-    } on AuthException catch (error) {
       _applyRegisterErrors(error);
     } finally {
       if (mounted) {
@@ -180,8 +207,16 @@ class _EmailAuthPageState extends State<EmailAuthPage>
       _loginGeneralError = error.fieldErrors.isEmpty ? error.message : null;
     });
 
-    if (_loginGeneralError != null) {
-      _showMessage(_loginGeneralError!);
+    if (_loginEmailError != null &&
+        _loginEmailError!.toLowerCase().contains('not registered')) {
+      _tabController.animateTo(1);
+    }
+
+    final messageToShow =
+        _loginGeneralError ?? _loginEmailError ?? _loginPasswordError;
+
+    if (messageToShow != null) {
+      _showMessage(messageToShow);
     }
   }
 
@@ -190,12 +225,20 @@ class _EmailAuthPageState extends State<EmailAuthPage>
       _registerNameError = error.fieldErrors['name'];
       _registerEmailError = error.fieldErrors['email'];
       _registerPasswordError = error.fieldErrors['password'];
-      _registerConfirmPasswordError = error.fieldErrors['confirm_password'];
+      _registerConfirmPasswordError =
+          error.fieldErrors['confirm_password'] ??
+          error.fieldErrors['password_confirmation'];
       _registerGeneralError = error.fieldErrors.isEmpty ? error.message : null;
     });
 
-    if (_registerGeneralError != null) {
-      _showMessage(_registerGeneralError!);
+    final messageToShow = _registerGeneralError ??
+        _registerNameError ??
+        _registerEmailError ??
+        _registerPasswordError ??
+        _registerConfirmPasswordError;
+
+    if (messageToShow != null) {
+      _showMessage(messageToShow);
     }
   }
 
@@ -501,6 +544,55 @@ class _EmailAuthPageState extends State<EmailAuthPage>
         ],
       ),
     );
+  }
+
+  void _prefillGoogleProfile() {
+    final profile = widget.googleProfile;
+    if (profile == null) {
+      return;
+    }
+
+    _registerNameController.text = profile.name;
+    _registerEmailController.text = profile.email;
+  }
+
+  Future<void> _completeRegisterSuccess(AuthSession session) async {
+    if (!mounted) return;
+
+    await _showRegisterSuccessAlert();
+    if (!mounted) return;
+
+    if (await AuthService.shouldShowPermissionFlow(session)) {
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => NotificationPermissionPage(session: session),
+        ),
+        (route) => false,
+      );
+      return;
+    }
+
+    _goToHome(session);
+  }
+
+  bool _isTimeoutError(AuthException error) {
+    return error.message.toLowerCase().contains('timed out');
+  }
+
+  Future<AuthSession?> _tryRecoverTimedOutRegister({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      return await AuthService.login(
+        email: email,
+        password: password,
+      );
+    } on AuthException {
+      return null;
+    }
   }
 
   String? _validateEmail(String? value) {
