@@ -34,10 +34,15 @@ class MyBookHeader extends StatelessWidget {
 
               IconButton(
                 onPressed: onHistoryTap,
+                constraints: const BoxConstraints.tightFor(
+                  width: 40,
+                  height: 40,
+                ),
+                padding: EdgeInsets.zero,
                 icon: const Icon(
                   Icons.pending_actions_rounded,
                   color: AppColors.white,
-                  size: 26,
+                  size: 22,
                 ),
               ),
 

@@ -172,16 +172,16 @@ class _EmptyBookingState extends StatelessWidget {
       children: [
         SizedBox(height: isCompact ? 28 : 40),
         Image.asset(
-          'assets/images/onboarding_bag.png',
-          width: isCompact ? 128 : 150,
-          height: isCompact ? 128 : 150,
+          'assets/images/empty_mascot.png',
+          width: isCompact ? 142 : 164,
+          height: isCompact ? 142 : 164,
           fit: BoxFit.contain,
         ),
-        SizedBox(height: isCompact ? 14 : 18),
+        SizedBox(height: isCompact ? 8 : 10),
         const Text(
           'No active orders',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 18,
             fontWeight: FontWeight.w800,
             color: AppColors.textDark,
           ),
@@ -204,7 +204,7 @@ class _EmptyBookingState extends StatelessWidget {
             return const SizedBox.shrink();
           },
         ),
-        SizedBox(height: isCompact ? 18 : 24),
+        SizedBox(height: isCompact ? 8 : 10),
         MyBookActionButton(
           text: 'Book now',
           onPressed: onBookNowTap,
