@@ -6,9 +6,9 @@ import 'package:frontend/core/auth/models/auth_session.dart';
 import 'package:frontend/core/auth/models/auth_user.dart';
 import 'package:frontend/core/auth/services/auth_storage.dart';
 import 'package:frontend/core/constants/api_config.dart';
+import 'package:frontend/core/notifications/services/fcm_token_service.dart';
 import 'package:frontend/core/notifications/services/notification_service.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -36,26 +36,8 @@ class AuthService {
     final session = _parseAuthResponse(response);
     await AuthStorage.saveSession(session);
     await NotificationService.maybeLogLoginActivity(session);
-
-    final fcmToken = await FirebaseMessaging.instance.getToken();
-    if (fcmToken != null) {
-      await _saveFcmTokenToServer(session.token, fcmToken);
-    }
+    await FcmTokenService.sync(session);
     return session;
-  }
-
-  static Future<void> _saveFcmTokenToServer(String authToken, String fcmToken) async {
-    try {
-      await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/fcm-token'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $authToken',
-        },
-        body: jsonEncode({'fcm_token': fcmToken}),
-      );
-    } catch (_) {}
   }
 
   static Future<AuthSession> register({
@@ -74,6 +56,7 @@ class AuthService {
 
     final session = _parseAuthResponse(response);
     await AuthStorage.saveSession(session);
+    await FcmTokenService.sync(session);
     return session;
   }
 
@@ -98,11 +81,7 @@ class AuthService {
       final session = _parseAuthResponse(response);
       await AuthStorage.saveSession(session);
       await NotificationService.maybeLogLoginActivity(session);
-
-      final fcmToken = await FirebaseMessaging.instance.getToken();
-      if (fcmToken != null) {
-        await _saveFcmTokenToServer(session.token, fcmToken);
-      }
+      await FcmTokenService.sync(session);
 
       return session;
     } on AuthException {
@@ -143,6 +122,7 @@ class AuthService {
       );
 
       await AuthStorage.saveSession(refreshedSession);
+      await FcmTokenService.sync(refreshedSession);
       return refreshedSession;
     } catch (_) {
       await AuthStorage.clearSession();

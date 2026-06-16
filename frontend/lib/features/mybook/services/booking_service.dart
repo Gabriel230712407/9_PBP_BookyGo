@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../core/auth/services/auth_service.dart';
 import '../../../core/constants/api_config.dart';
+import '../../../core/notifications/services/fcm_token_service.dart';
 import '../models/booking_model.dart';
 
 class BookingService {
@@ -58,6 +59,8 @@ class BookingService {
     if (session == null) {
       throw const BookingException('Please sign in first to continue booking.');
     }
+
+    await FcmTokenService.sync(session);
 
     final body = <String, String>{
       'kamar_id': '$roomId',

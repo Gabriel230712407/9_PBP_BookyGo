@@ -2,9 +2,7 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:http/http.dart' as http;
-import 'package:frontend/core/constants/api_config.dart';
-import 'package:frontend/core/auth/services/auth_storage.dart';
+import 'package:frontend/core/notifications/services/fcm_token_service.dart';
 import 'package:frontend/main.dart';
 import 'package:frontend/features/mybook/services/booking_service.dart';
 import 'package:frontend/features/reviews/pages/review_form.dart';
@@ -57,6 +55,18 @@ class FcmService {
         _handleNotificationData(response.payload);
       },
     );
+    final androidNotifications =
+        _localNotifications.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    await androidNotifications?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        _channelId,
+        _channelName,
+        description: _channelDesc,
+        importance: Importance.high,
+      ),
+    );
+    await androidNotifications?.requestNotificationsPermission();
 
     final messaging = FirebaseMessaging.instance;
     await messaging.requestPermission(
@@ -107,7 +117,8 @@ class FcmService {
     debugPrint('🧭 type: $type, pemesananId: $pemesananId');
     debugPrint('🧭 navigatorKey.currentState: ${navigatorKey.currentState}');
 
-    if (type == 'review' && pemesananId != null) {
+    if ((type == 'review' || type == 'review_reminder') &&
+        pemesananId != null) {
       debugPrint('🧭 Condition matched, fetching booking...');
       try {
         final booking = await BookingService().fetchBookingById(
@@ -131,29 +142,8 @@ class FcmService {
 
   static Future<void> _saveFcmToken(String token) async {
     try {
-      final session = await AuthStorage.getSession();
-
-      debugPrint('🔑 Session: ${session?.token}');
       debugPrint('📱 FCM Token: $token');
-      debugPrint('🌐 URL: ${ApiConfig.baseUrl}/fcm-token');
-
-      if (session == null) {
-        debugPrint('❌ Session null - belum login saat token disimpan');
-        return;
-      }
-
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/fcm-token'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer ${session.token}',
-        },
-        body: jsonEncode({'fcm_token': token}),
-      );
-
-      debugPrint('📡 Response status: ${response.statusCode}');
-      debugPrint('📡 Response body: ${response.body}');
+      await FcmTokenService.syncForCurrentSession(token);
     } catch (e) {
       debugPrint('❌ Error saving FCM token: $e');
     }
