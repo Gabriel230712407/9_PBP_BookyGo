@@ -8,7 +8,13 @@ Route::get('/', function () {
 });
 
 Route::get('/storage/{path}', function (string $path) {
-    abort_unless(Storage::disk('public')->exists($path), 404);
+    if (Storage::disk('public')->exists($path)) {
+        return Storage::disk('public')->response($path);
+    }
 
-    return Storage::disk('public')->response($path);
+    $seedFilePath = database_path('seed_files/' . $path);
+
+    abort_unless(is_file($seedFilePath), 404);
+
+    return response()->file($seedFilePath);
 })->where('path', '.*');

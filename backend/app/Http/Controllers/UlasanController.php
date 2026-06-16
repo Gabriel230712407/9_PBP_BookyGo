@@ -7,6 +7,7 @@ use App\Models\Kamar;
 use App\Models\Hotel;
 use App\Models\UlasanHelpful;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UlasanController extends Controller
 {
@@ -31,6 +32,7 @@ class UlasanController extends Controller
             $ulasan->isHelpful = $userId
                 ? $ulasan->helpfuls()->where('user_id', $userId)->exists()
                 : false; // default false kalau user belum login
+            $ulasan->photos = $this->availablePhotos($ulasan->photos ?? []);
             return $ulasan;
         });
 
@@ -60,7 +62,7 @@ class UlasanController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Detail ulasan berhasil diambil',
-            'data' => $ulasan
+            'data' => $this->withAvailablePhotos($ulasan)
         ]);
     }
 
@@ -98,7 +100,7 @@ class UlasanController extends Controller
 
         return response()->json([
             'message' => 'Ulasan berhasil disimpan',
-            'data' => $ulasan,
+            'data' => $this->withAvailablePhotos($ulasan),
         ], 201);
     }
 
@@ -148,7 +150,7 @@ class UlasanController extends Controller
 
         return response()->json([
             'message' => 'Ulasan berhasil diupdate',
-            'data' => $ulasan->fresh(),
+            'data' => $this->withAvailablePhotos($ulasan->fresh()),
         ]);
     }
 
@@ -197,6 +199,39 @@ class UlasanController extends Controller
                 'jumlah_ulasan' => Ulasan::where('kamar_id', $kamarId)->count()
             ]);
         }
+    }
+
+    private function withAvailablePhotos(Ulasan $ulasan)
+    {
+        $ulasan->photos = $this->availablePhotos($ulasan->photos ?? []);
+
+        return $ulasan;
+    }
+
+    private function availablePhotos($photos): array
+    {
+        if (!is_array($photos)) {
+            return [];
+        }
+
+        return array_values(array_filter($photos, function ($photo) {
+            $path = ltrim(str_replace('\\/', '/', (string) $photo), '/');
+
+            if ($path === '') {
+                return false;
+            }
+
+            if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                return true;
+            }
+
+            if (str_starts_with($path, 'storage/')) {
+                $path = substr($path, strlen('storage/'));
+            }
+
+            return Storage::disk('public')->exists($path)
+                || is_file(database_path('seed_files/' . $path));
+        }));
     }
     
     public function toggleHelpful(Request $request, Ulasan $ulasan)
