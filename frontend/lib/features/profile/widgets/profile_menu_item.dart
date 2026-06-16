@@ -7,6 +7,7 @@ class ProfileMenuItem extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onTap;
   final Color iconColor;
+  final Widget? trailing; // tambah ini
 
   const ProfileMenuItem({
     super.key,
@@ -15,6 +16,7 @@ class ProfileMenuItem extends StatelessWidget {
     this.subtitle,
     this.onTap,
     this.iconColor = ProfilePalette.iconGrey,
+    this.trailing, // tambah ini
   });
 
   @override
@@ -62,6 +64,7 @@ class ProfileMenuItem extends StatelessWidget {
                   ],
                 ),
               ),
+              if (trailing != null) trailing!, // tambah ini
             ],
           ),
         ),

@@ -46,4 +46,16 @@ class AuthStorage {
   static String _permissionKey(String userKey) {
     return '$_permissionCompletedKeyPrefix.$userKey';
   }
+
+  static const _fingerprintEnabledKey = 'bookygo.auth.fingerprint_enabled';
+
+  static Future<bool> isFingerprintEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_fingerprintEnabledKey) ?? false;
+  }
+
+  static Future<void> setFingerprintEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_fingerprintEnabledKey, value);
+  }
 }

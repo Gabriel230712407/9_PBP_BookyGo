@@ -4,6 +4,8 @@ import 'package:frontend/core/auth/services/auth_service.dart';
 import 'package:frontend/core/theme/app_colors.dart';
 import 'package:frontend/features/auth/pages/notification_permission_page.dart';
 import 'package:frontend/features/navigation/pages/main_nav_page.dart';
+import 'package:frontend/core/auth/services/auth_storage.dart';
+import 'package:frontend/core/auth/services/fingerprint_service.dart';
 
 class EmailAuthPage extends StatefulWidget {
   const EmailAuthPage({super.key});
@@ -26,6 +28,8 @@ class _EmailAuthPageState extends State<EmailAuthPage>
   final _registerPasswordController = TextEditingController();
   final _registerConfirmPasswordController = TextEditingController();
 
+  bool _isFingerprintAvailable = false;
+  bool _isFingerprintEnabled = false;
   bool _isLoading = false;
   bool _obscureLoginPassword = true;
   bool _obscureRegisterPassword = true;
@@ -43,6 +47,18 @@ class _EmailAuthPageState extends State<EmailAuthPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _checkFingerprint(); // tambah ini
+  }
+
+  Future<void> _checkFingerprint() async {
+    final isAvailable = await FingerprintService.isAvailable();
+    final isEnabled = await AuthStorage.isFingerprintEnabled();
+    if (mounted) {
+      setState(() {
+        _isFingerprintAvailable = isAvailable;
+        _isFingerprintEnabled = isEnabled;
+      });
+    }
   }
 
   @override
@@ -55,6 +71,46 @@ class _EmailAuthPageState extends State<EmailAuthPage>
     _registerPasswordController.dispose();
     _registerConfirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleFingerprintLogin() async {
+    setState(() => _isLoading = true);
+    try {
+      // 1. Scan sidik jari dulu
+      final authenticated = await FingerprintService.authenticate(
+        reason: 'Scan your fingerprint to login to BookyGo',
+      );
+
+      if (!authenticated) {
+        _showMessage('Fingerprint authentication failed.');
+        return;
+      }
+
+      // 2. Ambil token yang tersimpan
+      final session = await AuthStorage.getSession();
+      if (session == null) {
+        _showMessage('No saved session found. Please login with email first.');
+        await AuthStorage.setFingerprintEnabled(false);
+        if (mounted) setState(() => _isFingerprintEnabled = false);
+        return;
+      }
+
+      // 3. Validasi token ke /me
+      final restored = await AuthService.restoreSession();
+      if (!mounted) return;
+
+      if (restored == null) {
+        _showMessage('Session expired. Please login with email first.');
+        await AuthStorage.setFingerprintEnabled(false);
+        if (mounted) setState(() => _isFingerprintEnabled = false);
+        return;
+      }
+
+      // 4. Masuk ke home
+      _goToHome(restored);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _handleGoogleSignIn() async {
@@ -150,9 +206,9 @@ class _EmailAuthPageState extends State<EmailAuthPage>
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _clearLoginErrors() {
@@ -218,10 +274,7 @@ class _EmailAuthPageState extends State<EmailAuthPage>
           ),
           content: const Text(
             'Your account has been created successfully.',
-            style: TextStyle(
-              color: AppColors.textMuted,
-              height: 1.5,
-            ),
+            style: TextStyle(color: AppColors.textMuted, height: 1.5),
           ),
           actions: [
             SizedBox(
@@ -295,7 +348,8 @@ class _EmailAuthPageState extends State<EmailAuthPage>
                     validator: _validateEmail,
                     forceErrorText: _loginEmailError,
                     onChanged: (_) {
-                      if (_loginEmailError != null || _loginGeneralError != null) {
+                      if (_loginEmailError != null ||
+                          _loginGeneralError != null) {
                         setState(() {
                           _loginEmailError = null;
                           _loginGeneralError = null;
@@ -360,6 +414,9 @@ class _EmailAuthPageState extends State<EmailAuthPage>
                   _GoogleButton(
                     onPressed: _isLoading ? null : _handleGoogleSignIn,
                   ),
+                  if (_isFingerprintAvailable && _isFingerprintEnabled) ...[
+                    const SizedBox(height: 16),
+                  ],
                 ],
               ),
             ),
@@ -545,10 +602,7 @@ class _AuthFormShell extends StatelessWidget {
 }
 
 class _HeaderText extends StatelessWidget {
-  const _HeaderText({
-    required this.title,
-    required this.subtitle,
-  });
+  const _HeaderText({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -656,9 +710,7 @@ class _AuthInput extends StatelessWidget {
 }
 
 class _InlineError extends StatelessWidget {
-  const _InlineError({
-    required this.message,
-  });
+  const _InlineError({required this.message});
 
   final String message;
 
@@ -693,10 +745,7 @@ class _InlineError extends StatelessWidget {
 }
 
 class _PrimaryButton extends StatelessWidget {
-  const _PrimaryButton({
-    required this.text,
-    required this.onPressed,
-  });
+  const _PrimaryButton({required this.text, required this.onPressed});
 
   final String text;
   final VoidCallback? onPressed;
@@ -718,10 +767,7 @@ class _PrimaryButton extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ),
     );
@@ -771,6 +817,42 @@ class _GoogleButton extends StatelessWidget {
         ),
         label: const Text(
           'Continue with Google',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.darkBlue,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.blueLight),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FingerprintButton extends StatelessWidget {
+  const _FingerprintButton({required this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(
+          Icons.fingerprint,
+          size: 26,
+          color: AppColors.primaryEnd,
+        ),
+        label: const Text(
+          'Login with Fingerprint',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
