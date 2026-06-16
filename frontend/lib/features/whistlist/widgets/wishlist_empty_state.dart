@@ -16,7 +16,7 @@ class WishlistEmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.asset(
-            'assets/images/onboarding_bag.png',
+            'assets/images/empty_mascot.png',
             width: isCompact ? 140 : 170,
             height: isCompact ? 140 : 170,
             fit: BoxFit.contain,
