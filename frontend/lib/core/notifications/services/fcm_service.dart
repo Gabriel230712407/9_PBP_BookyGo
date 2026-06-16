@@ -1,19 +1,18 @@
 import 'dart:convert';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:frontend/core/auth/services/auth_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:frontend/core/constants/api_config.dart';
+import 'package:frontend/core/auth/services/auth_storage.dart';
+import 'package:frontend/main.dart';
 import 'package:frontend/features/mybook/services/booking_service.dart';
 import 'package:frontend/features/reviews/pages/review_form.dart';
-import 'package:frontend/main.dart';
-import 'package:http/http.dart' as http;
 
 final FlutterLocalNotificationsPlugin _localNotifications =
     FlutterLocalNotificationsPlugin();
 
-const String _channelId = 'bookygo_high_importance';
+const String _channelId   = 'bookygo_high_importance';
 const String _channelName = 'BookyGo Notifications';
 const String _channelDesc = 'Booking updates and reminders from BookyGo';
 
@@ -54,7 +53,7 @@ class FcmService {
         android: AndroidInitializationSettings('@drawable/ic_notification'),
       ),
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        debugPrint('Notification tapped: ${response.payload}');
+        debugPrint('🔔 Notif tapped: ${response.payload}');
         _handleNotificationData(response.payload);
       },
     );
@@ -69,38 +68,24 @@ class FcmService {
     FirebaseMessaging.onMessage.listen(_showLocalNotification);
 
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      debugPrint('Notification opened app: ${message.data}');
+      debugPrint('🔔 Notif opened app: ${message.data}');
       _navigateFromData(message.data);
     });
 
-    try {
-      final initialMessage = await messaging.getInitialMessage();
-      if (initialMessage != null) {
-        debugPrint('App opened from terminated state: ${initialMessage.data}');
-        _navigateFromData(initialMessage.data);
-      }
-    } catch (e) {
-      debugPrint('FCM initial message unavailable: $e');
+    final initialMessage = await messaging.getInitialMessage();
+    if (initialMessage != null) {
+      debugPrint('🔔 App opened from terminated: ${initialMessage.data}');
+      _navigateFromData(initialMessage.data);
     }
 
-    try {
-      final token = await messaging.getToken();
-      if (token != null) {
-        debugPrint('FCM token: $token');
-        await _saveFcmToken(token);
-      } else {
-        debugPrint('FCM token is null');
-      }
-    } catch (e) {
-      debugPrint('FCM token unavailable: $e');
+    final token = await messaging.getToken();
+    if (token != null) {
+      debugPrint('📱 FCM Token: $token');
+      await _saveFcmToken(token);
+    } else {
+      debugPrint('❌ FCM Token NULL');
     }
-
-    messaging.onTokenRefresh.listen(
-      _saveFcmToken,
-      onError: (Object error) {
-        debugPrint('FCM token refresh failed: $error');
-      },
-    );
+    messaging.onTokenRefresh.listen(_saveFcmToken);
   }
 
   static void _handleNotificationData(String? payload) {
@@ -109,30 +94,38 @@ class FcmService {
       final data = jsonDecode(payload) as Map<String, dynamic>;
       _navigateFromData(data);
     } catch (e) {
-      debugPrint('Error parsing notification payload: $e');
+      debugPrint('❌ Error parsing payload: $e');
     }
   }
 
   static Future<void> _navigateFromData(Map<String, dynamic> data) async {
-    debugPrint('Navigate from notification data: $data');
-
+    debugPrint('🧭 _navigateFromData called with: $data');
+    
     final type = data['type'];
     final pemesananId = data['pemesanan_id'];
+    
+    debugPrint('🧭 type: $type, pemesananId: $pemesananId');
+    debugPrint('🧭 navigatorKey.currentState: ${navigatorKey.currentState}');
 
     if (type == 'review' && pemesananId != null) {
+      debugPrint('🧭 Condition matched, fetching booking...');
       try {
         final booking = await BookingService().fetchBookingById(
           int.parse(pemesananId.toString()),
         );
+        debugPrint('🧭 Booking fetched: ${booking.id}');
 
         navigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (_) => ReviewFormPage(booking: booking),
           ),
         );
+        debugPrint('🧭 Navigation pushed');
       } catch (e) {
-        debugPrint('Failed to load booking for review: $e');
+        debugPrint('❌ Failed to load booking for review: $e');
       }
+    } else {
+      debugPrint('🧭 Condition NOT matched - type or pemesananId mismatch');
     }
   }
 
@@ -140,12 +133,12 @@ class FcmService {
     try {
       final session = await AuthStorage.getSession();
 
-      debugPrint('Session token: ${session?.token}');
-      debugPrint('FCM token to save: $token');
-      debugPrint('Save URL: ${ApiConfig.baseUrl}/fcm-token');
+      debugPrint('🔑 Session: ${session?.token}');
+      debugPrint('📱 FCM Token: $token');
+      debugPrint('🌐 URL: ${ApiConfig.baseUrl}/fcm-token');
 
       if (session == null) {
-        debugPrint('Session is null, skipping FCM token save');
+        debugPrint('❌ Session null - belum login saat token disimpan');
         return;
       }
 
@@ -159,10 +152,10 @@ class FcmService {
         body: jsonEncode({'fcm_token': token}),
       );
 
-      debugPrint('FCM save response status: ${response.statusCode}');
-      debugPrint('FCM save response body: ${response.body}');
+      debugPrint('📡 Response status: ${response.statusCode}');
+      debugPrint('📡 Response body: ${response.body}');
     } catch (e) {
-      debugPrint('Error saving FCM token: $e');
+      debugPrint('❌ Error saving FCM token: $e');
     }
   }
 }

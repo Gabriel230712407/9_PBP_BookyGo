@@ -11,12 +11,7 @@ final navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  try {
-    await FcmService.init();
-  } catch (e, stackTrace) {
-    debugPrint('FCM init failed: $e');
-    debugPrintStack(stackTrace: stackTrace);
-  }
+  await FcmService.init();
   runApp(const MainApp());
 }
 
