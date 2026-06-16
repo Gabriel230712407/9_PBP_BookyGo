@@ -15,7 +15,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 class AuthService {
   AuthService._();
 
-  static const _requestTimeout = Duration(seconds: 15);
+  static const _requestTimeout = Duration(seconds: 35);
 
   static Uri _uri(String path) => Uri.parse('${ApiConfig.baseUrl}$path');
   static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
@@ -62,6 +62,9 @@ class AuthService {
     required String name,
     required String email,
     required String password,
+    required String confirmPassword,
+    String? googleUid,
+    String? photoUrl,
   }) async {
     final response = await _post(
       '/register',
@@ -69,15 +72,24 @@ class AuthService {
         'name': name,
         'email': email,
         'password': password,
+        'password_confirmation': confirmPassword,
+        if (googleUid != null && googleUid.isNotEmpty) 'google_uid': googleUid,
+        if (photoUrl != null && photoUrl.isNotEmpty) 'foto': photoUrl,
       },
     );
 
     final session = _parseAuthResponse(response);
     await AuthStorage.saveSession(session);
+    await NotificationService.maybeLogLoginActivity(session);
+
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    if (fcmToken != null) {
+      await _saveFcmTokenToServer(session.token, fcmToken);
+    }
     return session;
   }
 
-  static Future<AuthSession> signInWithGoogle() async {
+  static Future<GoogleAuthResult> signInWithGoogle() async {
     try {
       await _googleSignIn.signOut();
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -95,6 +107,23 @@ class AuthService {
         },
       );
 
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = decoded['data'] as Map<String, dynamic>;
+      final registered = data['registered'] == true;
+
+      if (!registered) {
+        final profile = data['profile'] as Map<String, dynamic>;
+        return GoogleAuthResult.unregistered(
+          profile: GoogleRegistrationProfile(
+            name: profile['name'] as String? ?? '',
+            email: profile['email'] as String? ?? '',
+            photoUrl: profile['photo'] as String?,
+            googleUid: profile['google_uid'] as String?,
+          ),
+          message: _normalizeMessage(decoded['message'] as String? ?? 'This Google account is not registered yet.'),
+        );
+      }
+
       final session = _parseAuthResponse(response);
       await AuthStorage.saveSession(session);
       await NotificationService.maybeLogLoginActivity(session);
@@ -104,7 +133,7 @@ class AuthService {
         await _saveFcmTokenToServer(session.token, fcmToken);
       }
 
-      return session;
+      return GoogleAuthResult.registered(session: session);
     } on AuthException {
       rethrow;
     } catch (e) {
@@ -201,8 +230,8 @@ class AuthService {
 
       await AuthStorage.clearSession();
     } on SocketException {
-      throw const AuthException(
-        'Cannot reach the server. Make sure Laravel is running and your phone is on the same Wi-Fi network.',
+      throw AuthException(
+        'Cannot reach the server at ${ApiConfig.baseUrl}. Make sure Laravel is running and your phone is on the same Wi-Fi network.',
       );
     } on TimeoutException {
       throw const AuthException(
@@ -254,17 +283,8 @@ class AuthService {
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
 
-      final responseUser =
+      final updatedUser =
           AuthUser.fromJson(decoded['data'] as Map<String, dynamic>);
-      final updatedUser = AuthUser(
-        id: responseUser.id,
-        name: _firstNonEmpty(name, responseUser.name, session.user.name),
-        email: _firstNonEmpty(email, responseUser.email, session.user.email),
-        gender: _firstNonEmpty(gender, responseUser.gender, session.user.gender),
-        phoneNumber:
-            _firstNonEmpty(phoneNumber, responseUser.phoneNumber, session.user.phoneNumber),
-        photo: _firstNonEmpty(photo, responseUser.photo, session.user.photo),
-      );
 
       final updatedSession = AuthSession(
         token: session.token,
@@ -276,8 +296,8 @@ class AuthService {
 
       return updatedSession;
     } on SocketException {
-      throw const AuthException(
-        'Cannot reach the server. Make sure Laravel is running and your phone is on the same Wi-Fi network.',
+      throw AuthException(
+        'Cannot reach the server at ${ApiConfig.baseUrl}. Make sure Laravel is running and your phone is on the same Wi-Fi network.',
       );
     } on TimeoutException {
       throw const AuthException(
@@ -311,8 +331,8 @@ class AuthService {
           )
           .timeout(_requestTimeout);
     } on SocketException {
-      throw const AuthException(
-        'Cannot reach the server. Make sure Laravel is running and your phone is on the same Wi-Fi network.',
+      throw AuthException(
+        'Cannot reach the server at ${ApiConfig.baseUrl}. Make sure Laravel is running and your phone is on the same Wi-Fi network.',
       );
     } on HttpException {
       throw const AuthException('The server returned an invalid response.');
@@ -357,9 +377,10 @@ class AuthService {
           }
 
           if (fieldErrors.isNotEmpty) {
+            final normalizedFieldErrors = _normalizeFieldErrors(fieldErrors);
             return AuthException(
-              fieldErrors.values.first,
-              fieldErrors: fieldErrors,
+              normalizedFieldErrors.values.first,
+              fieldErrors: normalizedFieldErrors,
             );
           }
         }
@@ -367,7 +388,7 @@ class AuthService {
 
       if (decoded['message'] is String &&
           (decoded['message'] as String).isNotEmpty) {
-        return AuthException(decoded['message'] as String);
+        return AuthException(_normalizeMessage(decoded['message'] as String));
       }
     } catch (_) {
       // Use the default fallback below.
@@ -376,18 +397,39 @@ class AuthService {
     return const AuthException('Something went wrong. Please try again.');
   }
 
-  static String _firstNonEmpty(String? primary, String? fallback, String? last) {
-    final primaryText = primary?.trim();
-    if (primaryText != null && primaryText.isNotEmpty) {
-      return primaryText;
+  static Map<String, String> _normalizeFieldErrors(Map<String, String> fieldErrors) {
+    return fieldErrors.map((key, value) {
+      if (key == 'email' && value.toLowerCase().contains('taken')) {
+        return MapEntry(key, 'Email is already registered. Please log in instead.');
+      }
+      if (key == 'password' &&
+          value.toLowerCase().contains('confirmation')) {
+        return MapEntry(key, 'Password confirmation does not match.');
+      }
+      return MapEntry(key, _normalizeMessage(value));
+    });
+  }
+
+  static String _normalizeMessage(String message) {
+    final lower = message.toLowerCase();
+
+    if (lower.contains('email belum terdaftar')) {
+      return 'This email is not registered yet. Please create an account first.';
+    }
+    if (lower.contains('password yang kamu masukkan salah')) {
+      return 'Incorrect password. Please try again.';
+    }
+    if (lower.contains('email atau password salah')) {
+      return 'Email or password is incorrect.';
+    }
+    if (lower.contains('unique') || lower.contains('already been taken')) {
+      return 'This email is already registered. Please log in instead.';
+    }
+    if (lower.contains('password') && lower.contains('confirmation')) {
+      return 'Password confirmation does not match.';
     }
 
-    final fallbackText = fallback?.trim();
-    if (fallbackText != null && fallbackText.isNotEmpty) {
-      return fallbackText;
-    }
-
-    return last?.trim() ?? '';
+    return message;
   }
 }
 
@@ -399,4 +441,48 @@ class AuthException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class GoogleAuthResult {
+  const GoogleAuthResult._({
+    this.session,
+    this.profile,
+    this.message,
+    required this.isRegistered,
+  });
+
+  const GoogleAuthResult.registered({
+    required AuthSession session,
+  }) : this._(
+          session: session,
+          isRegistered: true,
+        );
+
+  const GoogleAuthResult.unregistered({
+    required GoogleRegistrationProfile profile,
+    String? message,
+  }) : this._(
+          profile: profile,
+          message: message,
+          isRegistered: false,
+        );
+
+  final AuthSession? session;
+  final GoogleRegistrationProfile? profile;
+  final String? message;
+  final bool isRegistered;
+}
+
+class GoogleRegistrationProfile {
+  const GoogleRegistrationProfile({
+    required this.name,
+    required this.email,
+    this.photoUrl,
+    this.googleUid,
+  });
+
+  final String name;
+  final String email;
+  final String? photoUrl;
+  final String? googleUid;
 }

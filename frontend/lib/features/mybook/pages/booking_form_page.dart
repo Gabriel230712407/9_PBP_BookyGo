@@ -739,8 +739,22 @@ class _AddonTile extends StatelessWidget {
   final Addon addon;
   final ValueChanged<bool> onChanged;
 
+  String get _displayName {
+    final value = addon.name.trim();
+    final normalized = value.toLowerCase();
+
+    if (normalized == 'lauandry' || normalized.contains('lauandry')) {
+      return value.replaceAll(
+        RegExp('lauandry', caseSensitive: false),
+        'Laundry',
+      );
+    }
+
+    return value;
+  }
+
   IconData get _icon {
-    final value = addon.name.toLowerCase();
+    final value = _displayName.toLowerCase();
     if (value.contains('breakfast')) {
       return Icons.restaurant_rounded;
     }
@@ -758,7 +772,7 @@ class _AddonTile extends StatelessWidget {
         const SizedBox(width: 14),
         Expanded(
           child: Text(
-            addon.name,
+            _displayName,
             style: const TextStyle(fontSize: 16, color: Color(0xFF5E6480)),
           ),
         ),
