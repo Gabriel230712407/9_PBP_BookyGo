@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../mybook/models/booking_model.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/app_image.dart';
 import '../services/review_service.dart';
 
 class ReviewFormPage extends StatefulWidget {
@@ -476,9 +477,12 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: widget.booking.imagePath.startsWith('http')
-                        ? Image.network(widget.booking.imagePath, width: 80, height: 80, fit: BoxFit.cover)
-                        : Image.asset(widget.booking.imagePath, width: 80, height: 80, fit: BoxFit.cover),
+                    child: AppImage(
+                      imagePath: widget.booking.imagePath,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

@@ -22,7 +22,8 @@ class AppImage extends StatelessWidget {
   Widget build(BuildContext context) {
     if (ImagePathResolver.isRemotePath(imagePath) ||
         imagePath.startsWith('storage/') ||
-        imagePath.startsWith('/storage/')) {
+        imagePath.startsWith('/storage/') ||
+        ImagePathResolver.isPublicDiskPath(imagePath)) {
       return Image.network(
         ImagePathResolver.toDisplayUrl(imagePath),
         width: width,

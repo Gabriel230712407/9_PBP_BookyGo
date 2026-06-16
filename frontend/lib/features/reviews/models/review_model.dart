@@ -115,25 +115,14 @@ class ReviewModel {
   String get firstPhotoUrl {
     if (photos.isEmpty) return '';
 
-    final path = photos.first.replaceAll(r'\/', '/');
-
-    if (path.startsWith('http')) return path;
-
-    final base = ApiConfig.baseUrl.replaceAll('/api', '');
-
-    return '$base/storage/$path';
+    return _buildImageUrl(photos.first) ?? '';
   }
 
   List<String> get photoUrls {
-    final base = ApiConfig.baseUrl.replaceAll('/api', '');
-
-    return photos.map((photo) {
-      final path = photo.replaceAll(r'\/', '/');
-
-      if (path.startsWith('http')) return path;
-
-      return '$base/storage/$path';
-    }).toList();
+    return photos
+        .map(_buildImageUrl)
+        .whereType<String>()
+        .toList();
   }
 }
 

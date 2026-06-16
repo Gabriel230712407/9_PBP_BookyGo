@@ -30,25 +30,42 @@ class ImagePathResolver {
   }
 
   static String toDisplayUrl(String path) {
-    if (isRemotePath(path)) {
-      return path;
+    final cleanPath = path.trim().replaceAll(r'\/', '/');
+
+    if (isRemotePath(cleanPath)) {
+      return cleanPath;
     }
 
     final baseUrl = ApiConfig.baseUrl.replaceFirst(RegExp(r'/api$'), '');
 
-    if (path.startsWith('/storage/')) {
-      return '$baseUrl$path';
+    if (cleanPath.startsWith('/storage/')) {
+      return '$baseUrl$cleanPath';
     }
 
-    if (path.startsWith('storage/')) {
-      return '$baseUrl/$path';
+    if (cleanPath.startsWith('storage/')) {
+      return '$baseUrl/$cleanPath';
     }
 
-    return path;
+    if (isPublicDiskPath(cleanPath)) {
+      return '$baseUrl/storage/$cleanPath';
+    }
+
+    return cleanPath;
+  }
+
+  static bool isPublicDiskPath(String path) {
+    final cleanPath = path.trim().replaceAll(r'\/', '/');
+
+    return cleanPath.startsWith('reviews/') ||
+        cleanPath.startsWith('profile_photos/') ||
+        cleanPath.startsWith('foto_hotels/') ||
+        cleanPath.startsWith('foto_kamars/');
   }
 
   static bool _isStoragePath(String path) {
-    return path.startsWith('storage/') || path.startsWith('/storage/');
+    return path.startsWith('storage/') ||
+        path.startsWith('/storage/') ||
+        isPublicDiskPath(path);
   }
 
   static Future<Set<String>> _loadAssetPaths() async {
