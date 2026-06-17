@@ -66,21 +66,26 @@ class BookingReceiptPdfService {
   }
 
   static String receiptQrData(BookingModel booking) {
-    return jsonEncode({
-      'receipt': 'BookyGo Booking Receipt',
-      'booking_id': booking.bookingCode,
-      'hotel': booking.hotelName,
-      'room': booking.roomName,
-      'guest_name': booking.contactName,
-      'check_in': BookingFormatters.dayMonthYear(booking.checkInDate),
-      'check_out': BookingFormatters.dayMonthYear(booking.checkOutDate),
-      'duration': booking.stayLabel,
-      'guests': booking.guestCountLabel,
-      'rooms': booking.roomCountLabel,
-      'payment_method': paymentMethodName(booking),
-      'total_paid': booking.formattedTotalPrice,
-      'status': 'PAID',
-    });
+    return booking.bookingCode.isEmpty
+        ? 'BOOKING:${booking.id}'
+        : 'BOOKING:${booking.bookingCode}';
+
+        //ini kalo mau nampilin qr yang isinya lengkap JSON
+    // return jsonEncode({
+    //   'receipt': 'BookyGo Booking Receipt',
+    //   'booking_id': booking.bookingCode,
+    //   'hotel': booking.hotelName,
+    //   'room': booking.roomName,
+    //   'guest_name': booking.contactName,
+    //   'check_in': BookingFormatters.dayMonthYear(booking.checkInDate),
+    //   'check_out': BookingFormatters.dayMonthYear(booking.checkOutDate),
+    //   'duration': booking.stayLabel,
+    //   'guests': booking.guestCountLabel,
+    //   'rooms': booking.roomCountLabel,
+    //   'payment_method': paymentMethodName(booking),
+    //   'total_paid': booking.formattedTotalPrice,
+    //   'status': 'PAID',
+    // });
   }
 
   static String paymentMethodName(BookingModel booking) {

@@ -38,7 +38,7 @@ class WishlistEmptyState extends StatelessWidget {
           SizedBox(height: isCompact ? 8 : 10),
           Text(
             isGuest
-                ? 'Silakan login terlebih dahulu untuk menyimpan hotel favorit dan melihat wishlist kamu.'
+                ? 'Please sign in first to save favorite hotels and view your wishlist.'
                 : 'Save hotels you like to your wishlist so you can',
             textAlign: TextAlign.center,
             style: TextStyle(

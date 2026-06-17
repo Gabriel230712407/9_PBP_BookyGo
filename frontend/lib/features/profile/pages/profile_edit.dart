@@ -50,7 +50,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       setState(() {
         _isLoading = false;
       });
-      _showMessage('Session tidak ditemukan. Silakan login ulang.');
+      _showMessage('Session not found. Please sign in again.');
       return;
     }
 
@@ -135,17 +135,17 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     final currentGender = gender ?? _gender;
 
     if (currentName.isEmpty || currentName == '-') {
-      _showMessage('Nama tidak boleh kosong.');
+      _showMessage('Name cannot be empty.');
       return;
     }
 
     if (currentEmail.isEmpty || currentEmail == '-') {
-      _showMessage('Email tidak boleh kosong.');
+      _showMessage('Email cannot be empty.');
       return;
     }
 
     if (!_isValidEmail(currentEmail)) {
-      _showMessage('Format email tidak valid.');
+      _showMessage('Invalid email format.');
       return;
     }
 

@@ -294,7 +294,7 @@ class _VirtualAccountPageState extends State<VirtualAccountPage> {
                           ),
                         )
                       : const Text(
-                          'Payment',
+                          'Pay Now',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 15,

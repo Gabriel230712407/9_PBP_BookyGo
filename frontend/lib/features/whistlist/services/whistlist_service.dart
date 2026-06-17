@@ -36,7 +36,7 @@ class WishlistService {
       final body = jsonDecode(response.body);
       return body['action'] == 'added';
     }
-    throw Exception('Gagal update wishlist');
+    throw Exception('Failed to update wishlist.');
   }
 
   // Ambil wishlist lengkap dengan data hotel

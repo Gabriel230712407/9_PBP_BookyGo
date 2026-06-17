@@ -55,7 +55,7 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal mengambil gambar: $e'),
+          content: Text('Failed to pick image: $e'),
         ),
       );
     }
@@ -91,7 +91,7 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
       if (_isEditing) {
         if (widget.booking.reviewId == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Review ID tidak ditemukan')),
+            const SnackBar(content: Text('Review ID was not found')),
           );
           return;
         }
@@ -428,7 +428,7 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
 
     if (widget.booking.reviewId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Review ID tidak ditemukan')),
+        const SnackBar(content: Text('Review ID was not found')),
       );
       return;
     }
@@ -459,7 +459,7 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menghapus review: $e')),
+        SnackBar(content: Text('Failed to delete review: $e')),
       );
     }
   }
