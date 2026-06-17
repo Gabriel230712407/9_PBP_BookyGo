@@ -183,7 +183,7 @@ class _WishlistPageState extends State<WishlistPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Gagal menghapus wishlist, coba lagi'),
+            content: Text('Failed to remove wishlist item. Please try again.'),
             behavior: SnackBarBehavior.floating,
           ),
         );

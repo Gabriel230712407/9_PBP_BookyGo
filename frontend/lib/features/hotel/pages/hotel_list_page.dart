@@ -78,7 +78,7 @@ class _HotelListPageState extends State<HotelListPage> {
       final ids = await WishlistService().getWishlistedHotelIds(_token);
       if (mounted) setState(() => _wishlistedIds = ids);
     } catch (_) {
-      // Gagal load wishlist tidak perlu crash
+      // Wishlist loading failure should not block hotel browsing.
     }
   }
 
@@ -97,7 +97,7 @@ class _HotelListPageState extends State<HotelListPage> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Session belum siap. Coba lagi sebentar.'),
+            content: Text('Session is not ready yet. Please try again shortly.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -135,7 +135,7 @@ class _HotelListPageState extends State<HotelListPage> {
         );
       }
     } catch (_) {
-      // Revert kalau gagal
+      // Revert the optimistic update when the request fails.
       if (mounted) {
         setState(() {
           if (_wishlistedIds.contains(hotelId)) {
@@ -146,7 +146,7 @@ class _HotelListPageState extends State<HotelListPage> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Gagal update wishlist, coba lagi'),
+            content: Text('Failed to update wishlist. Please try again.'),
             behavior: SnackBarBehavior.floating,
           ),
         );

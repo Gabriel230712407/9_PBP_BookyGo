@@ -19,7 +19,7 @@ class ProfileService {
 
     if (session == null) {
       throw const AuthException(
-        'Token tidak ditemukan. Silakan login ulang.',
+        'Token not found. Please sign in again.',
       );
     }
 
@@ -42,7 +42,7 @@ class ProfileService {
       }
 
       throw AuthException(
-        'Gagal mengambil profile stats. Status: ${response.statusCode}',
+        'Failed to fetch profile stats. Status: ${response.statusCode}',
       );
     } on SocketException {
       throw const AuthException(

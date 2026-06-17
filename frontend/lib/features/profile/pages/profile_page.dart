@@ -157,6 +157,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ProfileHeader(
                       userName:
                           _displayUserName ?? _nonEmptyName(widget.userName) ?? 'User',
+                      userEmail: widget.userEmail,
                       onEditTap: _goToEditProfile,
                     ),
                     const ProfileSectionDivider(),

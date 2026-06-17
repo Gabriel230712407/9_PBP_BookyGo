@@ -236,6 +236,8 @@ class _RoomCard extends StatelessWidget {
               builder: (context, snapshot) {
                 final totalReview =
                     snapshot.data?.summary.totalReview ?? room.reviewCount;
+                final averageRating =
+                    snapshot.data?.summary.averageRating ?? 0.0;
 
                 return GestureDetector(
                   onTap: () {
@@ -252,14 +254,22 @@ class _RoomCard extends StatelessWidget {
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.comment,
+                        Icons.star_rounded,
                         size: 18,
-                        color: AppColors.primaryEnd,
+                        color: Color(0xFFF6B545),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'See Reviews($totalReview)',
+                        '${averageRating.toStringAsFixed(1)} ($totalReview reviews)',
                         style: const TextStyle(
+                          color: Color(0xff26346B),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Text(
+                        'See reviews',
+                        style: TextStyle(
                           color: AppColors.primaryEnd,
                           fontWeight: FontWeight.bold,
                         ),

@@ -5,17 +5,19 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/auth/services/auth_storage.dart';
-import '../../../core/constants/api_config.dart'; // sesuaikan nama class jika berbeda
+import '../../../core/constants/api_config.dart';
 import 'profile_palette.dart';
 
 class ProfileHeader extends StatefulWidget {
   final String userName;
+  final String? userEmail;
   final VoidCallback onEditTap;
   final String? avatarAsset;
 
   const ProfileHeader({
     super.key,
     required this.userName,
+    this.userEmail,
     required this.onEditTap,
     this.avatarAsset,
   });
@@ -27,6 +29,7 @@ class ProfileHeader extends StatefulWidget {
 class _ProfileHeaderState extends State<ProfileHeader> {
   String? _localImagePath;
   String? _serverFotoUrl;
+  String? _email;
   String _token = '';
   bool _isUploading = false;
   final _picker = ImagePicker();
@@ -42,6 +45,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     final session = await AuthStorage.getSession();
     if (session == null) return;
     _token = session.token;
+    _email = session.user.email;
     await Future.wait([
       _loadLocalImage(),
       _fetchServerFoto(),
@@ -109,7 +113,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Foto profil berhasil disimpan'),
+            content: Text('Profile photo updated successfully.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -118,7 +122,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Gagal upload foto, coba lagi'),
+            content: Text('Failed to upload photo. Please try again.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -148,7 +152,8 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memilih foto: $e'),
+          SnackBar(
+            content: Text('Failed to pick photo: $e'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -205,7 +210,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                 ),
               ),
               const Text(
-                'Ganti Foto Profil',
+                'Change Profile Photo',
                 style: TextStyle(
                   fontSize: 15, fontWeight: FontWeight.w700,
                   color: ProfilePalette.darkText,
@@ -214,7 +219,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               const SizedBox(height: 16),
               _PickerOption(
                 icon: Icons.camera_alt_rounded,
-                label: 'Ambil Foto',
+                label: 'Take Photo',
                 color: const Color(0xff5E7CEB),
                 onTap: () {
                   Navigator.pop(context);
@@ -224,7 +229,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               const SizedBox(height: 10),
               _PickerOption(
                 icon: Icons.photo_library_rounded,
-                label: 'Pilih dari Galeri',
+                label: 'Choose from Gallery',
                 color: const Color(0xff5E7CEB),
                 onTap: () {
                   Navigator.pop(context);
@@ -235,7 +240,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                 const SizedBox(height: 10),
                 _PickerOption(
                   icon: Icons.delete_outline_rounded,
-                  label: 'Hapus Foto',
+                  label: 'Remove Photo',
                   color: Colors.red,
                   onTap: () {
                     Navigator.pop(context);
@@ -336,6 +341,19 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     color: ProfilePalette.darkText,
                   ),
                 ),
+                if ((widget.userEmail ?? _email ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    (widget.userEmail ?? _email ?? '').trim(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: ProfilePalette.mutedText,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
                 InkWell(
                   onTap: widget.onEditTap,

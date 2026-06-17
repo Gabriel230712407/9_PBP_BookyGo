@@ -113,7 +113,7 @@ class _RoomReviewListPageState extends State<RoomReviewListPage> {
                             _loadReviews();
                           },
                           icon: const Icon(Icons.refresh),
-                          label: const Text('Coba lagi'),
+                          label: const Text('Try again'),
                         ),
                       ],
                     ),

@@ -11,7 +11,7 @@ import '../models/booking_model.dart';
 class BookingService {
   static const _requestTimeout = Duration(seconds: 15);
   static const _loginRequiredMessage =
-      'Silakan login terlebih dahulu untuk booking.';
+      'Please sign in first to book.';
 
   static Uri _uri(String path) => Uri.parse('${ApiConfig.baseUrl}$path');
 
@@ -99,7 +99,7 @@ class BookingService {
     final session = await AuthService.currentSession();
     if (session == null) {
       throw const BookingException(
-        'Silakan login kembali untuk memperbarui booking.',
+        'Please sign in again to update this booking.',
       );
     }
 
@@ -125,7 +125,7 @@ class BookingService {
     final session = await AuthService.currentSession();
     if (session == null) {
       throw const BookingException(
-        'Silakan login kembali untuk menghapus booking.',
+        'Please sign in again to delete this booking.',
       );
     }
 

@@ -645,7 +645,7 @@ class _PaymentBottomBar extends StatelessWidget {
                         ),
                       )
                     : const Text(
-                        'Payment',
+                        'Pay Now',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,

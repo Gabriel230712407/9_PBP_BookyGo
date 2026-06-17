@@ -719,7 +719,7 @@ Future<void> _openMaps() async {
   final Uri url = Uri.parse('https://maps.app.goo.gl/UJeXkhgvPW5qgFkVA');
 
   if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-    throw Exception('Tidak bisa membuka Google Maps');
+    throw Exception('Unable to open Google Maps');
   }
 }
 
