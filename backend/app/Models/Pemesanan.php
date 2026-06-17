@@ -19,6 +19,7 @@ class Pemesanan extends Model
         'nama',
         'email',
         'no_telp',
+        'review_notified',
     ];
 
     public function user()

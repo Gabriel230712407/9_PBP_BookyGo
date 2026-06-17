@@ -10,6 +10,32 @@ use Carbon\Carbon;
 
 class NotificationController extends Controller
 {
+    private const REVIEW_TYPES = ['review', 'review_reminder'];
+
+    private function deleteReviewedBookingNotifications(int $userId): void
+    {
+        $notifications = Notification::where('user_id', $userId)
+            ->whereIn('type', self::REVIEW_TYPES)
+            ->get();
+
+        foreach ($notifications as $notification) {
+            $pemesananId = $notification->data['pemesanan_id'] ?? null;
+
+            if (!$pemesananId) {
+                continue;
+            }
+
+            $hasReview = Pemesanan::where('id', $pemesananId)
+                ->where('user_id', $userId)
+                ->whereHas('ulasan')
+                ->exists();
+
+            if ($hasReview) {
+                $notification->delete();
+            }
+        }
+    }
+
     private function createAndPush(
         int $userId,
         ?string $fcmToken,    
@@ -40,6 +66,7 @@ class NotificationController extends Controller
     public function generateReviewNotifications(Request $request)
     {
         $user = $request->user();
+        $createdCount = 0;
 
         $bookings = Pemesanan::with(['kamar.hotel', 'ulasan'])
             ->where('user_id', $user->id)
@@ -52,7 +79,7 @@ class NotificationController extends Controller
             if ($booking->review_notified) continue;
 
             $exists = Notification::where('user_id', $user->id)
-                ->where('type', 'review')
+                ->whereIn('type', self::REVIEW_TYPES)
                 ->get()
                 ->contains(function ($notif) use ($booking) {
                     return isset($notif->data['pemesanan_id']) &&
@@ -76,13 +103,19 @@ class NotificationController extends Controller
             );
 
             $booking->update(['review_notified' => true]);
+            $createdCount++;
         }
 
-        return response()->json(['status' => true]);
+        return response()->json([
+            'status' => true,
+            'created_count' => $createdCount,
+        ]);
     }
 
     public function index(Request $request)
     {
+        $this->deleteReviewedBookingNotifications($request->user()->id);
+
         $notifications = Notification::where('user_id', $request->user()->id)
             ->latest()
             ->get();

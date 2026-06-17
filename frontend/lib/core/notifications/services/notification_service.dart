@@ -115,7 +115,7 @@ class NotificationService {
     } catch (_) {}
   }
 
-  static Future<void> maybeGenerateReviewNotification(
+  static Future<bool> maybeGenerateReviewNotification(
     AuthSession session, {
     required String pemesananId,
     required String hotelNama,
@@ -123,7 +123,7 @@ class NotificationService {
     required DateTime tglCheckout,
   }) async {
     try {
-      await http.post(
+      final res = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/notifications/generate-review'),
         headers: _headers(session),
         body: jsonEncode({
@@ -133,7 +133,13 @@ class NotificationService {
           'tgl_checkout': tglCheckout.toIso8601String(),
         }),
       );
-    } catch (_) {}
+      if (res.statusCode != 200) return false;
+
+      final decoded = jsonDecode(res.body) as Map<String, dynamic>;
+      return (decoded['created_count'] as int? ?? 0) > 0;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<void> createReviewNotification(

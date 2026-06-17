@@ -50,7 +50,7 @@ class FcmHelper
                     'android' => [
                         'priority' => 'high',
                         'notification' => [
-                            'channel_id' => 'bookygo_high_importance',
+                            'channel_id' => 'bookygo_alerts_v2',
                         ],
                     ],
                 ],

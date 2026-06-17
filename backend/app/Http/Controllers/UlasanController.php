@@ -5,11 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\Ulasan;
 use App\Models\Kamar;
 use App\Models\Hotel;
+use App\Models\Notification;
 use App\Models\UlasanHelpful;
 use Illuminate\Http\Request;
 
 class UlasanController extends Controller
 {
+    private const REVIEW_NOTIFICATION_TYPES = ['review', 'review_reminder'];
+
+    private function deleteReviewNotifications(int $userId, int $pemesananId): void
+    {
+        Notification::where('user_id', $userId)
+            ->whereIn('type', self::REVIEW_NOTIFICATION_TYPES)
+            ->get()
+            ->filter(function ($notification) use ($pemesananId) {
+                return (int) ($notification->data['pemesanan_id'] ?? 0) === $pemesananId;
+            })
+            ->each
+            ->delete();
+    }
+
     public function index(Request $request)
     {
         $userId = optional($request->user())->id ?? $request->query('user_id');
@@ -95,6 +110,10 @@ class UlasanController extends Controller
         ]);
         $this->updateJumlahUlasanKamar($validated['kamar_id']);
         $this->updateRatingHotel($validated['hotel_id']);
+        $this->deleteReviewNotifications(
+            (int) $validated['user_id'],
+            (int) $validated['pemesanan_id']
+        );
 
         return response()->json([
             'message' => 'Ulasan berhasil disimpan',
@@ -145,6 +164,10 @@ class UlasanController extends Controller
 
         $this->updateJumlahUlasanKamar($validated['kamar_id']);
         $this->updateRatingHotel($validated['hotel_id']);
+        $this->deleteReviewNotifications(
+            (int) $validated['user_id'],
+            (int) $validated['pemesanan_id']
+        );
 
         return response()->json([
             'message' => 'Ulasan berhasil diupdate',

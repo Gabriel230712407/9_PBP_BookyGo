@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/booking_model.dart';
 import '../services/booking_service.dart';
+import '../widgets/payment_confirmation_dialog.dart';
+import 'payment_success_page.dart';
 import 'qris_page.dart';
 import 'virtual_account_page.dart';
 
@@ -72,8 +74,11 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
       return;
     }
 
-    // ── QRIS: langsung ke halaman QR tanpa dialog ─────────────
+    // QRIS shows the QR details first; payment is confirmed from that page.
     if (_selectedMethod == 'qris') {
+      final confirmed = await _showPaymentConfirmation();
+      if (confirmed != true) return;
+
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -109,6 +114,13 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
             builder: (_) => VirtualAccountPage(booking: updatedBooking),
           ),
         );
+      } else {
+        await Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentSuccessPage(booking: updatedBooking),
+          ),
+        );
       }
     } catch (error) {
       if (!mounted) return;
@@ -133,56 +145,20 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
   }
 
   Future<bool?> _showPaymentConfirmation() {
+    final message = switch (_selectedMethod) {
+      'qris' =>
+        'You are about to continue to QRIS payment for ${_booking.hotelName} for ${_booking.formattedTotalPrice}.',
+      'card' =>
+        'You are about to make a payment for ${_booking.hotelName} for ${_booking.formattedTotalPrice} using credit/debit card.',
+      'bri_va' =>
+        'You are about to make a payment for ${_booking.hotelName} for ${_booking.formattedTotalPrice} via BRI Virtual Account.',
+      _ =>
+        'You are about to make a payment for ${_booking.hotelName} for ${_booking.formattedTotalPrice}.',
+    };
+
     return showDialog<bool>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-          title: const Text(
-            'Confirm Payment',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textDark,
-            ),
-          ),
-          content: const Text(
-            'Continue to BRI Virtual Account payment details?',
-            style: TextStyle(fontSize: 13, color: Color(0xFF7E88AF)),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  color: Color(0xFF7E88AF),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryEnd,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                'Continue',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+      builder: (_) => PaymentConfirmationDialog(message: message),
     );
   }
 

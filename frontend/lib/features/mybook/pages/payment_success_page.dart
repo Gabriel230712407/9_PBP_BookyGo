@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/notifications/services/fcm_service.dart';
 import '../../../core/auth/services/auth_service.dart';
 import '../../../core/notifications/services/notification_service.dart'; // ✅ tambah import
 import '../../../core/theme/app_colors.dart';
@@ -36,6 +37,20 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
         hotelNama: widget.booking.hotelName,
         kodeBooking: widget.booking.bookingCode,
         tglCheckout: widget.booking.checkOutDate,
+      );
+
+      if (widget.booking.hasReview) return;
+
+      await FcmService.showLocalNotification(
+        title: 'How was your stay?',
+        body:
+            'You just checked out from ${widget.booking.hotelName}. Share your experience!',
+        data: {
+          'type': 'review',
+          'pemesanan_id': widget.booking.id.toString(),
+          'kode_booking': widget.booking.bookingCode,
+          'hotel_nama': widget.booking.hotelName,
+        },
       );
     } catch (_) {}
   }

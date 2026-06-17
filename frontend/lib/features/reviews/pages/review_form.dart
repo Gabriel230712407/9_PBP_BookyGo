@@ -22,10 +22,12 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
   final TextEditingController _commentController = TextEditingController();
   final List<String> _photos = [];
 
+  bool get _isEditing => widget.isEditing || widget.booking.hasReview;
+
   @override
   void initState() {
     super.initState();
-    if (widget.isEditing && widget.booking.hasReview) {
+    if (widget.booking.hasReview) {
       _rating = widget.booking.reviewRating ?? 5;
       _commentController.text = widget.booking.reviewComment ?? '';
       if (widget.booking.reviewPhotos != null) {
@@ -86,7 +88,7 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
     try {
       Map<String, dynamic>? result;
 
-      if (widget.isEditing) {
+      if (_isEditing) {
         if (widget.booking.reviewId == null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Review ID tidak ditemukan')),
@@ -100,6 +102,13 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
           _photos,
         );
       } else {
+        if (widget.booking.hasReview) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Review sudah ada untuk pemesanan ini')),
+          );
+          return;
+        }
+
         result = await ReviewService().createReview(data, _photos);
       }
 
@@ -459,7 +468,7 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditing ? 'Edit Review' : 'Write a Review',
+        title: Text(_isEditing ? 'Edit Review' : 'Write a Review',
             style: const TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.w700)),
         backgroundColor: AppColors.primaryEnd,
         leading: BackButton(color: Colors.white),
@@ -505,7 +514,7 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
 
             // Rating
             Center(
-              child: Text(widget.isEditing ? 'Edit your rating' : 'Rate your stay',
+              child: Text(_isEditing ? 'Edit your rating' : 'Rate your stay',
                   style: const TextStyle(fontWeight: FontWeight.w700)),
             ),
             const SizedBox(height: 8),
@@ -570,12 +579,12 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text(widget.isEditing ? 'Update Review' : 'Submit Review',
+                child: Text(_isEditing ? 'Update Review' : 'Submit Review',
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.white)),
               ),
             ),
             const SizedBox(height: 6),
-            if (widget.isEditing) ...[
+            if (_isEditing) ...[
               Center(
                 child: TextButton.icon(
                   onPressed: _deleteReview,

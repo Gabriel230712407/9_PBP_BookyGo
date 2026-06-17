@@ -12,7 +12,7 @@ import 'package:frontend/features/reviews/pages/review_form.dart';
 final FlutterLocalNotificationsPlugin _localNotifications =
     FlutterLocalNotificationsPlugin();
 
-const String _channelId   = 'bookygo_high_importance';
+const String _channelId = 'bookygo_alerts_v2';
 const String _channelName = 'BookyGo Notifications';
 const String _channelDesc = 'Booking updates and reminders from BookyGo';
 
@@ -23,19 +23,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> _showLocalNotification(RemoteMessage message) async {
   final notification = message.notification;
-  if (notification == null) return;
+  final title = notification?.title ?? message.data['title']?.toString();
+  final body = notification?.body ?? message.data['body']?.toString();
+  if (title == null && body == null) return;
 
   await _localNotifications.show(
-    notification.hashCode,
-    notification.title,
-    notification.body,
+    message.messageId?.hashCode ?? message.data.hashCode,
+    title,
+    body,
     const NotificationDetails(
       android: AndroidNotificationDetails(
         _channelId,
         _channelName,
         channelDescription: _channelDesc,
-        importance: Importance.high,
-        priority: Priority.high,
+        importance: Importance.max,
+        priority: Priority.max,
+        playSound: true,
+        enableVibration: true,
         icon: '@drawable/ic_notification',
       ),
     ),
@@ -46,8 +50,42 @@ Future<void> _showLocalNotification(RemoteMessage message) async {
 class FcmService {
   FcmService._();
 
+  static Future<void> showLocalNotification({
+    required String title,
+    required String body,
+    Map<String, dynamic> data = const {},
+  }) async {
+    debugPrint('LOCAL_NOTIFICATION_SHOW title=$title data=$data');
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      title,
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: _channelDesc,
+          importance: Importance.max,
+          priority: Priority.max,
+          playSound: true,
+          enableVibration: true,
+          icon: '@drawable/ic_notification',
+        ),
+      ),
+      payload: jsonEncode(data),
+    );
+  }
+
   static Future<void> init() async {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    const androidChannel = AndroidNotificationChannel(
+      _channelId,
+      _channelName,
+      description: _channelDesc,
+      importance: Importance.max,
+    );
+
     await _localNotifications.initialize(
       const InitializationSettings(
         android: AndroidInitializationSettings('@drawable/ic_notification'),
@@ -58,8 +96,19 @@ class FcmService {
       },
     );
 
+    final androidLocalNotifications = _localNotifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    await androidLocalNotifications?.createNotificationChannel(androidChannel);
+    await androidLocalNotifications?.requestNotificationsPermission();
+
     final messaging = FirebaseMessaging.instance;
     await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    await messaging.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
@@ -107,7 +156,8 @@ class FcmService {
     debugPrint('🧭 type: $type, pemesananId: $pemesananId');
     debugPrint('🧭 navigatorKey.currentState: ${navigatorKey.currentState}');
 
-    if (type == 'review' && pemesananId != null) {
+    if ((type == 'review' || type == 'review_reminder') &&
+        pemesananId != null) {
       debugPrint('🧭 Condition matched, fetching booking...');
       try {
         final booking = await BookingService().fetchBookingById(
@@ -117,7 +167,10 @@ class FcmService {
 
         navigatorKey.currentState?.push(
           MaterialPageRoute(
-            builder: (_) => ReviewFormPage(booking: booking),
+            builder: (_) => ReviewFormPage(
+              booking: booking,
+              isEditing: booking.hasReview,
+            ),
           ),
         );
         debugPrint('🧭 Navigation pushed');
