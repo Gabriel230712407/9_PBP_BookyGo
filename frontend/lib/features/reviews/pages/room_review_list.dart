@@ -32,12 +32,8 @@ class _RoomReviewListPageState extends State<RoomReviewListPage> {
 
   Future<void> _loadReviews() async {
     try {
-      final session = await AuthService.currentSession();
-      final currentUserId = session?.user.id;
-
       final result = await ReviewService().getReviews(
         kamarId: widget.kamarId,
-        userId: currentUserId,
       );
 
       if (!mounted) return;
@@ -184,12 +180,10 @@ class _RoomReviewCardState extends State<_RoomReviewCard> {
 
     try {
       final session = await AuthService.currentSession();
-      final currentUserId = session?.user.id;
-      if (currentUserId == null) throw Exception('User not logged in');
+      if (session == null) throw Exception('User not logged in');
 
       final response = await ReviewService().toggleHelpful(
         reviewId: _review.id,
-        userId: currentUserId, 
       );
 
       if (response != null) {

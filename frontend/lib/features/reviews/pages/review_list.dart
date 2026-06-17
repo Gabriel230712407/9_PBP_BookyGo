@@ -42,16 +42,13 @@ class _ReviewListPageState extends State<ReviewListPage> {
  Future<void> _loadReviews() async {
   try {
     final session = await AuthService.currentSession();
-    final currentUserId = session?.user.id;
 
     print('SESSION: $session');
-    print('USER ID: $currentUserId');
 
     final result = await ReviewService().getReviews(
       hotelId: widget.hotelId,
       kamarId: widget.kamarId,
       token: session?.token,
-      userId: currentUserId,
     );
 
       setState(() {
@@ -321,12 +318,10 @@ class _ReviewCardState extends State<_ReviewCard> {
 
     try {
       final session = await AuthService.currentSession();
-      final currentUserId = session?.user.id;
-      if (currentUserId == null) throw Exception('User not logged in');
+      if (session == null) throw Exception('User not logged in');
 
       final response = await ReviewService().toggleHelpful(
         reviewId: _review.id,
-        userId: currentUserId,
       );
 
       if (response != null) {

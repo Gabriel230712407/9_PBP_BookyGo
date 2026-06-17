@@ -6,6 +6,7 @@ use App\Models\Ulasan;
 use App\Models\Kamar;
 use App\Models\Hotel;
 use App\Models\Notification;
+use App\Models\Pemesanan;
 use App\Models\UlasanHelpful;
 use Illuminate\Http\Request;
 
@@ -25,9 +26,56 @@ class UlasanController extends Controller
             ->delete();
     }
 
+    private function reviewableBooking(Request $request, int $pemesananId): array
+    {
+        $pemesanan = Pemesanan::with('kamar.hotel')->find($pemesananId);
+
+        if (!$pemesanan) {
+            return [null, response()->json([
+                'status' => false,
+                'message' => 'Booking not found',
+            ], 404)];
+        }
+
+        if ((int) $pemesanan->user_id !== (int) $request->user()->id) {
+            return [null, response()->json([
+                'status' => false,
+                'message' => 'You can only review your own booking',
+            ], 403)];
+        }
+
+        if (!in_array($pemesanan->status_pesan, ['confirmed', 'completed'], true)) {
+            return [null, response()->json([
+                'status' => false,
+                'message' => 'Only paid or completed bookings can be reviewed',
+            ], 422)];
+        }
+
+        if (!$pemesanan->kamar || !$pemesanan->kamar->hotel) {
+            return [null, response()->json([
+                'status' => false,
+                'message' => 'Booking room or hotel data is invalid',
+            ], 422)];
+        }
+
+        return [$pemesanan, null];
+    }
+
+    private function ensureReviewOwner(Request $request, Ulasan $ulasan)
+    {
+        if ((int) $ulasan->user_id !== (int) $request->user()->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'You can only manage your own review',
+            ], 403);
+        }
+
+        return null;
+    }
+
     public function index(Request $request)
     {
-        $userId = optional($request->user())->id ?? $request->query('user_id');
+        $userId = optional($request->user())->id;
         $query = Ulasan::with(['pemesanan', 'user', 'kamar', 'hotel'])
             ->withCount('helpfuls')
             ->latest();
@@ -83,13 +131,19 @@ class UlasanController extends Controller
     {
         $validated = $request->validate([
             'pemesanan_id' => 'required|exists:pemesanans,id|unique:ulasans,pemesanan_id',
-            'kamar_id' => 'required|exists:kamars,id',
-            'user_id' => 'required|exists:users,id',
-            'hotel_id' => 'required|exists:hotels,id',
             'rating' => 'required|numeric|min:1|max:5',
             'komentar' => 'nullable|string',
             'photos.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
+
+        [$pemesanan, $errorResponse] = $this->reviewableBooking(
+            $request,
+            (int) $validated['pemesanan_id']
+        );
+
+        if ($errorResponse) {
+            return $errorResponse;
+        }
 
         $photoPaths = [];
 
@@ -101,17 +155,17 @@ class UlasanController extends Controller
 
         $ulasan = Ulasan::create([
             'pemesanan_id' => $validated['pemesanan_id'],
-            'kamar_id' => $validated['kamar_id'],
-            'user_id' => $validated['user_id'],
-            'hotel_id' => $validated['hotel_id'],
+            'kamar_id' => $pemesanan->kamar_id,
+            'user_id' => $request->user()->id,
+            'hotel_id' => $pemesanan->kamar->hotel_id,
             'rating' => $validated['rating'],
             'komentar' => $validated['komentar'] ?? null,
             'photos' => $photoPaths,
         ]);
-        $this->updateJumlahUlasanKamar($validated['kamar_id']);
-        $this->updateRatingHotel($validated['hotel_id']);
+        $this->updateJumlahUlasanKamar($pemesanan->kamar_id);
+        $this->updateRatingHotel($pemesanan->kamar->hotel_id);
         $this->deleteReviewNotifications(
-            (int) $validated['user_id'],
+            (int) $request->user()->id,
             (int) $validated['pemesanan_id']
         );
 
@@ -123,16 +177,26 @@ class UlasanController extends Controller
 
     public function update(Request $request, Ulasan $ulasan)
     {
+        if ($errorResponse = $this->ensureReviewOwner($request, $ulasan)) {
+            return $errorResponse;
+        }
+
         $validated = $request->validate([
             'pemesanan_id' => 'required|exists:pemesanans,id|unique:ulasans,pemesanan_id,' . $ulasan->id,
-            'kamar_id' => 'required|exists:kamars,id',
-            'user_id' => 'required|exists:users,id',
-            'hotel_id' => 'required|exists:hotels,id',
             'rating' => 'required|numeric|min:1|max:5',
             'komentar' => 'nullable|string',
             'photos.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'existing_photos' => 'nullable|string',
         ]);
+
+        [$pemesanan, $errorResponse] = $this->reviewableBooking(
+            $request,
+            (int) $validated['pemesanan_id']
+        );
+
+        if ($errorResponse) {
+            return $errorResponse;
+        }
 
         $photoPaths = [];
 
@@ -154,18 +218,18 @@ class UlasanController extends Controller
 
         $ulasan->update([
             'pemesanan_id' => $validated['pemesanan_id'],
-            'kamar_id' => $validated['kamar_id'],
-            'user_id' => $validated['user_id'],
-            'hotel_id' => $validated['hotel_id'],
+            'kamar_id' => $pemesanan->kamar_id,
+            'user_id' => $request->user()->id,
+            'hotel_id' => $pemesanan->kamar->hotel_id,
             'rating' => $validated['rating'],
             'komentar' => $validated['komentar'] ?? null,
             'photos' => $photoPaths,
         ]);
 
-        $this->updateJumlahUlasanKamar($validated['kamar_id']);
-        $this->updateRatingHotel($validated['hotel_id']);
+        $this->updateJumlahUlasanKamar($pemesanan->kamar_id);
+        $this->updateRatingHotel($pemesanan->kamar->hotel_id);
         $this->deleteReviewNotifications(
-            (int) $validated['user_id'],
+            (int) $request->user()->id,
             (int) $validated['pemesanan_id']
         );
 
@@ -175,15 +239,10 @@ class UlasanController extends Controller
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, Ulasan $ulasan)
     {
-        $ulasan = Ulasan::find($id);
-
-        if (!$ulasan) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Ulasan tidak ditemukan'
-            ], 404);
+        if ($errorResponse = $this->ensureReviewOwner($request, $ulasan)) {
+            return $errorResponse;
         }
 
         $hotelId = $ulasan->hotel_id;
@@ -224,12 +283,10 @@ class UlasanController extends Controller
     
     public function toggleHelpful(Request $request, Ulasan $ulasan)
     {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-        ]);
+        $userId = $request->user()->id;
 
         $helpful = UlasanHelpful::where('ulasan_id', $ulasan->id)
-            ->where('user_id', $request->user_id)
+            ->where('user_id', $userId)
             ->first();
 
         if ($helpful) {
@@ -244,7 +301,7 @@ class UlasanController extends Controller
 
         UlasanHelpful::create([
             'ulasan_id' => $ulasan->id,
-            'user_id' => $request->user_id,
+            'user_id' => $userId,
         ]);
 
         return response()->json([

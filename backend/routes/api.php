@@ -65,6 +65,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/log-location',      [NotificationController::class, 'logLocationPreference']);
     Route::post('/notifications/{id}/read',         [NotificationController::class, 'markAsRead']);
     Route::delete('/notifications/{id}',            [NotificationController::class, 'destroy']);
+
+    Route::post('/ulasans/{ulasan}/helpful', [UlasanController::class, 'toggleHelpful']);
+    Route::post('/ulasans', [UlasanController::class, 'store']);
+    Route::put('/ulasans/{ulasan}', [UlasanController::class, 'update']);
+    Route::patch('/ulasans/{ulasan}', [UlasanController::class, 'update']);
+    Route::delete('/ulasans/{ulasan}', [UlasanController::class, 'destroy']);
 });
 
 Route::get('/hotels', [HotelController::class, 'index']);
@@ -82,8 +88,8 @@ Route::get('/foto-hotels/{id}', [FotoHotelController::class, 'show']);
 Route::get('/foto-kamars', [FotoKamarController::class, 'index']);
 Route::get('/foto-kamars/{id}', [FotoKamarController::class, 'show']);
 
-Route::post('/ulasans/{ulasan}/helpful', [UlasanController::class, 'toggleHelpful']);
-Route::apiResource('ulasans', UlasanController::class);
+Route::get('/ulasans', [UlasanController::class, 'index']);
+Route::get('/ulasans/{ulasan}', [UlasanController::class, 'show']);
 
 Route::apiResource('hotels', HotelController::class)->except(['index', 'show']);
 Route::apiResource('kamars', KamarController::class)->except(['index', 'show']);

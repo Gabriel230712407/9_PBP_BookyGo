@@ -78,9 +78,6 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
 
     final data = {
       'pemesanan_id': widget.booking.id.toString(),
-      'kamar_id': widget.booking.roomId.toString(),
-      'user_id': widget.booking.userId.toString(),
-      'hotel_id': widget.booking.hotelId.toString(),
       'rating': _rating.toString(),
       'komentar': _commentController.text.trim(),
     };
@@ -104,7 +101,9 @@ class _ReviewFormPageState extends State<ReviewFormPage> {
       } else {
         if (widget.booking.hasReview) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Review sudah ada untuk pemesanan ini')),
+            const SnackBar(
+              content: Text('A review already exists for this booking'),
+            ),
           );
           return;
         }

@@ -2,20 +2,34 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
+import '../../../core/auth/services/auth_storage.dart';
 import '../../../core/constants/api_config.dart';
 import '../models/review_model.dart';
 
 class ReviewService {
+  Future<String> _requireToken() async {
+    final session = await AuthStorage.getSession();
+    final token = session?.token;
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Please sign in first.');
+    }
+
+    return token;
+  }
+
   Future<Map<String, dynamic>?> createReview(
     Map<String, dynamic> data,
     List<String> photos,
   ) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/ulasans');
+    final token = await _requireToken();
 
     final request = http.MultipartRequest('POST', url);
 
     request.headers.addAll({
       'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
     });
 
     data.forEach((key, value) {
@@ -60,11 +74,13 @@ class ReviewService {
     List<String> photos,
   ) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/ulasans/$reviewId');
+    final token = await _requireToken();
 
     final request = http.MultipartRequest('POST', url);
 
     request.headers.addAll({
       'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
     });
 
     request.fields['_method'] = 'PUT';
@@ -126,11 +142,13 @@ class ReviewService {
 
   Future<bool> deleteReview(int reviewId) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/ulasans/$reviewId');
+    final token = await _requireToken();
 
     final response = await http.delete(
       url,
       headers: {
         'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -150,13 +168,11 @@ class ReviewService {
     int? hotelId,
     int? kamarId,
     String? token,
-    int? userId,
   }) async {
     final queryParams = <String, String>{};
 
     if (hotelId != null) queryParams['hotel_id'] = hotelId.toString();
     if (kamarId != null) queryParams['kamar_id'] = kamarId.toString();
-    if (userId != null) queryParams['user_id'] = userId.toString();
 
     final uri = Uri.parse('${ApiConfig.baseUrl}/ulasans').replace(
       queryParameters: queryParams,
@@ -184,22 +200,19 @@ class ReviewService {
 
   Future<Map<String, dynamic>?> toggleHelpful({
     required int reviewId,
-    required int userId,
   }) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/ulasans/$reviewId/helpful');
+    final token = await _requireToken();
 
     final response = await http.post(
       url,
       headers: {
         'Accept': 'application/json',
-      },
-      body: {
-        'user_id': userId.toString(),
+        'Authorization': 'Bearer $token',
       },
     );
 
     print('TOGGLE HELPFUL URL: $url');
-    print('TOGGLE HELPFUL BODY: user_id=$userId');
     print('TOGGLE HELPFUL STATUS: ${response.statusCode}');
     print('TOGGLE HELPFUL BODY: ${response.body}');
 
