@@ -6,6 +6,7 @@ import 'package:frontend/core/auth/models/auth_session.dart';
 import 'package:frontend/core/auth/models/auth_user.dart';
 import 'package:frontend/core/auth/services/auth_storage.dart';
 import 'package:frontend/core/constants/api_config.dart';
+import 'package:frontend/core/notifications/services/fcm_service.dart';
 import 'package:frontend/core/notifications/services/notification_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -36,6 +37,11 @@ class AuthService {
     final session = _parseAuthResponse(response);
     await AuthStorage.saveSession(session);
     await NotificationService.maybeLogLoginActivity(session);
+    await FcmService.showLocalNotification(
+      title: 'Signed In',
+      body: 'Your account was signed in successfully.',
+      data: const {'type': 'activity'},
+    );
 
     final fcmToken = await FirebaseMessaging.instance.getToken();
     if (fcmToken != null) {
@@ -74,6 +80,12 @@ class AuthService {
 
     final session = _parseAuthResponse(response);
     await AuthStorage.saveSession(session);
+
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    if (fcmToken != null) {
+      await _saveFcmTokenToServer(session.token, fcmToken);
+    }
+
     return session;
   }
 
@@ -98,6 +110,11 @@ class AuthService {
       final session = _parseAuthResponse(response);
       await AuthStorage.saveSession(session);
       await NotificationService.maybeLogLoginActivity(session);
+      await FcmService.showLocalNotification(
+        title: 'Signed In',
+        body: 'Your account was signed in successfully.',
+        data: const {'type': 'activity'},
+      );
 
       final fcmToken = await FirebaseMessaging.instance.getToken();
       if (fcmToken != null) {
@@ -143,6 +160,11 @@ class AuthService {
       );
 
       await AuthStorage.saveSession(refreshedSession);
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        await _saveFcmTokenToServer(refreshedSession.token, fcmToken);
+      }
+
       return refreshedSession;
     } catch (_) {
       await AuthStorage.clearSession();
@@ -273,6 +295,11 @@ class AuthService {
 
       await AuthStorage.saveSession(updatedSession);
       await NotificationService.maybeLogProfileUpdate(updatedSession);
+      await FcmService.showLocalNotification(
+        title: 'Profile Updated',
+        body: 'Your profile details were updated successfully.',
+        data: const {'type': 'profile'},
+      );
 
       return updatedSession;
     } on SocketException {

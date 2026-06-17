@@ -3,7 +3,6 @@ import 'package:frontend/core/auth/models/auth_session.dart';
 import 'package:frontend/core/notifications/models/app_notification.dart';
 import 'package:frontend/core/notifications/services/notification_service.dart';
 import 'package:frontend/core/theme/app_colors.dart';
-import 'package:frontend/features/mybook/models/booking_model.dart';
 import 'package:frontend/features/mybook/services/booking_service.dart';
 import 'package:frontend/features/reviews/pages/review_form.dart';
 
@@ -23,6 +22,10 @@ class _NotificationPageState extends State<NotificationPage> {
   List<AppNotification> _items = const [];
   bool _isLoading = true;
 
+  bool _isReviewNotification(AppNotification item) {
+    return item.type == 'review' || item.type == 'review_reminder';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -30,12 +33,18 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _load() async {
-    final items = await NotificationService.getNotifications(widget.session);
-    if (!mounted) return;
-    setState(() {
-      _items = items;
-      _isLoading = false;
-    });
+    if (!_isLoading) {
+      setState(() => _isLoading = true);
+    }
+
+    try {
+      final items = await NotificationService.getNotifications(widget.session);
+      if (!mounted) return;
+      setState(() => _items = items);
+    } finally {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _markAllAsRead() async {
@@ -58,20 +67,13 @@ class _NotificationPageState extends State<NotificationPage> {
     setState(() {
       _items = _items.map((n) {
         if (n.id == item.id) {
-          return AppNotification(
-            id: n.id,
-            type: n.type,
-            title: n.title,
-            message: n.message,
-            isRead: true,
-            data: n.data,
-            createdAt: n.createdAt,
-          );
+          return n.copyWith(isRead: true);
         }
         return n;
       }).toList();
     });
-    if (item.type == 'review' && item.data != null) {
+
+    if (_isReviewNotification(item) && item.data != null) {
       final rawId = item.data!['pemesanan_id'];
       if (rawId == null) return;
       final pemesananId = rawId.toString();
@@ -90,6 +92,25 @@ class _NotificationPageState extends State<NotificationPage> {
         if (!mounted) return;
         Navigator.pop(context); // tutup loading
 
+        if (booking.hasReview) {
+          await NotificationService.deleteNotification(widget.session, item.id);
+          if (!mounted) return;
+          setState(() {
+            _items = _items.where((n) => n.id != item.id).toList();
+          });
+
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ReviewFormPage(
+                booking: booking,
+                isEditing: true,
+              ),
+            ),
+          );
+          return;
+        }
+
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
@@ -98,17 +119,17 @@ class _NotificationPageState extends State<NotificationPage> {
         );
 
         if (result == true) {
-            await NotificationService.deleteNotification(widget.session, item.id);
-            if (!mounted) return;
-            setState(() {
-                _items = _items.where((n) => n.id != item.id).toList();
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Review submitted! Thank you 🙏'),
-                    backgroundColor: Color(0xFF1C9A5E),
-                ),
-            );
+          await NotificationService.deleteNotification(widget.session, item.id);
+          if (!mounted) return;
+          setState(() {
+            _items = _items.where((n) => n.id != item.id).toList();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Review submitted! Thank you 🙏'),
+              backgroundColor: Color(0xFF1C9A5E),
+            ),
+          );
         }
       } catch (e) {
         if (!mounted) return;
@@ -300,7 +321,8 @@ class _NotificationCard extends StatelessWidget {
                       ),
                     ),
                     // Tampilkan hint "Tap to review" untuk notif review
-                    if (item.type == 'review') ...[
+                    if (item.type == 'review' ||
+                        item.type == 'review_reminder') ...[
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -340,6 +362,7 @@ class _NotificationCard extends StatelessWidget {
       case 'activity':
         return Icons.bolt_rounded;
       case 'review':
+      case 'review_reminder':
         return Icons.rate_review_outlined;
       case 'booking':
         return Icons.check_circle_outline_rounded;

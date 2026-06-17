@@ -186,7 +186,7 @@ class PemesananController extends Controller
         if ($oldStatus !== 'completed' && $pemesanan->status_pesan === 'completed') {
             Notification::create([
                 'user_id' => $pemesanan->user_id,
-                'type'    => 'review_reminder',
+                'type'    => 'review',
                 'title'   => 'How was your stay?',
                 'message' => "You've checked out from {$hotelNama}. Share your experience!",
                 'is_read' => false,
@@ -203,7 +203,7 @@ class PemesananController extends Controller
                     'How was your stay? ⭐',
                     "You've checked out from {$hotelNama}. Leave a review!",
                     [
-                        'type'         => 'review_reminder',
+                        'type'         => 'review',
                         'pemesanan_id' => (string) $pemesanan->id,
                     ]
                 );

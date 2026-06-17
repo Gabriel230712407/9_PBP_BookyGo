@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../core/auth/services/auth_service.dart';
+import '../../../core/notifications/services/fcm_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_image.dart';
 import '../../hotel/models/hotel_model.dart';
@@ -150,6 +151,18 @@ class _BookingFormPageState extends State<BookingFormPage> {
       if (!mounted) {
         return;
       }
+
+      await FcmService.showLocalNotification(
+        title: 'Booking Confirmed!',
+        body:
+            'Your booking at ${booking.hotelName} has been confirmed. Booking code: ${booking.bookingCode}.',
+        data: {
+          'type': 'booking',
+          'pemesanan_id': booking.id.toString(),
+          'kode_booking': booking.bookingCode,
+          'hotel_nama': booking.hotelName,
+        },
+      );
 
       await Navigator.pushReplacement(
         context,
