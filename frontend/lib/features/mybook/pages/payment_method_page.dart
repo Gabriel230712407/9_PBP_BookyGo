@@ -276,7 +276,7 @@ class _PaymentMethodPageState extends State<PaymentMethodPage> {
               ),
             ),
             _PaymentBottomBar(
-              totalPrice: _booking.formattedTotalPrice,
+              booking: _booking,
               isEnabled: _selectedMethod.isNotEmpty &&
                   !_isSubmitting &&
                   _remaining != Duration.zero,
@@ -575,16 +575,25 @@ class _PaymentMethodTile extends StatelessWidget {
 
 class _PaymentBottomBar extends StatelessWidget {
   const _PaymentBottomBar({
-    required this.totalPrice,
+    required this.booking,
     required this.isEnabled,
     required this.isSubmitting,
     required this.onPressed,
   });
 
-  final String totalPrice;
+  final BookingModel booking;
   final bool isEnabled;
   final bool isSubmitting;
   final VoidCallback onPressed;
+
+  void _showPriceDetails(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _PriceDetailsSheet(booking: booking),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -599,25 +608,35 @@ class _PaymentBottomBar extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      totalPrice,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textDark,
-                      ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _showPriceDetails(context),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            booking.formattedTotalPrice,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.textDark,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.textDark,
-                  ),
-                ],
+                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -656,6 +675,211 @@ class _PaymentBottomBar extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PriceDetailsSheet extends StatelessWidget {
+  const _PriceDetailsSheet({required this.booking});
+
+  final BookingModel booking;
+
+  String get _roomLine {
+    final nights = booking.payableNightCount;
+    final rooms = booking.roomCount;
+    return '${booking.roomName} - $rooms room${rooms > 1 ? 's' : ''} - $nights night${nights > 1 ? 's' : ''}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.only(top: 64),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 22),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Price Details',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                booking.hotelName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _roomLine,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF727C9B),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 18),
+              _PriceInfoPanel(
+                child: Column(
+                  children: [
+                    _PriceRow(
+                      label: 'Room price',
+                      value: BookingFormatters.currency(booking.totalPrice),
+                      helper: 'per night',
+                    ),
+                    _PriceRow(
+                      label: 'Room subtotal',
+                      value: BookingFormatters.currency(booking.staySubtotal),
+                      helper:
+                          '${booking.roomCountLabel} x ${booking.stayLabel}',
+                    ),
+                    if (booking.addons.isNotEmpty) ...[
+                      const _PriceDivider(),
+                      ...booking.addons.map(
+                        (addon) => _PriceRow(
+                          label: addon.name,
+                          value: BookingFormatters.currency(addon.price),
+                          helper: 'Add-on',
+                        ),
+                      ),
+                    ] else ...[
+                      const _PriceDivider(),
+                      const _PriceRow(
+                        label: 'Add-ons',
+                        value: 'None',
+                      ),
+                    ],
+                    const _PriceDivider(),
+                    _PriceRow(
+                      label: 'Tax',
+                      value: BookingFormatters.currency(booking.taxAmount),
+                      helper:
+                          '${(BookingModel.taxRate * 100).toStringAsFixed(0)}% of room subtotal',
+                    ),
+                    const _PriceDivider(),
+                    _PriceRow(
+                      label: 'Total',
+                      value: booking.formattedTotalPrice,
+                      isTotal: true,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PriceInfoPanel extends StatelessWidget {
+  const _PriceInfoPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F9FE),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFDCE2F0)),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _PriceDivider extends StatelessWidget {
+  const _PriceDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(height: 22, color: Color(0xFFE1E6F2));
+  }
+}
+
+class _PriceRow extends StatelessWidget {
+  const _PriceRow({
+    required this.label,
+    required this.value,
+    this.helper,
+    this.isTotal = false,
+  });
+
+  final String label;
+  final String value;
+  final String? helper;
+  final bool isTotal;
+
+  @override
+  Widget build(BuildContext context) {
+    final labelStyle = TextStyle(
+      fontSize: isTotal ? 16 : 14,
+      fontWeight: isTotal ? FontWeight.w900 : FontWeight.w700,
+      color: AppColors.textDark,
+    );
+    final valueStyle = TextStyle(
+      fontSize: isTotal ? 16 : 14,
+      fontWeight: isTotal ? FontWeight.w900 : FontWeight.w700,
+      color: AppColors.darkBlue,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: labelStyle),
+                if (helper != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    helper!,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF7B849D),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(value, textAlign: TextAlign.right, style: valueStyle),
+        ],
       ),
     );
   }
