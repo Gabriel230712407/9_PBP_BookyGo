@@ -54,7 +54,7 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
     if (mounted) {
       setState(() => _currentUserId = userId);
     }
-    return ReviewService().getReviews(hotelId: widget.hotelId, userId: userId);
+    return ReviewService().getReviews(hotelId: widget.hotelId);
   }
 
   String _formatDate(DateTime date) {
