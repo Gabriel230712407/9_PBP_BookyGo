@@ -41,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/my-pemesanans', [PemesananController::class, 'myBookings']);
+    Route::get('/pemesanans', [PemesananController::class, 'index']);
+    Route::get('/pemesanans/{pemesanan}', [PemesananController::class, 'show']);
     Route::post('/pemesanans', [PemesananController::class, 'store']);
     Route::put('/pemesanans/{pemesanan}', [PemesananController::class, 'update']);
     Route::patch('/pemesanans/{pemesanan}', [PemesananController::class, 'update']);
@@ -48,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/my-wishlists', [WishlistController::class, 'myWishlists']);
     Route::post('/wishlists/toggle', [WishlistController::class, 'toggle']);
+    Route::apiResource('wishlists', WishlistController::class);
 
     Route::post('/profile/foto', [AuthController::class, 'updateFoto']);
     Route::post('/fcm-token', [AuthController::class, 'saveFcmToken']);
@@ -60,7 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/log-login',         [NotificationController::class, 'logLoginActivity']);
     Route::post('/notifications/log-profile-update',[NotificationController::class, 'logProfileUpdate']);
     Route::post('/notifications/log-location',      [NotificationController::class, 'logLocationPreference']);
-    Route::post('/notifications/{id}/read',         [NotificationController::class, 'markAsRead']);  // ← {id} di bawah
+    Route::post('/notifications/{id}/read',         [NotificationController::class, 'markAsRead']);
     Route::delete('/notifications/{id}',            [NotificationController::class, 'destroy']);
 });
 
@@ -79,10 +82,6 @@ Route::get('/foto-hotels/{id}', [FotoHotelController::class, 'show']);
 Route::get('/foto-kamars', [FotoKamarController::class, 'index']);
 Route::get('/foto-kamars/{id}', [FotoKamarController::class, 'show']);
 
-Route::get('/pemesanans', [PemesananController::class, 'index']);
-Route::get('/pemesanans/{pemesanan}', [PemesananController::class, 'show']);
-
-Route::apiResource('wishlists', WishlistController::class);
 Route::post('/ulasans/{ulasan}/helpful', [UlasanController::class, 'toggleHelpful']);
 Route::apiResource('ulasans', UlasanController::class);
 

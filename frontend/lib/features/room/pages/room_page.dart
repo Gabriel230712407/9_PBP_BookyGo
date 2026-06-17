@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../hotel/models/hotel_model.dart';
+import '../../auth/utils/guest_action_guard.dart';
 import '../../mybook/pages/booking_form_page.dart';
 import '../../navigation/utils/main_nav_launcher.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
@@ -17,6 +18,7 @@ class RoomPage extends StatelessWidget {
   final DateTime checkOutDate;
   final int roomCount;
   final int guestCount;
+  final bool isGuest;
 
   const RoomPage({
     super.key,
@@ -25,6 +27,7 @@ class RoomPage extends StatelessWidget {
     required this.checkOutDate,
     required this.roomCount,
     required this.guestCount,
+    required this.isGuest,
   });
 
   String _formatDate(DateTime date) {
@@ -73,6 +76,7 @@ class RoomPage extends StatelessWidget {
                     checkOutDate: checkOutDate,
                     roomCount: roomCount,
                     guestCount: guestCount,
+                    isGuest: isGuest,
                   ),
                 ),
               ],
@@ -140,6 +144,7 @@ class _RoomCard extends StatelessWidget {
   final DateTime checkOutDate;
   final int roomCount;
   final int guestCount;
+  final bool isGuest;
 
   const _RoomCard({
     required this.room,
@@ -148,6 +153,7 @@ class _RoomCard extends StatelessWidget {
     required this.checkOutDate,
     required this.roomCount,
     required this.guestCount,
+    required this.isGuest,
   });
 
   @override
@@ -294,6 +300,13 @@ class _RoomCard extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
+                  if (!GuestActionGuard.ensureCanBook(
+                    context,
+                    isGuest: isGuest,
+                  )) {
+                    return;
+                  }
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -304,6 +317,7 @@ class _RoomCard extends StatelessWidget {
                         checkOutDate: checkOutDate,
                         roomCount: roomCount,
                         guestCount: guestCount,
+                        isGuest: isGuest,
                       ),
                     ),
                   );

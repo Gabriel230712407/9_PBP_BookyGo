@@ -7,7 +7,9 @@ import '../widgets/wishlist_header.dart';
 import '../../hotel/pages/hotel_detail.dart';
 
 class WishlistPage extends StatefulWidget {
-  const WishlistPage({super.key});
+  const WishlistPage({super.key, required this.isGuest});
+
+  final bool isGuest;
 
   @override
   State<WishlistPage> createState() => _WishlistPageState();
@@ -25,6 +27,13 @@ class _WishlistPageState extends State<WishlistPage> {
   }
 
   Future<void> _init() async {
+    if (widget.isGuest) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
+
     final session = await AuthStorage.getSession();
     if (session != null) {
       _token = session.token;
@@ -33,7 +42,7 @@ class _WishlistPageState extends State<WishlistPage> {
   }
 
   Future<void> _loadWishlists() async {
-    if (_token.isEmpty) {
+    if (widget.isGuest || _token.isEmpty) {
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -58,9 +67,11 @@ class _WishlistPageState extends State<WishlistPage> {
     final sorted = List<Map<String, dynamic>>.from(data);
 
     sorted.sort((a, b) {
-      final aDate = DateTime.tryParse((a['created_at'] ?? '').toString()) ??
+      final aDate =
+          DateTime.tryParse((a['created_at'] ?? '').toString()) ??
           DateTime.fromMillisecondsSinceEpoch(0);
-      final bDate = DateTime.tryParse((b['created_at'] ?? '').toString()) ??
+      final bDate =
+          DateTime.tryParse((b['created_at'] ?? '').toString()) ??
           DateTime.fromMillisecondsSinceEpoch(0);
 
       return bDate.compareTo(aDate);
@@ -71,8 +82,6 @@ class _WishlistPageState extends State<WishlistPage> {
 
   Future<void> _confirmRemove(Map<String, dynamic> item) async {
     final hotelId = item['hotel_id'] as int;
-    final hotelName = item['hotel']?['nama'] ?? 'hotel ini';
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -107,10 +116,7 @@ class _WishlistPageState extends State<WishlistPage> {
             Text(
               'Are you sure want to delete this wishlist?',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade600,
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -216,7 +222,8 @@ class _WishlistPageState extends State<WishlistPage> {
     final hotel = item['hotel'] as Map<String, dynamic>? ?? {};
     final name = hotel['nama'] ?? 'Hotel';
     final location = hotel['kota'] ?? '';
-    final rawRating = double.tryParse(hotel['total_rating']?.toString() ?? '') ?? 0.0;
+    final rawRating =
+        double.tryParse(hotel['total_rating']?.toString() ?? '') ?? 0.0;
 
     final truncatedRating = (rawRating * 10).truncate() / 10;
 
@@ -242,8 +249,7 @@ class _WishlistPageState extends State<WishlistPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(14)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
             child: Stack(
               children: [
                 imageUrl.isNotEmpty
@@ -319,8 +325,10 @@ class _WishlistPageState extends State<WishlistPage> {
                     Expanded(
                       child: Text(
                         location,
-                        style:
-                            const TextStyle(fontSize: 11, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ],
@@ -340,6 +348,7 @@ class _WishlistPageState extends State<WishlistPage> {
                             checkOutDate: now.add(const Duration(days: 1)),
                             roomCount: 1,
                             guestCount: 1,
+                            isGuest: widget.isGuest,
                           ),
                         ),
                       );
@@ -388,19 +397,20 @@ class _WishlistPageState extends State<WishlistPage> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
+                : widget.isGuest
+                ? const WishlistEmptyState(isGuest: true)
                 : _wishlists.isEmpty
-                    ? const WishlistEmptyState()
-                    : RefreshIndicator(
-                        onRefresh: _loadWishlists,
-                        child: ListView.builder(
-                          padding:
-                              const EdgeInsets.fromLTRB(16, 16, 16, 90),
-                          itemCount: _wishlists.length,
-                          itemBuilder: (context, index) {
-                            return _buildWishlistCard(_wishlists[index]);
-                          },
-                        ),
-                      ),
+                ? const WishlistEmptyState()
+                : RefreshIndicator(
+                    onRefresh: _loadWishlists,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+                      itemCount: _wishlists.length,
+                      itemBuilder: (context, index) {
+                        return _buildWishlistCard(_wishlists[index]);
+                      },
+                    ),
+                  ),
           ),
         ],
       ),

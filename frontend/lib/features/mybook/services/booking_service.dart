@@ -10,6 +10,8 @@ import '../models/booking_model.dart';
 
 class BookingService {
   static const _requestTimeout = Duration(seconds: 15);
+  static const _loginRequiredMessage =
+      'Silakan login terlebih dahulu untuk booking.';
 
   static Uri _uri(String path) => Uri.parse('${ApiConfig.baseUrl}$path');
 
@@ -28,7 +30,7 @@ class BookingService {
   Future<BookingModel> fetchBookingById(int bookingId) async {
     final session = await AuthService.currentSession();
     if (session == null) {
-      throw const BookingException('Please sign in first.');
+      throw const BookingException(_loginRequiredMessage);
     }
 
     final response = await _get('/pemesanans/$bookingId', token: session.token);
@@ -56,7 +58,7 @@ class BookingService {
   }) async {
     final session = await AuthService.currentSession();
     if (session == null) {
-      throw const BookingException('Please sign in first to continue booking.');
+      throw const BookingException(_loginRequiredMessage);
     }
 
     final body = <String, String>{
@@ -96,7 +98,9 @@ class BookingService {
   }) async {
     final session = await AuthService.currentSession();
     if (session == null) {
-      throw const BookingException('Please sign in again to update this booking.');
+      throw const BookingException(
+        'Silakan login kembali untuk memperbarui booking.',
+      );
     }
 
     final body = <String, String>{};
@@ -120,7 +124,9 @@ class BookingService {
   Future<void> deleteBooking(int bookingId) async {
     final session = await AuthService.currentSession();
     if (session == null) {
-      throw const BookingException('Please sign in again to delete this booking.');
+      throw const BookingException(
+        'Silakan login kembali untuk menghapus booking.',
+      );
     }
 
     await _send(
@@ -133,13 +139,15 @@ class BookingService {
 
   Future<http.Response> _get(String path, {required String token}) async {
     try {
-      final response = await http.get(
-        _uri(path),
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      ).timeout(_requestTimeout);
+      final response = await http
+          .get(
+            _uri(path),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(_requestTimeout);
 
       _throwIfFailed(response);
       return response;
@@ -150,20 +158,21 @@ class BookingService {
         'Cannot reach the server. Make sure Laravel is running and reachable from this device.',
       );
     } on FormatException {
-      throw const BookingException('The server returned unreadable booking data.');
+      throw const BookingException(
+        'The server returned unreadable booking data.',
+      );
     } on TimeoutException {
-      throw const BookingException('The booking request timed out. Please try again.');
+      throw const BookingException(
+        'The booking request timed out. Please try again.',
+      );
     }
   }
 
   Future<http.Response> _getPublic(String path) async {
     try {
-      final response = await http.get(
-        _uri(path),
-        headers: {
-          'Accept': 'application/json',
-        },
-      ).timeout(_requestTimeout);
+      final response = await http
+          .get(_uri(path), headers: {'Accept': 'application/json'})
+          .timeout(_requestTimeout);
 
       _throwIfFailed(response);
       return response;
@@ -174,9 +183,13 @@ class BookingService {
         'Cannot reach the server. Make sure Laravel is running and reachable from this device.',
       );
     } on FormatException {
-      throw const BookingException('The server returned unreadable booking data.');
+      throw const BookingException(
+        'The server returned unreadable booking data.',
+      );
     } on TimeoutException {
-      throw const BookingException('The booking request timed out. Please try again.');
+      throw const BookingException(
+        'The booking request timed out. Please try again.',
+      );
     }
   }
 
@@ -222,9 +235,13 @@ class BookingService {
         'Cannot reach the server. Make sure Laravel is running and reachable from this device.',
       );
     } on FormatException {
-      throw const BookingException('The server returned unreadable booking data.');
+      throw const BookingException(
+        'The server returned unreadable booking data.',
+      );
     } on TimeoutException {
-      throw const BookingException('The booking request timed out. Please try again.');
+      throw const BookingException(
+        'The booking request timed out. Please try again.',
+      );
     }
   }
 
@@ -234,8 +251,10 @@ class BookingService {
     }
 
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-    final message = (decoded['message'] ?? 'Something went wrong while saving your booking.')
-        .toString();
+    final message =
+        (decoded['message'] ??
+                'Something went wrong while saving your booking.')
+            .toString();
 
     if (decoded['errors'] is Map<String, dynamic>) {
       final errors = decoded['errors'] as Map<String, dynamic>;
@@ -253,7 +272,8 @@ class BookingService {
     final decoded = jsonDecode(body) as Map<String, dynamic>;
     if (decoded['status'] != true) {
       throw BookingException(
-        (decoded['message'] ?? 'Something went wrong while saving your booking.')
+        (decoded['message'] ??
+                'Something went wrong while saving your booking.')
             .toString(),
       );
     }

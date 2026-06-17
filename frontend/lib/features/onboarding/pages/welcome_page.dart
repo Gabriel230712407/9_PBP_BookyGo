@@ -35,12 +35,22 @@ class _WelcomePageState extends State<WelcomePage> {
       );
     } on AuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _handleSkip() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MainNavPage(isGuest: true),
+      ),
+      (route) => false,
+    );
   }
 
   @override
@@ -63,8 +73,8 @@ class _WelcomePageState extends State<WelcomePage> {
             final contentTailSpacing = constraints.maxHeight < 720
                 ? 28.0
                 : constraints.maxHeight < 820
-                    ? 48.0
-                    : 72.0;
+                ? 48.0
+                : 72.0;
 
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
@@ -80,6 +90,25 @@ class _WelcomePageState extends State<WelcomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: TextButton(
+                        onPressed: _handleSkip,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Skip',
+                          style: TextStyle(
+                            color: AppColors.primaryEnd,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
                     SizedBox(height: topSpacing),
                     Container(
                       width: 112,
@@ -124,7 +153,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     BenefitItem(
                       icon: Icons.search_rounded,
                       title: 'Find your stay quickly.',
-                      subtitle: 'Search hotels and rooms faster from one account.',
+                      subtitle:
+                          'Search hotels and rooms faster from one account.',
                       iconSize: isCompactWidth ? 21 : 23,
                       titleSize: benefitTitleSize,
                       subtitleSize: benefitSubtitleSize,
@@ -134,7 +164,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     BenefitItem(
                       icon: Icons.meeting_room_outlined,
                       title: 'Keep booking history in sync.',
-                      subtitle: 'View active reservations and booking history anytime.',
+                      subtitle:
+                          'View active reservations and booking history anytime.',
                       iconSize: isCompactWidth ? 21 : 23,
                       titleSize: benefitTitleSize,
                       subtitleSize: benefitSubtitleSize,
@@ -144,7 +175,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     BenefitItem(
                       icon: Icons.person_outline_rounded,
                       title: 'Complete your profile later.',
-                      subtitle: 'Gender, phone number, and profile photo can be added after sign-in.',
+                      subtitle:
+                          'Gender, phone number, and profile photo can be added after sign-in.',
                       iconSize: isCompactWidth ? 21 : 23,
                       titleSize: benefitTitleSize,
                       subtitleSize: benefitSubtitleSize,

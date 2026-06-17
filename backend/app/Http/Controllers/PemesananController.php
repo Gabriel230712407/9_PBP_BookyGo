@@ -10,9 +10,10 @@ use Illuminate\Support\Str;
 
 class PemesananController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $pemesanans = Pemesanan::with(['user', 'kamar.hotel.fotoHotels', 'kamar.fotoKamars', 'addons', 'ulasan'])
+            ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
 
@@ -23,13 +24,17 @@ class PemesananController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $pemesanan = Pemesanan::with(['user', 'kamar.hotel.fotoHotels', 'kamar.fotoKamars', 'addons', 'ulasan'])
             ->find($id);
 
         if (!$pemesanan) {
             return response()->json(['status' => false, 'message' => 'Pemesanan tidak ditemukan'], 404);
+        }
+
+        if ((int) $pemesanan->user_id !== (int) $request->user()->id) {
+            return response()->json(['status' => false, 'message' => 'Anda tidak memiliki akses ke pemesanan ini'], 403);
         }
 
         return response()->json([
@@ -142,7 +147,7 @@ class PemesananController extends Controller
         }
 
         $user = $request->user();
-        if ($user && (int) $pemesanan->user_id !== (int) $user->id) {
+        if ((int) $pemesanan->user_id !== (int) $user->id) {
             return response()->json(['status' => false, 'message' => 'Anda tidak memiliki akses ke pemesanan ini'], 403);
         }
 
@@ -172,9 +177,8 @@ class PemesananController extends Controller
 
         if ($request->has('addon_ids')) {
             $syncData = [];
-            $userId = $user?->id ?? $pemesanan->user_id;
             foreach ($request->addon_ids as $addonId) {
-                $syncData[$addonId] = ['user_id' => $userId];
+                $syncData[$addonId] = ['user_id' => $user->id];
             }
             $pemesanan->addons()->sync($syncData);
         }
@@ -226,7 +230,7 @@ class PemesananController extends Controller
         }
 
         $user = $request->user();
-        if ($user && (int) $pemesanan->user_id !== (int) $user->id) {
+        if ((int) $pemesanan->user_id !== (int) $user->id) {
             return response()->json(['status' => false, 'message' => 'Anda tidak memiliki akses ke pemesanan ini'], 403);
         }
 
