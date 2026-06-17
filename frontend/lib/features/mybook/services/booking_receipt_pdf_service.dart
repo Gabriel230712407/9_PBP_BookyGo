@@ -261,6 +261,13 @@ class BookingReceiptPdfService {
   }
 
   static pw.Widget _paymentMethod(BookingModel booking) {
+    final paymentLogo = switch (booking.paymentMethod) {
+      'ewallet' => 'QR',
+      'transfer' => 'BRI',
+      'cash' => 'CARD',
+      _ => 'PAY',
+    };
+
     return pw.Container(
       padding: const pw.EdgeInsets.all(12),
       decoration: pw.BoxDecoration(
@@ -270,7 +277,7 @@ class BookingReceiptPdfService {
       child: pw.Row(
         children: [
           pw.Container(
-            width: 34,
+            width: paymentLogo.length > 3 ? 42 : 34,
             height: 24,
             alignment: pw.Alignment.center,
             decoration: pw.BoxDecoration(
@@ -279,7 +286,7 @@ class BookingReceiptPdfService {
               border: pw.Border.all(color: const PdfColor.fromInt(0xFFE0E5F4)),
             ),
             child: pw.Text(
-              booking.paymentMethod == 'ewallet' ? 'QR' : 'BRI',
+              paymentLogo,
               style: pw.TextStyle(
                 fontSize: 9,
                 fontWeight: pw.FontWeight.bold,

@@ -35,7 +35,7 @@ class PaymentConfirmationDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset(
-              'assets/images/vector_permission.png',
+              'assets/images/vector_check.png',
               width: 86,
               height: 86,
               fit: BoxFit.contain,

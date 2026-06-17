@@ -46,6 +46,7 @@ flutter:
     - assets/images/vector_permission.png
     - assets/images/vector_success.png
     - assets/images/vector_sihir.png
+    - assets/images/vector_check.png
 
     - assets/images/maps.jpeg
     

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../models/room_model.dart';
 
 class RoomCardWidget extends StatelessWidget {
@@ -100,12 +101,12 @@ class RoomCardWidget extends StatelessWidget {
 
             const Row(
               children: [
-                Icon(Icons.comment, size: 18, color: Color(0xff5E7CEB)),
+                Icon(Icons.comment, size: 18, color: AppColors.primaryEnd),
                 SizedBox(width: 4),
                 Text(
                   'See Reviews(1)',
                   style: TextStyle(
-                    color: Color(0xff5E7CEB),
+                    color: AppColors.primaryEnd,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -140,7 +141,7 @@ class RoomCardWidget extends StatelessWidget {
               height: 42,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff5E7CEB),
+                  backgroundColor: AppColors.primaryEnd,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),

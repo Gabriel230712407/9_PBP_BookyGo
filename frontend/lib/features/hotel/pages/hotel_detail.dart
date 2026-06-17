@@ -933,7 +933,7 @@ class _BottomBookingBar extends StatelessWidget {
               children: [
                 const Text(
                   'Starts from',
-                  style: TextStyle(color: Color(0xff5E7CEB), fontSize: 12),
+                  style: TextStyle(color: AppColors.primaryEnd, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -951,7 +951,7 @@ class _BottomBookingBar extends StatelessWidget {
             height: 44,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xff5E7CEB),
+                backgroundColor: AppColors.primaryEnd,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
