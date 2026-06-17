@@ -254,13 +254,13 @@ class _RoomCard extends StatelessWidget {
                       const Icon(
                         Icons.comment,
                         size: 18,
-                        color: Color(0xff5E7CEB),
+                        color: AppColors.primaryEnd,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         'See Reviews($totalReview)',
                         style: const TextStyle(
-                          color: Color(0xff5E7CEB),
+                          color: AppColors.primaryEnd,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -294,7 +294,7 @@ class _RoomCard extends StatelessWidget {
               height: 42,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff5E7CEB),
+                  backgroundColor: AppColors.primaryEnd,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),

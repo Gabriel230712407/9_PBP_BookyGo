@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/auth/services/auth_service.dart';
 import '../../../core/widgets/app_image.dart';
+import '../../../core/widgets/connection_error_state.dart';
 import '../../navigation/utils/main_nav_launcher.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
 import '../../room/pages/room_page.dart';
@@ -97,14 +98,12 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Text(
-                  snapshot.error.toString(),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+            return ConnectionErrorState(
+              onRetry: () async {
+                setState(() {
+                  _futureHotel = HotelService().fetchHotelDetail(widget.hotelId);
+                });
+              },
             );
           }
 
@@ -936,7 +935,7 @@ class _BottomBookingBar extends StatelessWidget {
               children: [
                 const Text(
                   'Starts from',
-                  style: TextStyle(color: Color(0xff5E7CEB), fontSize: 12),
+                  style: TextStyle(color: AppColors.primaryEnd, fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -954,7 +953,7 @@ class _BottomBookingBar extends StatelessWidget {
             height: 44,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xff5E7CEB),
+                backgroundColor: AppColors.primaryEnd,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

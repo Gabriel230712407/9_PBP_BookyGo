@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/auth/services/auth_storage.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_image.dart';
 import '../services/whistlist_service.dart';
 import '../widgets/wishlist_empty_state.dart';
@@ -99,7 +100,7 @@ class _WishlistPageState extends State<WishlistPage> {
               ),
               child: const Icon(
                 Icons.luggage_rounded,
-                color: Color(0xff5E7CEB),
+                color: AppColors.primaryEnd,
                 size: 40,
               ),
             ),
@@ -354,7 +355,7 @@ class _WishlistPageState extends State<WishlistPage> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xff5E7CEB),
+                      backgroundColor: AppColors.primaryEnd,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),

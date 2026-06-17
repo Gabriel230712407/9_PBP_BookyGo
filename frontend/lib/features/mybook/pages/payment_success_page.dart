@@ -77,17 +77,15 @@ class _PaymentSuccessPageState extends State<PaymentSuccessPage> {
     return Scaffold(
       backgroundColor: AppColors.bgVeryLight,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.darkBlue),
-          onPressed: () => Navigator.pop(context),
-        ),
+        centerTitle: true,
+        backgroundColor: AppColors.primaryEnd,
+        surfaceTintColor: AppColors.primaryEnd,
+        automaticallyImplyLeading: false,
         title: const Text(
           'Payment',
           style: TextStyle(
-            color: AppColors.textDark,
-            fontSize: 16,
+            color: Colors.white,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),

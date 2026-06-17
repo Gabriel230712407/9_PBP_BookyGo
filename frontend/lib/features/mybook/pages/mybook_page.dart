@@ -3,6 +3,7 @@ import 'dart:async';
 
 import '../../../core/auth/services/auth_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/connection_error_state.dart';
 import '../../history/pages/history_page.dart';
 import '../models/booking_model.dart';
 import 'booking_detail_page.dart';
@@ -117,7 +118,6 @@ class _MyBookPageState extends State<MyBookPage> {
 
                 if (snapshot.hasError) {
                   return _StateMessage(
-                    title: 'Unable to load bookings',
                     message: snapshot.error.toString(),
                     actionLabel: 'Retry',
                     onTap: _refresh,
@@ -512,59 +512,33 @@ enum _BookingPillTone { info, action, success, danger, muted }
 
 class _StateMessage extends StatelessWidget {
   const _StateMessage({
-    required this.title,
     required this.message,
     required this.actionLabel,
     required this.onTap,
   });
 
-  final String title;
   final String message;
   final String actionLabel;
   final Future<void> Function() onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textDark,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textMuted,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 14),
-            ElevatedButton(
-              onPressed: () {
-                onTap();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryEnd,
-              ),
-              child: Text(
-                actionLabel,
-                style: const TextStyle(color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ConnectionErrorState(
+      message: _friendlyErrorMessage(message),
+      actionLabel: actionLabel,
+      onRetry: onTap,
     );
+  }
+
+  String _friendlyErrorMessage(String raw) {
+    final lower = raw.toLowerCase();
+    if (lower.contains('cannot reach') ||
+        lower.contains('timed out') ||
+        lower.contains('socket') ||
+        lower.contains('connection')) {
+      return 'We could not reach the server. Check your internet connection and try again.';
+    }
+
+    return 'Something went wrong while loading your data. Please try again.';
   }
 }

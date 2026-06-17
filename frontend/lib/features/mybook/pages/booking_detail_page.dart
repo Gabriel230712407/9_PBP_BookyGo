@@ -609,10 +609,15 @@ class _PaymentLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = method == 'ewallet' ? 'QR' : 'BRI';
+    final label = switch (method) {
+      'ewallet' => 'QR',
+      'transfer' => 'BRI',
+      'cash' => 'CARD',
+      _ => 'PAY',
+    };
 
     return Container(
-      width: 36,
+      width: label.length > 3 ? 44 : 36,
       height: 28,
       alignment: Alignment.center,
       decoration: BoxDecoration(

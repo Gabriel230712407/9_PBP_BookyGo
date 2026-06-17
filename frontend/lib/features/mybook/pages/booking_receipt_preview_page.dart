@@ -294,6 +294,13 @@ class _PaymentMethod extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final paymentLogo = switch (booking.paymentMethod) {
+      'ewallet' => 'QR',
+      'transfer' => 'BRI',
+      'cash' => 'CARD',
+      _ => 'PAY',
+    };
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -304,7 +311,7 @@ class _PaymentMethod extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 36,
+            width: paymentLogo.length > 3 ? 44 : 36,
             height: 26,
             alignment: Alignment.center,
             decoration: BoxDecoration(
@@ -313,7 +320,7 @@ class _PaymentMethod extends StatelessWidget {
               border: Border.all(color: const Color(0xFFE0E5F4)),
             ),
             child: Text(
-              booking.paymentMethod == 'ewallet' ? 'QR' : 'BRI',
+              paymentLogo,
               style: const TextStyle(
                 color: AppColors.primaryEnd,
                 fontSize: 10,
