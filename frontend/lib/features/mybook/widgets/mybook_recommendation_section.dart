@@ -5,7 +5,12 @@ import '../../../features/hotel/pages/hotel_detail.dart';
 import 'mybook_hotel_card.dart';
 
 class MyBookRecommendationSection extends StatefulWidget {
-  const MyBookRecommendationSection({super.key});
+  const MyBookRecommendationSection({
+    super.key,
+    required this.isGuest,
+  });
+
+  final bool isGuest;
 
   @override
   State<MyBookRecommendationSection> createState() =>
@@ -31,11 +36,7 @@ class _MyBookRecommendationSectionState
   }
 
   Future<List<HotelModel>> _fetchForCity(String city) {
-    return _hotelService.searchHotels(
-      destination: city,
-      rooms: 1,
-      guests: 1,
-    );
+    return _hotelService.searchHotels(destination: city, rooms: 1, guests: 1);
   }
 
   void _selectCity(String city) {
@@ -121,10 +122,7 @@ class _MyBookRecommendationSectionState
                   child: Center(
                     child: Text(
                       'Failed to load hotels',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[500],
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                     ),
                   ),
                 );
@@ -138,10 +136,7 @@ class _MyBookRecommendationSectionState
                   child: Center(
                     child: Text(
                       'No hotels found in $_selectedCity',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[500],
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
                     ),
                   ),
                 );
@@ -165,6 +160,7 @@ class _MyBookRecommendationSectionState
                                 checkOutDate: _defaultCheckOut,
                                 roomCount: 1,
                                 guestCount: 1,
+                                isGuest: widget.isGuest,
                               ),
                             ),
                           ),

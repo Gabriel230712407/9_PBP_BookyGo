@@ -52,11 +52,12 @@ class _MainNavPageState extends State<MainNavPage> {
         refreshToken: _homeRefreshToken,
       ),
       MyBookPage(
+        isGuest: widget.isGuest,
         onBookNowTap: () {
           _onItemTapped(0);
         },
       ),
-      const WishlistPage(),
+      WishlistPage(isGuest: widget.isGuest),
       ProfilePage(
         isGuest: widget.isGuest,
         userName: widget.userName,
@@ -65,10 +66,7 @@ class _MainNavPageState extends State<MainNavPage> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: pages),
       bottomNavigationBar: AppBottomNavBar(
         selectedIndex: _selectedIndex,
         onTap: _onItemTapped,

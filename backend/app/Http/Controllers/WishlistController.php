@@ -7,9 +7,10 @@ use Illuminate\Http\Request;
 
 class WishlistController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $wishlists = Wishlist::with(['user', 'hotel.fotoHotels'])
+        $wishlists = Wishlist::with(['hotel.fotoHotels'])
+            ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
 
@@ -20,9 +21,10 @@ class WishlistController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $wishlist = Wishlist::with(['user', 'hotel.fotoHotels'])
+        $wishlist = Wishlist::with(['hotel.fotoHotels'])
+            ->where('user_id', $request->user()->id)
             ->find($id);
 
         if (!$wishlist) {
@@ -42,11 +44,12 @@ class WishlistController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
             'hotel_id' => 'required|exists:hotels,id',
         ]);
 
-        $exists = Wishlist::where('user_id', $request->user_id)
+        $userId = $request->user()->id;
+
+        $exists = Wishlist::where('user_id', $userId)
             ->where('hotel_id', $request->hotel_id)
             ->first();
 
@@ -58,20 +61,20 @@ class WishlistController extends Controller
         }
 
         $wishlist = Wishlist::create([
-            'user_id' => $request->user_id,
+            'user_id' => $userId,
             'hotel_id' => $request->hotel_id,
         ]);
 
         return response()->json([
             'status' => true,
             'message' => 'Wishlist berhasil ditambahkan',
-            'data' => $wishlist->load(['user', 'hotel'])
+            'data' => $wishlist->load(['hotel.fotoHotels'])
         ], 201);
     }
 
     public function update(Request $request, $id)
     {
-        $wishlist = Wishlist::find($id);
+        $wishlist = Wishlist::where('user_id', $request->user()->id)->find($id);
 
         if (!$wishlist) {
             return response()->json([
@@ -81,11 +84,10 @@ class WishlistController extends Controller
         }
 
         $request->validate([
-            'user_id' => 'sometimes|required|exists:users,id',
             'hotel_id' => 'sometimes|required|exists:hotels,id',
         ]);
 
-        $userId = $request->user_id ?? $wishlist->user_id;
+        $userId = $request->user()->id;
         $hotelId = $request->hotel_id ?? $wishlist->hotel_id;
 
         $exists = Wishlist::where('user_id', $userId)
@@ -108,13 +110,13 @@ class WishlistController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Wishlist berhasil diperbarui',
-            'data' => $wishlist->load(['user', 'hotel'])
+            'data' => $wishlist->load(['hotel.fotoHotels'])
         ]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $wishlist = Wishlist::find($id);
+        $wishlist = Wishlist::where('user_id', $request->user()->id)->find($id);
 
         if (!$wishlist) {
             return response()->json([
@@ -131,20 +133,19 @@ class WishlistController extends Controller
         ]);
     }
 
-    // Ambil wishlist milik user yang login
     public function myWishlists(Request $request)
-{
-    $wishlists = Wishlist::with(['hotel.fotoHotels'])
-        ->where('user_id', $request->user()->id)
-        ->latest()
-        ->get();
+    {
+        $wishlists = Wishlist::with(['hotel.fotoHotels'])
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->get();
 
-    return response()->json([
-        'status' => true,
-        'data' => $wishlists
-    ]);
-}
-    // Toggle: kalau belum ada → tambah, kalau sudah ada → hapus
+        return response()->json([
+            'status' => true,
+            'data' => $wishlists
+        ]);
+    }
+
     public function toggle(Request $request)
     {
         $request->validate(['hotel_id' => 'required|exists:hotels,id']);

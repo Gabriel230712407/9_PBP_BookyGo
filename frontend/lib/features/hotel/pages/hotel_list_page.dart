@@ -4,6 +4,7 @@ import '../../../core/widgets/app_image.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../navigation/utils/main_nav_launcher.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
+import '../../auth/utils/guest_action_guard.dart';
 import '../models/hotel_model.dart';
 import '../services/hotel_service.dart';
 import '../../whistlist/services/whistlist_service.dart';
@@ -16,6 +17,7 @@ class HotelListPage extends StatefulWidget {
   final DateTime checkOutDate;
   final int roomCount;
   final int guestCount;
+  final bool isGuest;
 
   const HotelListPage({
     super.key,
@@ -24,6 +26,7 @@ class HotelListPage extends StatefulWidget {
     required this.checkOutDate,
     required this.roomCount,
     required this.guestCount,
+    required this.isGuest,
   });
 
   @override
@@ -62,14 +65,14 @@ class _HotelListPageState extends State<HotelListPage> {
 
   Future<void> _loadToken() async {
     final session = await AuthStorage.getSession();
-    if (session != null) {
+    if (!widget.isGuest && session != null) {
       _token = session.token;
     }
     await _loadWishlists();
   }
 
   Future<void> _loadWishlists() async {
-    if (_token.isEmpty) return;
+    if (widget.isGuest || _token.isEmpty) return;
     try {
       final ids = await WishlistService().getWishlistedHotelIds(_token);
       if (mounted) setState(() => _wishlistedIds = ids);
@@ -79,7 +82,28 @@ class _HotelListPageState extends State<HotelListPage> {
   }
 
   Future<void> _toggleWishlist(int hotelId) async {
+    if (!GuestActionGuard.ensureCanUseWishlist(
+      context,
+      isGuest: widget.isGuest,
+    )) {
+      return;
+    }
+
     // Optimistic update — UI langsung berubah dulu
+    if (_token.isEmpty) {
+      await _loadToken();
+      if (_token.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session belum siap. Coba lagi sebentar.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+    }
+
     setState(() {
       if (_wishlistedIds.contains(hotelId)) {
         _wishlistedIds.remove(hotelId);
@@ -165,6 +189,7 @@ class _HotelListPageState extends State<HotelListPage> {
               checkOutDate: widget.checkOutDate,
               roomCount: widget.roomCount,
               guestCount: widget.guestCount,
+              isGuest: widget.isGuest,
             ),
           ),
         );

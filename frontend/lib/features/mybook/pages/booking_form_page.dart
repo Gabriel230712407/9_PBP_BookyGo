@@ -6,6 +6,7 @@ import '../../../core/auth/services/auth_service.dart';
 import '../../../core/notifications/services/fcm_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_image.dart';
+import '../../auth/utils/guest_action_guard.dart';
 import '../../hotel/models/hotel_model.dart';
 import '../../room/models/room_model.dart';
 import '../models/booking_model.dart';
@@ -21,6 +22,7 @@ class BookingFormPage extends StatefulWidget {
     required this.checkOutDate,
     required this.roomCount,
     required this.guestCount,
+    required this.isGuest,
   });
 
   final HotelModel hotel;
@@ -29,6 +31,7 @@ class BookingFormPage extends StatefulWidget {
   final DateTime checkOutDate;
   final int roomCount;
   final int guestCount;
+  final bool isGuest;
 
   @override
   State<BookingFormPage> createState() => _BookingFormPageState();
@@ -129,6 +132,10 @@ class _BookingFormPageState extends State<BookingFormPage> {
   }
 
   Future<void> _submit() async {
+    if (!GuestActionGuard.ensureCanBook(context, isGuest: widget.isGuest)) {
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
       return;
     }

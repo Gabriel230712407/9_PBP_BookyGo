@@ -96,7 +96,7 @@ class _HomePageState extends State<HomePage> {
       debugPrint('_loadHotels error [$destination]: $e');
       if (!mounted) return;
       setState(() {
-        _hotelCache[destination] = []; 
+        _hotelCache[destination] = [];
         _hotelsLoading = false;
       });
     }
@@ -184,8 +184,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _openNotifications() async {
-    final reminderEnabled =
-        context.read<ReminderProvider>().notificationEnabled;
+    final reminderEnabled = context
+        .read<ReminderProvider>()
+        .notificationEnabled;
     if (_session == null || !reminderEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -213,6 +214,7 @@ class _HomePageState extends State<HomePage> {
           checkOutDate: _defaultCheckOut,
           roomCount: 1,
           guestCount: 1,
+          isGuest: widget.isGuest,
         ),
       ),
     );
@@ -228,6 +230,7 @@ class _HomePageState extends State<HomePage> {
           checkOutDate: _defaultCheckOut,
           roomCount: 1,
           guestCount: 1,
+          isGuest: widget.isGuest,
         ),
       ),
     );
@@ -235,13 +238,14 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final reminderEnabled =
-        context.watch<ReminderProvider>().notificationEnabled;
+    final reminderEnabled = context
+        .watch<ReminderProvider>()
+        .notificationEnabled;
     final String displayName = widget.isGuest
         ? 'User'
         : (widget.userName != null && widget.userName!.trim().isNotEmpty
-            ? widget.userName!.trim()
-            : extractNameFromEmail(widget.userEmail));
+              ? widget.userName!.trim()
+              : extractNameFromEmail(widget.userEmail));
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final bool isCompact = screenWidth < 360;
@@ -261,7 +265,9 @@ class _HomePageState extends State<HomePage> {
               children: [
                 SizedBox(height: topSectionHeight, width: double.infinity),
                 Positioned(
-                  top: 0, left: 0, right: 0,
+                  top: 0,
+                  left: 0,
+                  right: 0,
                   child: Container(
                     height: heroHeight,
                     decoration: const BoxDecoration(
@@ -274,7 +280,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 Positioned(
-                  top: 0, left: 0, right: 0,
+                  top: 0,
+                  left: 0,
+                  right: 0,
                   child: SafeArea(
                     bottom: false,
                     child: HomeHeader(
@@ -289,7 +297,7 @@ class _HomePageState extends State<HomePage> {
                   left: isCompact ? 12 : 16,
                   right: isCompact ? 12 : 16,
                   top: searchTop,
-                  child: const SearchSection(),
+                  child: SearchSection(isGuest: widget.isGuest),
                 ),
               ],
             ),
@@ -316,17 +324,20 @@ class _HomePageState extends State<HomePage> {
               height: 42,
               child: ListView(
                 padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPadding - 2),
+                  horizontal: horizontalPadding - 2,
+                ),
                 scrollDirection: Axis.horizontal,
                 children: _destinations
-                    .map((dest) => Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: _DestinationChip(
-                            label: dest,
-                            isSelected: _selectedDestination == dest,
-                            onTap: () => _selectDestination(dest),
-                          ),
-                        ))
+                    .map(
+                      (dest) => Padding(
+                        padding: const EdgeInsets.only(right: 10),
+                        child: _DestinationChip(
+                          label: dest,
+                          isSelected: _selectedDestination == dest,
+                          onTap: () => _selectDestination(dest),
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -384,7 +395,9 @@ class _HomePageState extends State<HomePage> {
     if (!_hotelsLoading && _currentHotels.isEmpty) {
       return Padding(
         padding: EdgeInsets.symmetric(
-            horizontal: horizontalPadding, vertical: 24),
+          horizontal: horizontalPadding,
+          vertical: 24,
+        ),
         child: const Center(
           child: Text(
             'No hotels found for this destination.',
@@ -544,8 +557,11 @@ class _HotelCard extends StatelessWidget {
 
                   Row(
                     children: [
-                      const Icon(Icons.location_on_rounded,
-                          size: 11, color: AppColors.textMuted),
+                      const Icon(
+                        Icons.location_on_rounded,
+                        size: 11,
+                        color: AppColors.textMuted,
+                      ),
                       const SizedBox(width: 2),
                       Expanded(
                         child: Text(
@@ -564,8 +580,11 @@ class _HotelCard extends StatelessWidget {
 
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded,
-                          size: 13, color: Color(0xFFF6B545)),
+                      const Icon(
+                        Icons.star_rounded,
+                        size: 13,
+                        color: Color(0xFFF6B545),
+                      ),
                       const SizedBox(width: 2),
                       Text(
                         hotel.rawRating.toStringAsFixed(1),
@@ -606,8 +625,9 @@ class _HotelCard extends StatelessWidget {
   }
 
   Widget _buildImage(double width, double height) {
-    final String? firstImage =
-        (hotel.images.isNotEmpty) ? hotel.images.first : null;
+    final String? firstImage = (hotel.images.isNotEmpty)
+        ? hotel.images.first
+        : null;
 
     if (firstImage == null) return _placeholder(width, height);
 

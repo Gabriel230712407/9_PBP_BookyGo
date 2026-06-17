@@ -19,6 +19,7 @@ class HotelDetailPage extends StatefulWidget {
   final DateTime checkOutDate;
   final int roomCount;
   final int guestCount;
+  final bool isGuest;
 
   const HotelDetailPage({
     super.key,
@@ -27,6 +28,7 @@ class HotelDetailPage extends StatefulWidget {
     required this.checkOutDate,
     required this.roomCount,
     required this.guestCount,
+    required this.isGuest,
   });
 
   @override
@@ -165,6 +167,7 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                         checkOutDate: widget.checkOutDate,
                         roomCount: widget.roomCount,
                         guestCount: widget.guestCount,
+                        isGuest: widget.isGuest,
                       ),
                     ),
                   );

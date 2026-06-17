@@ -4,15 +4,21 @@ import 'package:frontend/features/hotel/pages/hotel_list_page.dart';
 import '../../../core/theme/app_colors.dart';
 
 class SearchSection extends StatefulWidget {
-  const SearchSection({super.key});
+  const SearchSection({
+    super.key,
+    required this.isGuest,
+  });
+
+  final bool isGuest;
 
   @override
   State<SearchSection> createState() => _SearchSectionState();
 }
 
 class _SearchSectionState extends State<SearchSection> {
-  final TextEditingController _destinationController =
-      TextEditingController(text: 'Yogyakarta');
+  final TextEditingController _destinationController = TextEditingController(
+    text: 'Yogyakarta',
+  );
 
   late DateTime _checkInDate;
   late DateTime _checkOutDate;
@@ -51,10 +57,7 @@ class _SearchSectionState extends State<SearchSection> {
       context: context,
       firstDate: DateTime.now(),
       lastDate: DateTime(2030),
-      initialDateRange: DateTimeRange(
-        start: _checkInDate,
-        end: _checkOutDate,
-      ),
+      initialDateRange: DateTimeRange(start: _checkInDate, end: _checkOutDate),
     );
 
     if (picked != null) {
@@ -250,10 +253,7 @@ class _SearchSectionState extends State<SearchSection> {
                     gradient: const LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
-                      colors: [
-                        AppColors.primaryEnd,
-                        AppColors.blueDark,
-                      ],
+                      colors: [AppColors.primaryEnd, AppColors.blueDark],
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -274,6 +274,7 @@ class _SearchSectionState extends State<SearchSection> {
                             checkOutDate: _checkOutDate,
                             roomCount: _rooms,
                             guestCount: _guests,
+                            isGuest: widget.isGuest,
                           ),
                         ),
                       );

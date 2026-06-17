@@ -16,9 +16,11 @@ import '../../../core/notifications/services/notification_service.dart';
 class MyBookPage extends StatefulWidget {
   const MyBookPage({
     super.key,
+    required this.isGuest,
     required this.onBookNowTap,
   });
 
+  final bool isGuest;
   final VoidCallback onBookNowTap;
 
   @override
@@ -33,8 +35,12 @@ class _MyBookPageState extends State<MyBookPage> {
   @override
   void initState() {
     super.initState();
-    _futureBookings = _bookingService.fetchMyBookings();
-    _futureBookings.then(_generateReviewNotifs);
+    _futureBookings = widget.isGuest
+        ? Future.value(const [])
+        : _bookingService.fetchMyBookings();
+    if (!widget.isGuest) {
+      _futureBookings.then(_generateReviewNotifs);
+    }
     _statusTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {});
@@ -49,6 +55,13 @@ class _MyBookPageState extends State<MyBookPage> {
   }
 
   Future<void> _refresh() async {
+    if (widget.isGuest) {
+      setState(() {
+        _futureBookings = Future.value(const []);
+      });
+      return;
+    }
+
     final bookings = _bookingService.fetchMyBookings();
     setState(() {
       _futureBookings = bookings;
@@ -126,6 +139,7 @@ class _MyBookPageState extends State<MyBookPage> {
                           delegate: SliverChildListDelegate([
                             if (activeBookings.isEmpty)
                               _EmptyBookingState(
+                                isGuest: widget.isGuest,
                                 isCompact: isCompact,
                                 onBookNowTap: widget.onBookNowTap,
                               )
@@ -135,7 +149,9 @@ class _MyBookPageState extends State<MyBookPage> {
                                 onBookingUpdated: _refresh,
                               ),
                             SizedBox(height: isCompact ? 28 : 40),
-                            const MyBookRecommendationSection(),
+                            MyBookRecommendationSection(
+                              isGuest: widget.isGuest,
+                            ),
                             const SizedBox(height: 24),
                           ]),
                         ),
@@ -159,10 +175,12 @@ class _MyBookPageState extends State<MyBookPage> {
 
 class _EmptyBookingState extends StatelessWidget {
   const _EmptyBookingState({
+    required this.isGuest,
     required this.isCompact,
     required this.onBookNowTap,
   });
 
+  final bool isGuest;
   final bool isCompact;
   final VoidCallback onBookNowTap;
 
@@ -188,22 +206,15 @@ class _EmptyBookingState extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         SizedBox(height: isCompact ? 12 : 14),
-        FutureBuilder(
-          future: AuthService.currentSession(),
-          builder: (context, snapshot) {
-            if ((snapshot.data) == null) {
-              return const Text(
-                'Sign in first to save and track your bookings.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textMuted,
-                ),
-                textAlign: TextAlign.center,
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
+        if (isGuest)
+          const Text(
+            'Sign in first to save and track your bookings.',
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
         SizedBox(height: isCompact ? 8 : 10),
         MyBookActionButton(
           text: 'Book now',

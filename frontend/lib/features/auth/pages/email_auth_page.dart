@@ -150,9 +150,9 @@ class _EmailAuthPageState extends State<EmailAuthPage>
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _clearLoginErrors() {
@@ -218,10 +218,7 @@ class _EmailAuthPageState extends State<EmailAuthPage>
           ),
           content: const Text(
             'Your account has been created successfully.',
-            style: TextStyle(
-              color: AppColors.textMuted,
-              height: 1.5,
-            ),
+            style: TextStyle(color: AppColors.textMuted, height: 1.5),
           ),
           actions: [
             SizedBox(
@@ -295,7 +292,8 @@ class _EmailAuthPageState extends State<EmailAuthPage>
                     validator: _validateEmail,
                     forceErrorText: _loginEmailError,
                     onChanged: (_) {
-                      if (_loginEmailError != null || _loginGeneralError != null) {
+                      if (_loginEmailError != null ||
+                          _loginGeneralError != null) {
                         setState(() {
                           _loginEmailError = null;
                           _loginGeneralError = null;
@@ -545,10 +543,7 @@ class _AuthFormShell extends StatelessWidget {
 }
 
 class _HeaderText extends StatelessWidget {
-  const _HeaderText({
-    required this.title,
-    required this.subtitle,
-  });
+  const _HeaderText({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -656,9 +651,7 @@ class _AuthInput extends StatelessWidget {
 }
 
 class _InlineError extends StatelessWidget {
-  const _InlineError({
-    required this.message,
-  });
+  const _InlineError({required this.message});
 
   final String message;
 
@@ -693,10 +686,7 @@ class _InlineError extends StatelessWidget {
 }
 
 class _PrimaryButton extends StatelessWidget {
-  const _PrimaryButton({
-    required this.text,
-    required this.onPressed,
-  });
+  const _PrimaryButton({required this.text, required this.onPressed});
 
   final String text;
   final VoidCallback? onPressed;
@@ -718,10 +708,7 @@ class _PrimaryButton extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ),
     );
