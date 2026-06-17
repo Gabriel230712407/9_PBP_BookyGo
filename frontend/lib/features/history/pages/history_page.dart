@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/connection_error_state.dart';
 import '../../mybook/models/booking_model.dart';
 import '../../mybook/services/booking_service.dart';
 import '../widgets/empty_history_view.dart';
@@ -104,14 +105,8 @@ class _HistoryPageState extends State<HistoryPage> {
                 child: snapshot.connectionState == ConnectionState.waiting
                     ? const Center(child: CircularProgressIndicator())
                     : snapshot.hasError
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: Text(
-                                snapshot.error.toString(),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
+                        ? ConnectionErrorState(
+                            onRetry: _refresh,
                           )
                         : bookings.isEmpty
                             ? const EmptyHistoryView()

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/app_image.dart';
+import '../../../core/widgets/connection_error_state.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../navigation/utils/main_nav_launcher.dart';
 import '../../navigation/widgets/app_bottom_nav_bar.dart';
@@ -458,14 +459,16 @@ class _HotelListPageState extends State<HotelListPage> {
                 }
 
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Text(
-                        snapshot.error.toString(),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                  return ConnectionErrorState(
+                    onRetry: () async {
+                      setState(() {
+                        _futureHotels = HotelService().searchHotels(
+                          destination: widget.destination,
+                          rooms: widget.roomCount,
+                          guests: widget.guestCount,
+                        );
+                      });
+                    },
                   );
                 }
 
