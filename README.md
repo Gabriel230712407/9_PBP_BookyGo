@@ -8,22 +8,21 @@ Aplikasi ini terdiri dari dua bagian utama, yaitu frontend Flutter sebagai aplik
 
 ## Anggota Kelompok
 
-| Nama       | NPM       | Tanggung Jawab Fungsional                                |
-| ---------- | --------- | -------------------------------------------------------- |
-| [ISI NAMA] | [ISI NPM] | Autentikasi, login, register, Google Sign-In, profile    |
-| [ISI NAMA] | [ISI NPM] | Home page, daftar hotel, pencarian hotel, detail hotel   |
-| [ISI NAMA] | [ISI NPM] | Detail kamar, fasilitas kamar, review dan foto review    |
-| [ISI NAMA] | [ISI NPM] | Booking, payment, booking history, receipt               |
-| [ISI NAMA] | [ISI NPM] | Backend API, database, storage, notification, deployment |
+| Nama                          | NPM       | Tanggung Jawab                                                                                                       |
+| ---                           | ---       | --------------                                                                                                       |
+| Valentino Rossi Hartono       | 230712311 | Fitur booking transaksi, termasuk alur pemesanan kamar, dan perhitungan transaksi                                    |
+| Gavrila Tunggala Soares       | 230712443 | Fitur penambahan komentar/ulasan serta halaman history untuk melihat riwayat pemesanan pengguna.                     |
+| Gabriel Geta Wahyu Handrajati | 230712407 | Fitur wishlist dan profile, termasuk penyimpanan hotel favorit serta pengelolaan data profil pengguna.               |
+| Ida Ayu Shantiani Putri       | 230712423 | Fitur login, homepage, booking, , dan proses pembayaran, termasuk autentikasi pengguna serta tampilan awal aplikasi. |
 
 ---
 
 ## Link Project
 
-* Repository GitHub: [ISI LINK GITHUB]
-* Figma: [ISI LINK FIGMA]
+* Repository GitHub: [ISI LINK GITHUB](https://github.com/Gabriel230712407/9_PBP_BookyGo.git)
+* Figma: [Tubes PBP 09](https://www.figma.com/design/TlsFx5ZQ0ioxbK6DLbIPEq/Tubes_PBP_09?m=auto&t=qrJ8YGGlZKisfgR3-6)
 * Backend Railway: https://9pbpbookygo-production.up.railway.app/api
-* Video Demo/Presentasi: [ISI LINK VIDEO JIKA ADA]
+* Video Demo/Presentasi: [Link video akan ditambahkan]
 
 ---
 
@@ -56,7 +55,7 @@ Aplikasi ini terdiri dari dua bagian utama, yaitu frontend Flutter sebagai aplik
 
 Berikut adalah Entity Relationship Diagram dari database BookyGo:
 
-![ERD BookyGo](docs/ERD_BookyGo.png)
+![ERD BookyGo](docs/BookyGo_ERD.png)
 
 ---
 
@@ -286,10 +285,7 @@ php artisan db:seed
 
 ## Akun Demo
 
-| Jenis Login  | Email              | Password                      |
-| ------------ | ------------------ | ----------------------------- |
-| Manual Login | [ISI EMAIL DEMO]   | [ISI PASSWORD DEMO]           |
-| Google Login | [ISI EMAIL GOOGLE] | Login menggunakan akun Google |
+Dapat membuat akun secara langsung
 
 ---
 
