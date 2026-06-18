@@ -8,6 +8,7 @@ class HistoryHeader extends StatelessWidget {
   final VoidCallback onCancelSelect;
   final VoidCallback onDeleteAll;
   final VoidCallback onDeleteSelected;
+  final bool showActions;
 
   const HistoryHeader({
     super.key,
@@ -17,6 +18,7 @@ class HistoryHeader extends StatelessWidget {
     required this.onCancelSelect,
     required this.onDeleteAll,
     required this.onDeleteSelected,
+    this.showActions = true,
   });
 
   @override
@@ -56,7 +58,9 @@ class HistoryHeader extends StatelessWidget {
 
               const Spacer(),
 
-              if (isSelecting)
+              if (!showActions)
+                const SizedBox(width: 4)
+              else if (isSelecting)
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: InkWell(

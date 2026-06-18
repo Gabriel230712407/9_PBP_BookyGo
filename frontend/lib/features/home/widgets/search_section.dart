@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/features/hotel/pages/hotel_list_page.dart';
+import 'package:frontend/core/utils/location_service.dart';
 
 import '../../../core/theme/app_colors.dart';
 
@@ -19,6 +20,9 @@ class _SearchSectionState extends State<SearchSection> {
   final TextEditingController _destinationController = TextEditingController(
     text: 'Yogyakarta',
   );
+
+  final LocationService _locationService = LocationService();
+  bool _isLoadingLocation = false;
 
   late DateTime _checkInDate;
   late DateTime _checkOutDate;
@@ -65,6 +69,25 @@ class _SearchSectionState extends State<SearchSection> {
         _checkInDate = picked.start;
         _checkOutDate = picked.end;
       });
+    }
+  }
+
+  Future<void> _useMyLocation() async {
+    setState(() => _isLoadingLocation = true);
+
+    final city = await _locationService.getCurrentCityName();
+
+    setState(() => _isLoadingLocation = false);
+
+    if (city != null) {
+      _destinationController.text = city;
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to get your location.'),
+        ),
+      );
     }
   }
 
@@ -179,6 +202,23 @@ class _SearchSectionState extends State<SearchSection> {
                     color: AppColors.textMuted,
                   ),
                   hintText: 'Destination',
+                  suffixIcon: _isLoadingLocation
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(
+                            Icons.my_location_rounded,
+                            color: AppColors.mutedBlue,
+                          ),
+                          tooltip: 'Use my location',
+                          onPressed: _useMyLocation,
+                        ),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: isCompact ? 14 : 16,
                   ),

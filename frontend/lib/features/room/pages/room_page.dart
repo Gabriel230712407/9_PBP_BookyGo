@@ -178,6 +178,15 @@ class _RoomCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              room.shortDescription,
+              style: const TextStyle(
+                color: Color(0xff697089),
+                fontSize: 14,
+                height: 1.35,
+              ),
+            ),
             const SizedBox(height: 10),
             Row(
               children: [

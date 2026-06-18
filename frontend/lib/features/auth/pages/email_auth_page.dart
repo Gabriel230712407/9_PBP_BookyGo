@@ -204,41 +204,82 @@ class _EmailAuthPageState extends State<EmailAuthPage>
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
+        return Dialog(
           backgroundColor: AppColors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 82),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
           ),
-          title: const Text(
-            'Account Created',
-            style: TextStyle(
-              color: AppColors.darkBlue,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          content: const Text(
-            'Your account has been created successfully.',
-            style: TextStyle(color: AppColors.textMuted, height: 1.5),
-          ),
-          actions: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryEnd,
-                  foregroundColor: AppColors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            width: 210,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 26, 18, 22),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/vector_love.png',
+                    width: 82,
+                    height: 82,
+                    fit: BoxFit.contain,
                   ),
-                ),
-                child: const Text(
-                  'Continue',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
+
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    'Account Created',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.primaryEnd,
+                      fontSize: 16,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  const Text(
+                    'Your account has been created successfully.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 11,
+                      height: 1.2,
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  SizedBox(
+                    width: 122,
+                    height: 42,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 4,
+                        shadowColor:
+                            AppColors.primaryEnd.withValues(alpha: 0.25),
+                        backgroundColor: AppColors.primaryEnd,
+                        foregroundColor: AppColors.white,
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                      ),
+                      child: const Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         );
       },
     );

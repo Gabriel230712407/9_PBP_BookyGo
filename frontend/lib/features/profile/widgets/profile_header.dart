@@ -30,10 +30,11 @@ class _ProfileHeaderState extends State<ProfileHeader> {
   String? _localImagePath;
   String? _serverFotoUrl;
   String? _email;
+  int? _userId;
   String _token = '';
   bool _isUploading = false;
   final _picker = ImagePicker();
-  static const _localPathKey = 'profile_image_path';
+  static const _localPathKeyPrefix = 'profile_image_path';
 
   @override
   void initState() {
@@ -46,15 +47,25 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     if (session == null) return;
     _token = session.token;
     _email = session.user.email;
+    _userId = session.user.id;
     await Future.wait([
       _loadLocalImage(),
       _fetchServerFoto(),
     ]);
   }
 
+  String? get _localPathKey {
+    final userId = _userId;
+    if (userId == null) return null;
+    return '$_localPathKeyPrefix.$userId';
+  }
+
   Future<void> _loadLocalImage() async {
+    final key = _localPathKey;
+    if (key == null) return;
+
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_localPathKey);
+    final saved = prefs.getString(key);
     if (saved != null && File(saved).existsSync()) {
       if (mounted) setState(() => _localImagePath = saved);
     }
@@ -84,6 +95,8 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           }
           
           setState(() => _serverFotoUrl = fotoUrl);
+        } else if (mounted) {
+          setState(() => _serverFotoUrl = null);
         }
       }
     } catch (_) {}
@@ -143,8 +156,11 @@ class _ProfileHeaderState extends State<ProfileHeader> {
       if (picked == null) return;
 
       // Simpan path lokal
+      final key = _localPathKey;
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_localPathKey, picked.path);
+      if (key != null) {
+        await prefs.setString(key, picked.path);
+      }
       if (mounted) setState(() => _localImagePath = picked.path);
 
       // Upload ke server → masuk database
@@ -163,8 +179,11 @@ class _ProfileHeaderState extends State<ProfileHeader> {
 
   Future<void> _deletePhoto() async {
     // Hapus lokal
+    final key = _localPathKey;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_localPathKey);
+    if (key != null) {
+      await prefs.remove(key);
+    }
     if (mounted) setState(() {
       _localImagePath = null;
       _serverFotoUrl = null;

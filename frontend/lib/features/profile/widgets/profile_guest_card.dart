@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+
 class ProfileGuestCard extends StatelessWidget {
   final VoidCallback onSignInPressed;
 
@@ -12,7 +14,6 @@ class ProfileGuestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     const darkBlue = Color(0xFF344A99);
     const textGrey = Color(0xFF6B7280);
-    const primaryColor = Color(0xFF5B74E8);
     final double width = MediaQuery.of(context).size.width;
     final bool isCompact = width < 360;
 
@@ -90,25 +91,25 @@ class ProfileGuestCard extends StatelessWidget {
 
           SizedBox(
             width: double.infinity,
-            height: isCompact ? 54 : 58,
+            height: isCompact ? 38 : 40,
             child: OutlinedButton(
               onPressed: onSignInPressed,
               style: OutlinedButton.styleFrom(
-                foregroundColor: primaryColor,
+                foregroundColor: AppColors.primaryEnd,
                 side: const BorderSide(
-                  color: primaryColor,
-                  width: 1.4,
+                  color: AppColors.primaryEnd,
+                  width: 1.2,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(7),
                 ),
                 backgroundColor: Colors.white.withValues(alpha: 0.35),
               ),
               child: const Text(
                 'Sign In',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),

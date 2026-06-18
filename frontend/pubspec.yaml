@@ -19,6 +19,8 @@ dependencies:
   printing: ^5.14.2
   google_sign_in: ^6.2.1
   firebase_auth: ^5.5.3
+  geolocator: ^13.0.0        # ambil GPS koordinat
+  geocoding: ^3.0.0 
 
   # Firebase
   firebase_core: ^3.13.1
@@ -46,6 +48,7 @@ flutter:
     - assets/images/vector_permission.png
     - assets/images/vector_success.png
     - assets/images/vector_sihir.png
+    - assets/images/vector_love.png
     - assets/images/vector_check.png
     - assets/images/vector_lostconnection.png
 

@@ -4,12 +4,15 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/connection_error_state.dart';
 import '../../mybook/models/booking_model.dart';
 import '../../mybook/services/booking_service.dart';
+import '../../onboarding/pages/welcome_page.dart';
 import '../widgets/empty_history_view.dart';
 import '../widgets/history_card.dart';
 import '../widgets/history_header.dart';
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key});
+  const HistoryPage({super.key, this.isGuest = false});
+
+  final bool isGuest;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -25,10 +28,14 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   void initState() {
     super.initState();
-    _futureBookings = _bookingService.fetchMyBookings();
+    _futureBookings = widget.isGuest
+        ? Future.value(const [])
+        : _bookingService.fetchMyBookings();
   }
 
   Future<void> _refresh() async {
+    if (widget.isGuest) return;
+
     final future = _bookingService.fetchMyBookings();
     setState(() {
       _futureBookings = future;
@@ -80,6 +87,35 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isGuest) {
+      return Scaffold(
+        backgroundColor: AppColors.bgVeryLight,
+        body: Column(
+          children: [
+            HistoryHeader(
+              showActions: false,
+              onSelect: () {},
+              onCancelSelect: () {},
+              onDeleteAll: () {},
+              onDeleteSelected: () {},
+            ),
+            Expanded(
+              child: EmptyHistoryView(
+                isGuest: true,
+                onPrimaryTap: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const WelcomePage()),
+                    (route) => false,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.bgVeryLight,
       body: FutureBuilder<List<BookingModel>>(
@@ -100,6 +136,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 onDeleteSelected: () {
                   _deleteSelected();
                 },
+                showActions: bookings.isNotEmpty,
               ),
               Expanded(
                 child: snapshot.connectionState == ConnectionState.waiting
