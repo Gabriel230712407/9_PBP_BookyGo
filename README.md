@@ -19,10 +19,10 @@ Aplikasi ini terdiri dari dua bagian utama, yaitu frontend Flutter sebagai aplik
 
 ## Link Project
 
-* Repository GitHub: [ISI LINK GITHUB](https://github.com/Gabriel230712407/9_PBP_BookyGo.git)
+* Repository GitHub: [LINK GITHUB](https://github.com/Gabriel230712407/9_PBP_BookyGo.git)
 * Figma: [Tubes PBP 09](https://www.figma.com/design/TlsFx5ZQ0ioxbK6DLbIPEq/Tubes_PBP_09?m=auto&t=qrJ8YGGlZKisfgR3-6)
 * Backend Railway: https://9pbpbookygo-production.up.railway.app/api
-* Video Demo/Presentasi: [Link video akan ditambahkan](https://drive.google.com/file/d/1YAVQMccOckQCaW6s1DRvy1g4ebddYITx/view?usp=drivesdk)
+* Video Demo/Presentasi: [Video Demo](https://drive.google.com/file/d/1YAVQMccOckQCaW6s1DRvy1g4ebddYITx/view?usp=drivesdk)
 
 ---
 
