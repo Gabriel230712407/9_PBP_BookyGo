@@ -1,9 +1,50 @@
-import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 class LocationService {
+  static const Map<String, List<String>> _supportedDestinationAliases = {
+    'Yogyakarta': [
+      'yogyakarta',
+      'kota yogyakarta',
+      'sleman',
+      'bantul',
+      'kulon progo',
+      'gunungkidul',
+    ],
+    'Jakarta': [
+      'jakarta',
+      'jakarta pusat',
+      'jakarta barat',
+      'jakarta timur',
+      'jakarta utara',
+      'jakarta selatan',
+      'dki jakarta',
+    ],
+    'Bali': [
+      'bali',
+      'denpasar',
+      'badung',
+      'gianyar',
+      'tabanan',
+      'buleleng',
+      'karangasem',
+      'klungkung',
+      'jembrana',
+      'bangli',
+    ],
+    'Bandung': [
+      'bandung',
+      'kota bandung',
+      'kabupaten bandung',
+      'bandung barat',
+      'cimahi',
+    ],
+  };
+
   Future<String?> getCurrentCityName() async {
-    // 1. Cek permission
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return null;
+
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -11,12 +52,10 @@ class LocationService {
     }
     if (permission == LocationPermission.deniedForever) return null;
 
-    // 2. Ambil koordinat GPS
     final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.medium, // hemat baterai
+      desiredAccuracy: LocationAccuracy.medium,
     );
 
-    // 3. Koordinat → nama kota (Nominatim/geocoding)
     final placemarks = await placemarkFromCoordinates(
       position.latitude,
       position.longitude,
@@ -25,10 +64,28 @@ class LocationService {
     if (placemarks.isEmpty) return null;
 
     final place = placemarks.first;
+    final candidates = [
+      place.locality,
+      place.subAdministrativeArea,
+      place.administrativeArea,
+    ].whereType<String>().where((value) => value.trim().isNotEmpty);
 
-    // Ambil nama kota, fallback ke subAdministrativeArea atau locality
-    return place.locality?.isNotEmpty == true
-        ? place.locality
-        : place.subAdministrativeArea;
+    for (final candidate in candidates) {
+      final destination = _matchSupportedDestination(candidate);
+      if (destination != null) return destination;
+    }
+
+    return null;
+  }
+
+  String? _matchSupportedDestination(String locationName) {
+    final normalizedLocation = locationName.toLowerCase();
+
+    for (final entry in _supportedDestinationAliases.entries) {
+      final hasMatch = entry.value.any(normalizedLocation.contains);
+      if (hasMatch) return entry.key;
+    }
+
+    return null;
   }
 }
