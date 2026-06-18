@@ -74,6 +74,27 @@ class RoomModel {
 
   String get smokingLabel =>
       smokingPolicy == 'smoking' ? 'Smoking Room' : 'Non-smoking Room';
+
+  String get shortDescription {
+    final details = <String>[];
+
+    if (bedType.trim().isNotEmpty) {
+      details.add(bedType.trim());
+    }
+
+    details.add(smokingLabel.toLowerCase());
+
+    if (capacity > 0) {
+      details.add('up to $capacity adults');
+    }
+
+    final facilities = facilityList.take(3).join(', ');
+    final facilityText = facilities.isNotEmpty
+        ? ' Featured amenities include $facilities.'
+        : '';
+
+    return '$name offers a comfortable stay with ${details.join(', ')}.$facilityText';
+  }
 }
 
 int _toInt(dynamic value) {
