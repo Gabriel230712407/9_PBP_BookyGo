@@ -56,7 +56,7 @@ Aplikasi ini terdiri dari dua bagian utama, yaitu frontend Flutter sebagai aplik
 
 Berikut adalah Entity Relationship Diagram dari database BookyGo:
 
-![ERD BookyGo](docs/erd-bookygo.png)
+![ERD BookyGo](docs/ERD_BookyGo.png)
 
 ---
 
