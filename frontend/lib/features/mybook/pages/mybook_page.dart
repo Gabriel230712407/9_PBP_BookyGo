@@ -104,7 +104,9 @@ class _MyBookPageState extends State<MyBookPage> {
             onHistoryTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const HistoryPage()),
+                MaterialPageRoute(
+                  builder: (_) => HistoryPage(isGuest: widget.isGuest),
+                ),
               );
             },
           ),

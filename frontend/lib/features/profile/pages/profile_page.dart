@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/auth/services/auth_service.dart';
+import 'package:frontend/core/theme/app_colors.dart';
 
 import '../../onboarding/pages/welcome_page.dart';
 import 'profile_edit.dart';
@@ -132,23 +133,56 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildGuestHeader() {
+    return Container(
+      color: AppColors.primaryEnd,
+      child: const SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: 52,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Profile',
+                style: TextStyle(
+                  color: AppColors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ProfilePalette.background,
-      body: SafeArea(
-        bottom: false,
-        child: widget.isGuest
-            ? ProfileGuestCard(
-                onSignInPressed: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const WelcomePage()),
-                    (route) => false,
-                  );
-                },
-              )
-            : SingleChildScrollView(
+      body: widget.isGuest
+          ? Column(
+              children: [
+                _buildGuestHeader(),
+                Expanded(
+                  child: ProfileGuestCard(
+                    onSignInPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WelcomePage()),
+                        (route) => false,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            )
+          : SafeArea(
+              bottom: false,
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.only(bottom: 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,7 +190,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     ProfileHeader(
                       userName:
-                          _displayUserName ?? _nonEmptyName(widget.userName) ?? 'User',
+                          _displayUserName ??
+                          _nonEmptyName(widget.userName) ??
+                          'User',
                       userEmail: widget.userEmail,
                       onEditTap: _goToEditProfile,
                     ),
@@ -172,7 +208,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
               ),
-      ),
+            ),
     );
   }
 }

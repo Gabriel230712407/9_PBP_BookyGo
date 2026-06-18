@@ -85,7 +85,7 @@ class _SearchSectionState extends State<SearchSection> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Tidak bisa mendapatkan lokasi kamu'),
+          content: Text('Unable to get your location.'),
         ),
       );
     }
@@ -216,7 +216,7 @@ class _SearchSectionState extends State<SearchSection> {
                             Icons.my_location_rounded,
                             color: AppColors.mutedBlue,
                           ),
-                          tooltip: 'Gunakan lokasi saya',
+                          tooltip: 'Use my location',
                           onPressed: _useMyLocation,
                         ),
                   contentPadding: EdgeInsets.symmetric(
