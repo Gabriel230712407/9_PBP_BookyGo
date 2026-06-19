@@ -12,6 +12,24 @@ import '../../whistlist/services/whistlist_service.dart';
 import 'hotel_detail.dart';
 import '../../../core/auth/services/auth_storage.dart';
 
+class ByHarga extends StatefulWidget {
+  final double harga;
+  const ByHarga({super.key, required this.harga});
+
+  @override
+  State<ByHarga> createState() => ByHargaState();
+}
+
+class ByHargaState extends State<ByHarga> {
+  late final TextEditingController _searchController;
+  double _harga = 0.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
+  }
+}
+
 class HotelListPage extends StatefulWidget {
   final String destination;
   final DateTime checkInDate;
@@ -97,7 +115,9 @@ class _HotelListPageState extends State<HotelListPage> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Session is not ready yet. Please try again shortly.'),
+            content: Text(
+              'Session is not ready yet. Please try again shortly.',
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );

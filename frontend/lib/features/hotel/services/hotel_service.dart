@@ -28,14 +28,21 @@ class HotelService {
     required int guests,
   }) async {
     final hotels = await fetchHotels();
+    final kamar = hotels.where((hotel) => hotel.rooms.length >= rooms).toList();
     final keyword = destination.trim().toLowerCase();
+    final priceQuery = double.tryParse(destination);
 
     return hotels.where((hotel) {
       final matchDestination =
           keyword.isEmpty ||
           hotel.name.toLowerCase().contains(keyword) ||
           hotel.city.toLowerCase().contains(keyword) ||
-          hotel.address.toLowerCase().contains(keyword);
+          hotel.address.toLowerCase().contains(keyword) ||
+          (priceQuery != null &&
+              hotel.rooms.any((room) {
+                final roomPrice = double.tryParse(room.price.toString());
+                return roomPrice != null && roomPrice <= priceQuery;
+              }));
 
       final enoughRooms = hotel.rooms.length >= rooms;
       final enoughGuests = hotel.rooms.any((room) => room.capacity >= guests);
